@@ -180,6 +180,17 @@ docker compose ps
 - 無関係なファイルを commit しない
 - ユーザーが作った未コミット変更を勝手に戻さない
 
+## Issue / PR テンプレートルール
+
+Issue または PR を作成する場合は、事前に対応するテンプレートを確認する。
+
+- PR作成時: `.github/pull_request_template.md`
+- タスクIssue作成時: `.github/ISSUE_TEMPLATE/task.md`
+- バグIssue作成時: `.github/ISSUE_TEMPLATE/bug_report.md`
+
+テンプレートの項目をできるだけ埋める。
+該当しない項目がある場合は、空欄にせず「該当なし」または理由を記載する。
+
 ## ファイル移動ルール
 
 - 指定されたファイルだけ移動する

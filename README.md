@@ -35,6 +35,10 @@ Copy-Item backend\.env.example backend\.env
 Copy-Item frontend\.env.local.example frontend\.env.local
 ```
 
+`API_BASE_URL` は Next.js の Server Component など、frontend サーバー側から backend へ接続するためのURLです。
+Docker Compose では `http://backend:8080` を使用します。
+`NEXT_PUBLIC_API_BASE_URL` はブラウザ側から backend へ接続する実装で使用します。
+
 ## Dockerで起動
 
 ```powershell
