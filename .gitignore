@@ -1,0 +1,30 @@
+# Node
+node_modules/
+dist/
+.next/
+out/
+coverage/
+
+# Go
+bin/
+tmp/
+*.exe
+*.out
+main
+
+# Env
+.env
+
+# Docker
+*.log
+.env.local
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Windows
+Thumbs.db
