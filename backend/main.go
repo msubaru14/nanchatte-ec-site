@@ -4,10 +4,20 @@ import (
 	"log"
 	"os"
 
+	"github.com/msubaru14/nanchatte-ec-backend/db"
 	"github.com/msubaru14/nanchatte-ec-backend/router"
 )
 
 func main() {
+	database, err := db.Connect()
+	if err != nil {
+		log.Fatalf("database connection failed: %v", err)
+	}
+
+	if err := db.RunMigrations(database); err != nil {
+		log.Fatalf("migration failed: %v", err)
+	}
+
 	r := router.SetupRouter()
 
 	port := os.Getenv("PORT")
