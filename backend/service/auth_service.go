@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 
 	"github.com/msubaru14/nanchatte-ec-backend/model"
@@ -13,6 +14,11 @@ import (
 )
 
 const CustomerRole = "customer"
+
+const (
+	postgresUniqueViolationCode = "23505"
+	usersEmailUniqueConstraint  = "users_email_key"
+)
 
 type AuthService struct {
 	db           *gorm.DB
@@ -282,6 +288,18 @@ func toAPIError(err error) *apperror.APIError {
 	if errors.As(err, &apiErr) {
 		return apiErr
 	}
+	if isUniqueViolation(err, usersEmailUniqueConstraint) {
+		return apperror.NewConflict("email already exists")
+	}
 
 	return apperror.NewInternalServerError()
+}
+
+func isUniqueViolation(err error, constraintName string) bool {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return false
+	}
+
+	return pgErr.Code == postgresUniqueViolationCode && pgErr.ConstraintName == constraintName
 }
