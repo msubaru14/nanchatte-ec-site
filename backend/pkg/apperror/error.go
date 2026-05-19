@@ -20,8 +20,12 @@ func MapErrorCodeToStatus(code string) int {
 	switch code {
 	case CodeInvalidRequest, CodeValidationError:
 		return http.StatusBadRequest
+	case CodeConflict:
+		return http.StatusConflict
 	case CodeUnauthorized:
 		return http.StatusUnauthorized
+	case CodeForbidden:
+		return http.StatusForbidden
 	case CodeNotFound:
 		return http.StatusNotFound
 	case CodeInternalServerError:
@@ -69,6 +73,20 @@ func NewUnauthorized() *APIError {
 	return &APIError{
 		Code:    CodeUnauthorized,
 		Message: "unauthorized",
+	}
+}
+
+func NewForbidden() *APIError {
+	return &APIError{
+		Code:    CodeForbidden,
+		Message: "forbidden",
+	}
+}
+
+func NewConflict(message string) *APIError {
+	return &APIError{
+		Code:    CodeConflict,
+		Message: message,
 	}
 }
 

@@ -18,7 +18,7 @@ func main() {
 		log.Fatalf("migration failed: %v", err)
 	}
 
-	r := router.SetupRouter()
+	r := router.SetupRouter(database)
 
 	port := os.Getenv("PORT")
 	if port == "" {
