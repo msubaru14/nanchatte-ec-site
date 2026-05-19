@@ -74,6 +74,37 @@ docker compose ps
 docker compose down
 ```
 
+## DB migration / seed
+
+Migration は backend 起動時に自動実行されます。
+
+```powershell
+docker compose up --build -d
+```
+
+ローカルで backend を直接起動する場合も、起動時に migration が実行されます。
+
+```powershell
+cd backend
+go run ./cmd/api
+```
+
+Seed は migration とは分けて、必要なタイミングで手動実行します。
+Docker Compose 起動中は、backend コンテナから実行します。
+
+```powershell
+docker compose exec backend go run ./cmd/seed
+```
+
+backend をローカルで直接実行する環境では、backend ディレクトリから実行します。
+
+```powershell
+cd backend
+go run ./cmd/seed
+```
+
+Seed は再実行可能な作りにしており、既に存在する初期データは重複投入しません。
+
 ## ローカル開発コマンド
 
 Backend:
