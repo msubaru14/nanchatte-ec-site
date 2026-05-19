@@ -1,11 +1,11 @@
-package service
+package auth
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/apperror"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
 )
 
 func TestToAPIError(t *testing.T) {

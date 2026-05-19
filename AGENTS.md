@@ -34,11 +34,14 @@
 ```txt
 .
 ├── backend
-│   ├── controller
+│   ├── cmd
 │   ├── db
-│   ├── pkg
-│   └── router
-├── db
+│   └── internal
+│       ├── auth
+│       ├── health
+│       ├── middleware
+│       ├── router
+│       └── shared
 ├── docs
 │   ├── api
 │   ├── database
@@ -48,13 +51,13 @@
     └── app
 ```
 
-今後 backend は必要に応じて以下の層を追加する。
+今後 backend は必要に応じて domain 単位で以下のファイル・層を追加する。
 
-- `domain`
-- `service` または `application`
+- `handler`
+- `service`
 - `repository`
+- `model`
 - `dto`
-- `middleware`
 
 ## 基本原則
 
@@ -115,13 +118,13 @@
 
 ## Backend 実装ルール
 
-- API入口は `controller`
-- ルーティングは `router`
-- 共通レスポンスは `pkg/response`
-- 共通エラーは `pkg/apperror`
+- API入口は domain 単位の `handler`
+- ルーティングは `internal/router`
+- 共通レスポンスは `internal/shared/response`
+- 共通エラーは `internal/shared/apperror`
 - DB接続・migration基盤は `db`
-- 業務ロジックが増えたら `domain` / `service` / `repository` を分ける
-- 業務ルールは controller に寄せすぎない
+- 業務ロジックが増えたら domain 単位で `service` / `repository` を分ける
+- 業務ルールは handler に寄せすぎない
 - DB制約とアプリ側で守るルールの切り分けは `docs/database/DB制約整理.md` を確認する
 
 Goファイル変更後は原則として以下を実行する。

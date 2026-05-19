@@ -1,4 +1,4 @@
-package middleware
+package middleware_test
 
 import (
 	"net/http"
@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/msubaru14/nanchatte-ec-backend/service"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/auth"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/middleware"
 )
 
 func TestRequireRole(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	tokenService := service.NewTokenServiceWithSecret("test-secret", func() time.Time {
+	tokenService := auth.NewTokenServiceWithSecret("test-secret", func() time.Time {
 		return time.Date(2026, 5, 18, 12, 0, 0, 0, time.UTC)
 	})
 	token, err := tokenService.GenerateAccessToken(1, []string{"customer"})
@@ -41,7 +42,7 @@ func TestRequireRole(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			router := gin.New()
-			router.GET("/test", AuthMiddleware(tokenService), RequireRole(tt.requiredRole), func(c *gin.Context) {
+			router.GET("/test", middleware.AuthMiddleware(tokenService), middleware.RequireRole(tt.requiredRole), func(c *gin.Context) {
 				c.Status(http.StatusOK)
 			})
 
