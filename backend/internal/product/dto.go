@@ -6,10 +6,8 @@ type ProductResponse struct {
 	ID                int64            `json:"id"`
 	Name              string           `json:"name"`
 	Description       *string          `json:"description"`
-	PriceExcludingTax int              `json:"priceExcludingTax"`
 	PriceIncludingTax int              `json:"priceIncludingTax"`
 	Category          CategoryResponse `json:"category"`
-	TaxRate           TaxRateResponse  `json:"taxRate"`
 	Status            ProductStatus    `json:"status"`
 	StockStatus       StockStatus      `json:"stockStatus"`
 	ImageURL          *string          `json:"imageUrl"`
@@ -21,12 +19,6 @@ type ProductResponse struct {
 type CategoryResponse struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
-}
-
-type TaxRateResponse struct {
-	ID   int64   `json:"id"`
-	Name string  `json:"name"`
-	Rate float64 `json:"rate"`
 }
 
 type StockStatus string

@@ -37,15 +37,10 @@ paths:
                       - id: 1
                         name: HHKB Professional HYBRID Type-S
                         description: Compact keyboard with electrostatic capacitive switches.
-                        priceExcludingTax: 36000
                         priceIncludingTax: 39600
                         category:
                           id: 1
                           name: keyboard
-                        taxRate:
-                          id: 1
-                          name: standard_10_percent
-                          rate: 0.1
                         status: active
                         stockStatus: in_stock
                         imageUrl: null
@@ -88,15 +83,10 @@ paths:
                       id: 1
                       name: HHKB Professional HYBRID Type-S
                       description: Compact keyboard with electrostatic capacitive switches.
-                      priceExcludingTax: 36000
                       priceIncludingTax: 39600
                       category:
                         id: 1
                         name: keyboard
-                      taxRate:
-                        id: 1
-                        name: standard_10_percent
-                        rate: 0.1
                       status: active
                       stockStatus: in_stock
                       imageUrl: null
@@ -223,10 +213,8 @@ components:
       required:
         - id
         - name
-        - priceExcludingTax
         - priceIncludingTax
         - category
-        - taxRate
         - status
         - stockStatus
       properties:
@@ -241,16 +229,11 @@ components:
           type: string
           nullable: true
           example: Compact keyboard with electrostatic capacitive switches.
-        priceExcludingTax:
-          type: integer
-          example: 36000
         priceIncludingTax:
           type: integer
           example: 39600
         category:
           $ref: "#/components/schemas/Category"
-        taxRate:
-          $ref: "#/components/schemas/TaxRate"
         status:
           type: string
           enum:
@@ -294,21 +277,3 @@ components:
         name:
           type: string
           example: keyboard
-    TaxRate:
-      type: object
-      required:
-        - id
-        - name
-        - rate
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 1
-        name:
-          type: string
-          example: standard_10_percent
-        rate:
-          type: number
-          format: double
-          example: 0.1

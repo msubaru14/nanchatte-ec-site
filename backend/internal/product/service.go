@@ -58,16 +58,10 @@ func toProductResponse(product Product) ProductResponse {
 		ID:                product.ID,
 		Name:              product.Name,
 		Description:       product.Description,
-		PriceExcludingTax: product.PriceExcludingTax,
 		PriceIncludingTax: priceIncludingTax(product.PriceExcludingTax, product.TaxRate.Rate),
 		Category: CategoryResponse{
 			ID:   product.Category.ID,
 			Name: product.Category.Name,
-		},
-		TaxRate: TaxRateResponse{
-			ID:   product.TaxRate.ID,
-			Name: product.TaxRate.Name,
-			Rate: product.TaxRate.Rate,
 		},
 		Status:      product.Status,
 		StockStatus: stockStatus(product.StockQuantity, product.LowStockThreshold),
