@@ -13,10 +13,21 @@
 ## ディレクトリ構成
 
 ```txt
-frontend/  Next.js App Router
-backend/   Go + Gin API
-db/        DB関連の作業領域
-docs/      設計ドキュメント
+.
+├── backend
+│   ├── cmd
+│   │   └── api
+│   ├── db
+│   └── internal
+│       ├── auth
+│       ├── health
+│       ├── middleware
+│       ├── router
+│       └── shared
+├── db
+├── docs
+└── frontend
+    └── app
 ```
 
 設計資料の入口は [docs/設計ドキュメント索引.md](docs/設計ドキュメント索引.md) です。
@@ -70,7 +81,7 @@ Backend:
 ```powershell
 cd backend
 go test ./...
-go run .
+go run ./cmd/api
 ```
 
 Frontend:
@@ -85,9 +96,17 @@ npm run dev
 ## 現在の実装状態
 
 - `GET /api/health` の最小API
+- auth API
+  - `POST /api/auth/register`
+  - `POST /api/auth/login`
+  - `POST /api/auth/refresh`
+  - `POST /api/auth/logout`
+  - `GET /api/me`
 - Next.js の最小トップページ
 - Docker Compose による `db` / `backend` / `frontend` 起動
-- Go共通レスポンス・エラー基盤
+- `internal/auth` による auth domain 構成
+- auth の repository 分離
+- `internal/shared` によるGo共通レスポンス・エラー基盤
 - DB接続・migration実行基盤
 
 ## 注意
