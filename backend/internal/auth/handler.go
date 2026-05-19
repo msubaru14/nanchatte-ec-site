@@ -1,14 +1,13 @@
-package controller
+package auth
 
 import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/apperror"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/response"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/validation"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/validator"
-	"github.com/msubaru14/nanchatte-ec-backend/service"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/response"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/validation"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/validator"
 )
 
 const (
@@ -17,8 +16,8 @@ const (
 	passwordMaxLength = 128
 )
 
-type AuthController struct {
-	authService *service.AuthService
+type AuthHandler struct {
+	authService *AuthService
 }
 
 type registerRequest struct {
@@ -65,11 +64,11 @@ type accessTokenResponse struct {
 	ExpiresIn   int64  `json:"expiresIn"`
 }
 
-func NewAuthController(authService *service.AuthService) *AuthController {
-	return &AuthController{authService: authService}
+func NewAuthHandler(authService *AuthService) *AuthHandler {
+	return &AuthHandler{authService: authService}
 }
 
-func (a *AuthController) Register(c *gin.Context) {
+func (a *AuthHandler) Register(c *gin.Context) {
 	var req registerRequest
 	if !bindJSON(c, &req) {
 		return
@@ -89,7 +88,7 @@ func (a *AuthController) Register(c *gin.Context) {
 	response.SuccessCreated(c, newAuthResponse(result))
 }
 
-func (a *AuthController) Login(c *gin.Context) {
+func (a *AuthHandler) Login(c *gin.Context) {
 	var req loginRequest
 	if !bindJSON(c, &req) {
 		return
@@ -109,7 +108,7 @@ func (a *AuthController) Login(c *gin.Context) {
 	response.Success(c, newAuthResponse(result))
 }
 
-func (a *AuthController) Refresh(c *gin.Context) {
+func (a *AuthHandler) Refresh(c *gin.Context) {
 	var req refreshRequest
 	if !bindJSON(c, &req) {
 		return
@@ -134,7 +133,7 @@ func (a *AuthController) Refresh(c *gin.Context) {
 	})
 }
 
-func (a *AuthController) Logout(c *gin.Context) {
+func (a *AuthHandler) Logout(c *gin.Context) {
 	var req logoutRequest
 	if !bindJSON(c, &req) {
 		return
@@ -208,7 +207,7 @@ func validatePassword(password string) []apperror.ErrorDetail {
 	return nil
 }
 
-func newAuthResponse(result *service.AuthResult) authResponse {
+func newAuthResponse(result *AuthResult) authResponse {
 	return authResponse{
 		User: userResponse{
 			ID:    result.User.ID,

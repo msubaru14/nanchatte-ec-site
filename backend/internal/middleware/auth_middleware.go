@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/apperror"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/response"
-	"github.com/msubaru14/nanchatte-ec-backend/service"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
+	sharedauth "github.com/msubaru14/nanchatte-ec-backend/internal/shared/auth"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/response"
 )
 
 const (
@@ -14,7 +14,11 @@ const (
 	contextRolesKey  = "auth.roles"
 )
 
-func AuthMiddleware(tokenService *service.TokenService) gin.HandlerFunc {
+type AccessTokenParser interface {
+	ParseAccessToken(token string) (sharedauth.JWTClaims, error)
+}
+
+func AuthMiddleware(tokenService AccessTokenParser) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {

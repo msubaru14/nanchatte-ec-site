@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/apperror"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
 )
 
 func RequireRole(requiredRole string) gin.HandlerFunc {

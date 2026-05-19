@@ -3,7 +3,7 @@ package response
 import (
 	"net/http"
 
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/apperror"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
 
 	"github.com/gin-gonic/gin"
 )

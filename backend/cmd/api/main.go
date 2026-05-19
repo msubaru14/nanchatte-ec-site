@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/msubaru14/nanchatte-ec-backend/db"
-	"github.com/msubaru14/nanchatte-ec-backend/router"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/router"
 )
 
 func main() {

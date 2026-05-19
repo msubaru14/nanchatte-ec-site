@@ -1,4 +1,4 @@
-package service
+package auth
 
 import (
 	"errors"
@@ -7,10 +7,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 
-	"github.com/msubaru14/nanchatte-ec-backend/model"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/apperror"
-	authpkg "github.com/msubaru14/nanchatte-ec-backend/pkg/auth"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/validator"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
+	sharedauth "github.com/msubaru14/nanchatte-ec-backend/internal/shared/auth"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/validator"
 )
 
 const CustomerRole = "customer"
@@ -21,12 +20,12 @@ const (
 )
 
 type AuthService struct {
-	db           *gorm.DB
+	repository   *Repository
 	tokenService *TokenService
 }
 
 type AuthResult struct {
-	User         model.User
+	User         User
 	Roles        []string
 	AccessToken  string
 	RefreshToken string
@@ -35,7 +34,7 @@ type AuthResult struct {
 
 func NewAuthService(db *gorm.DB, tokenService *TokenService) *AuthService {
 	return &AuthService{
-		db:           db,
+		repository:   NewRepository(db),
 		tokenService: tokenService,
 	}
 }
@@ -49,40 +48,40 @@ func (s *AuthService) Register(name string, email string, password string) (*Aut
 		})
 	}
 
-	passwordHash, err := authpkg.HashPassword(password)
+	passwordHash, err := sharedauth.HashPassword(password)
 	if err != nil {
 		return nil, apperror.NewInternalServerError()
 	}
 
 	var result *AuthResult
-	err = s.db.Transaction(func(tx *gorm.DB) error {
-		var count int64
-		if err := tx.Model(&model.User{}).Where("email = ?", normalizedEmail).Count(&count).Error; err != nil {
+	err = s.repository.Transaction(func(repository *Repository) error {
+		count, err := repository.CountUsersByEmail(normalizedEmail)
+		if err != nil {
 			return err
 		}
 		if count > 0 {
 			return apperror.NewConflict("email already exists")
 		}
 
-		user := model.User{
+		user := User{
 			Name:         trimmedName,
 			Email:        normalizedEmail,
 			PasswordHash: passwordHash,
 		}
-		if err := tx.Create(&user).Error; err != nil {
+		if err := repository.CreateUser(&user); err != nil {
 			return err
 		}
 
-		role, err := findOrCreateRole(tx, CustomerRole)
+		role, err := repository.FindOrCreateRole(CustomerRole)
 		if err != nil {
 			return err
 		}
 
-		if err := tx.Create(&model.UserRole{UserID: user.ID, RoleID: role.ID}).Error; err != nil {
+		if err := repository.CreateUserRole(user.ID, role.ID); err != nil {
 			return err
 		}
 
-		if err := tx.Create(&model.Cart{UserID: user.ID}).Error; err != nil {
+		if err := repository.CreateCart(user.ID); err != nil {
 			return err
 		}
 
@@ -97,11 +96,11 @@ func (s *AuthService) Register(name string, email string, password string) (*Aut
 			return err
 		}
 
-		if err := tx.Create(&model.RefreshToken{
+		if err := repository.CreateRefreshToken(&RefreshToken{
 			UserID:    user.ID,
 			TokenHash: refreshTokenHash,
 			ExpiresAt: expiresAt,
-		}).Error; err != nil {
+		}); err != nil {
 			return err
 		}
 
@@ -127,15 +126,15 @@ func (s *AuthService) Login(email string, password string) (*AuthResult, *apperr
 		return nil, apperror.NewUnauthorized()
 	}
 
-	var user model.User
-	if err := s.db.Where("email = ?", normalizedEmail).First(&user).Error; err != nil {
+	user, err := s.repository.FindUserByEmail(normalizedEmail)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, apperror.NewUnauthorized()
 		}
 		return nil, apperror.NewInternalServerError()
 	}
 
-	if user.DeletedAt != nil || !authpkg.VerifyPassword(password, user.PasswordHash) {
+	if user.DeletedAt != nil || !sharedauth.VerifyPassword(password, user.PasswordHash) {
 		return nil, apperror.NewUnauthorized()
 	}
 
@@ -154,16 +153,16 @@ func (s *AuthService) Login(email string, password string) (*AuthResult, *apperr
 		return nil, apperror.NewInternalServerError()
 	}
 
-	if err := s.db.Create(&model.RefreshToken{
+	if err := s.repository.CreateRefreshToken(&RefreshToken{
 		UserID:    user.ID,
 		TokenHash: refreshTokenHash,
 		ExpiresAt: expiresAt,
-	}).Error; err != nil {
+	}); err != nil {
 		return nil, apperror.NewInternalServerError()
 	}
 
 	return &AuthResult{
-		User:         user,
+		User:         *user,
 		Roles:        roles,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -174,8 +173,8 @@ func (s *AuthService) Login(email string, password string) (*AuthResult, *apperr
 func (s *AuthService) Refresh(refreshToken string) (string, int64, *apperror.APIError) {
 	tokenHash := s.tokenService.HashRefreshToken(refreshToken)
 
-	var stored model.RefreshToken
-	if err := s.db.Where("token_hash = ?", tokenHash).First(&stored).Error; err != nil {
+	stored, err := s.repository.FindRefreshTokenByHash(tokenHash)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return "", 0, apperror.NewUnauthorized()
 		}
@@ -186,8 +185,8 @@ func (s *AuthService) Refresh(refreshToken string) (string, int64, *apperror.API
 		return "", 0, apperror.NewUnauthorized()
 	}
 
-	var user model.User
-	if err := s.db.First(&user, stored.UserID).Error; err != nil {
+	user, err := s.repository.FindUserByID(stored.UserID)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return "", 0, apperror.NewUnauthorized()
 		}
@@ -214,22 +213,20 @@ func (s *AuthService) Logout(refreshToken string) *apperror.APIError {
 	tokenHash := s.tokenService.HashRefreshToken(refreshToken)
 	now := s.tokenService.now()
 
-	result := s.db.Model(&model.RefreshToken{}).
-		Where("token_hash = ? AND revoked_at IS NULL", tokenHash).
-		Update("revoked_at", now)
-	if result.Error != nil {
+	rowsAffected, err := s.repository.RevokeRefreshToken(tokenHash, now)
+	if err != nil {
 		return apperror.NewInternalServerError()
 	}
-	if result.RowsAffected == 0 {
+	if rowsAffected == 0 {
 		return apperror.NewUnauthorized()
 	}
 
 	return nil
 }
 
-func (s *AuthService) CurrentUser(userID int64) (*model.User, []string, *apperror.APIError) {
-	var user model.User
-	if err := s.db.First(&user, userID).Error; err != nil {
+func (s *AuthService) CurrentUser(userID int64) (*User, []string, *apperror.APIError) {
+	user, err := s.repository.FindUserByID(userID)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil, apperror.NewUnauthorized()
 		}
@@ -244,17 +241,11 @@ func (s *AuthService) CurrentUser(userID int64) (*model.User, []string, *apperro
 		return nil, nil, apiErr
 	}
 
-	return &user, roles, nil
+	return user, roles, nil
 }
 
 func (s *AuthService) rolesForUser(userID int64) ([]string, *apperror.APIError) {
-	var roles []string
-	err := s.db.Table("roles").
-		Select("roles.name").
-		Joins("JOIN user_roles ON user_roles.role_id = roles.id").
-		Where("user_roles.user_id = ?", userID).
-		Order("roles.name").
-		Pluck("roles.name", &roles).Error
+	roles, err := s.repository.RolesForUser(userID)
 	if err != nil {
 		return nil, apperror.NewInternalServerError()
 	}
@@ -264,25 +255,6 @@ func (s *AuthService) rolesForUser(userID int64) ([]string, *apperror.APIError) 
 
 	return roles, nil
 }
-
-func findOrCreateRole(tx *gorm.DB, name string) (*model.Role, error) {
-	var role model.Role
-	err := tx.Where("name = ?", name).First(&role).Error
-	if err == nil {
-		return &role, nil
-	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
-	}
-
-	role = model.Role{Name: name}
-	if err := tx.Create(&role).Error; err != nil {
-		return nil, err
-	}
-
-	return &role, nil
-}
-
 func toAPIError(err error) *apperror.APIError {
 	var apiErr *apperror.APIError
 	if errors.As(err, &apiErr) {

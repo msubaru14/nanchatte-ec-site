@@ -1,9 +1,9 @@
-package controller
+package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/apperror"
-	"github.com/msubaru14/nanchatte-ec-backend/pkg/response"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/response"
 )
 
 func bindJSON(c *gin.Context, target interface{}) bool {
