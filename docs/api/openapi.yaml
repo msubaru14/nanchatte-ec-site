@@ -1,0 +1,279 @@
+openapi: 3.0.3
+info:
+  title: Nanchatte EC Site API
+  version: 0.1.0
+  description: |
+    なんちゃってECサイトのAPI仕様。
+    このファイルには実装済みAPIから順次追記する。
+servers:
+  - url: http://localhost:8080
+    description: Local backend
+tags:
+  - name: Products
+    description: Public product APIs
+paths:
+  /api/products:
+    get:
+      tags:
+        - Products
+      summary: Product list
+      description: |
+        公開中の商品一覧を取得する。
+
+        現時点では active 商品の全件取得のみ対応する。
+        検索、絞り込み、並び替え、pagination は後続Issueで追加する。
+      operationId: listProducts
+      responses:
+        "200":
+          description: Product list response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      - id: 1
+                        name: HHKB Professional HYBRID Type-S
+                        description: Compact keyboard with electrostatic capacitive switches.
+                        priceIncludingTax: 39600
+                        category:
+                          id: 1
+                          name: keyboard
+                        status: active
+                        stockStatus: in_stock
+                        imageUrl: null
+                        releasedAt: "2023-10-25"
+                        makerName: PFU
+                        modelNumber: PD-KB800BS
+                    error: null
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Product detail
+      description: |
+        公開中の商品詳細を取得する。
+
+        stopped 商品は存在しない商品と同じく 404 を返す。
+      operationId: getProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Product detail response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      id: 1
+                      name: HHKB Professional HYBRID Type-S
+                      description: Compact keyboard with electrostatic capacitive switches.
+                      priceIncludingTax: 39600
+                      category:
+                        id: 1
+                        name: keyboard
+                      status: active
+                      stockStatus: in_stock
+                      imageUrl: null
+                      releasedAt: "2023-10-25"
+                      makerName: PFU
+                      modelNumber: PD-KB800BS
+                    error: null
+        "400":
+          description: Invalid product ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidProductId:
+                  value:
+                    data: null
+                    error:
+                      code: INVALID_REQUEST
+                      message: invalid product id
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                productNotFound:
+                  value:
+                    data: null
+                    error:
+                      code: NOT_FOUND
+                      message: product not found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  responses:
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            internalServerError:
+              value:
+                data: null
+                error:
+                  code: INTERNAL_SERVER_ERROR
+                  message: internal server error
+  schemas:
+    ProductListSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        error:
+          nullable: true
+          example: null
+    ProductSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/Product"
+        error:
+          nullable: true
+          example: null
+    ErrorResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          nullable: true
+          example: null
+        error:
+          $ref: "#/components/schemas/APIError"
+    APIError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - INVALID_REQUEST
+            - VALIDATION_ERROR
+            - CONFLICT
+            - UNAUTHORIZED
+            - FORBIDDEN
+            - NOT_FOUND
+            - INTERNAL_SERVER_ERROR
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+    ErrorDetail:
+      type: object
+      required:
+        - field
+        - code
+        - message
+      properties:
+        field:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - priceIncludingTax
+        - category
+        - status
+        - stockStatus
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: HHKB Professional HYBRID Type-S
+        description:
+          type: string
+          nullable: true
+          example: Compact keyboard with electrostatic capacitive switches.
+        priceIncludingTax:
+          type: integer
+          example: 39600
+        category:
+          $ref: "#/components/schemas/Category"
+        status:
+          type: string
+          enum:
+            - active
+            - stopped
+          example: active
+        stockStatus:
+          type: string
+          enum:
+            - in_stock
+            - low_stock
+            - out_of_stock
+          example: in_stock
+        imageUrl:
+          type: string
+          nullable: true
+          example: null
+        releasedAt:
+          type: string
+          format: date
+          nullable: true
+          example: "2023-10-25"
+        makerName:
+          type: string
+          nullable: true
+          example: PFU
+        modelNumber:
+          type: string
+          nullable: true
+          example: PD-KB800BS
+    Category:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: keyboard

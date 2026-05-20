@@ -5,6 +5,7 @@ import (
 	"github.com/msubaru14/nanchatte-ec-backend/internal/auth"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/health"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/middleware"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/product"
 	"gorm.io/gorm"
 )
 
@@ -13,14 +14,18 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 
 	tokenService := auth.NewTokenService()
 	authService := auth.NewAuthService(database, tokenService)
+	productService := product.NewService(database)
 
 	healthHandler := health.NewHandler()
 	authHandler := auth.NewAuthHandler(authService)
 	meHandler := auth.NewMeHandler(authService)
+	productHandler := product.NewHandler(productService)
 
 	api := r.Group("/api")
 	{
 		api.GET("/health", healthHandler.Show)
+		api.GET("/products", productHandler.List)
+		api.GET("/products/:id", productHandler.Show)
 
 		authRoutes := api.Group("/auth")
 		{
