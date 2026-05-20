@@ -50,6 +50,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </p>
           <p className={styles.price}>
             {priceFormatter.format(product.priceIncludingTax)}
+            <span className={styles.taxLabel}>(税込)</span>
           </p>
         </div>
       </Link>
