@@ -12,6 +12,9 @@ tmp/
 *.out
 main
 
+# Next.js
+frontend/next-env.d.ts
+
 # Env
 .env
 
