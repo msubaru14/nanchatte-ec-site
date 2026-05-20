@@ -33,7 +33,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 16px;
 }
 
@@ -44,6 +44,94 @@
   padding: 32px;
   color: var(--muted);
   text-align: center;
+}
+
+.errorPanel {
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff7f7;
+  padding: 28px;
+}
+
+.errorTitle {
+  margin: 0 0 8px;
+  color: #991b1b;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.errorMessage {
+  margin: 0 0 18px;
+  color: #7f1d1d;
+  font-size: 14px;
+}
+
+.retryButton {
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 14px;
+}
+
+.retryButton:hover {
+  background: var(--primary-dark);
+}
+
+.skeletonCard {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
+}
+
+.skeletonImage {
+  aspect-ratio: 4 / 3;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(90deg, #eef3f8 0%, #f8fafc 50%, #eef3f8 100%);
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+
+.skeletonBody {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.skeletonLine,
+.skeletonLineShort,
+.skeletonLineTiny {
+  height: 14px;
+  border-radius: 999px;
+  background: #e5eaf1;
+}
+
+.skeletonLine {
+  width: 88%;
+}
+
+.skeletonLineShort {
+  width: 48%;
+}
+
+.skeletonLineTiny {
+  width: 34%;
+}
+
+@keyframes skeletonPulse {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
 }
 
 @media (max-width: 640px) {
