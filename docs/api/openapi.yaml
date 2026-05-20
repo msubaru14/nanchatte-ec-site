@@ -9,9 +9,243 @@ servers:
   - url: http://localhost:8080
     description: Local backend
 tags:
+  - name: Auth
+    description: Authentication APIs
   - name: Products
     description: Public product APIs
 paths:
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register user
+      description: |
+        ユーザー登録を行う。
+
+        登録時に email を正規化し、password を hash 化して保存する。
+        初期 role として customer を付与し、cart を作成する。
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            examples:
+              default:
+                value:
+                  name: Alice
+                  email: alice@example.com
+                  password: secret123
+      responses:
+        "201":
+          description: Register success response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      user:
+                        id: 1
+                        name: Alice
+                        email: alice@example.com
+                        roles:
+                          - customer
+                      tokens:
+                        accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                        refreshToken: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                        tokenType: Bearer
+                        expiresIn: 900
+                    error: null
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                emailAlreadyExists:
+                  value:
+                    data: null
+                    error:
+                      code: CONFLICT
+                      message: email already exists
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login
+      description: |
+        email / password でログインする。
+
+        認証成功時に user 情報、roles、access token、refresh token を返す。
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            examples:
+              default:
+                value:
+                  email: alice@example.com
+                  password: secret123
+      responses:
+        "200":
+          description: Login success response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      user:
+                        id: 1
+                        name: Alice
+                        email: alice@example.com
+                        roles:
+                          - customer
+                      tokens:
+                        accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                        refreshToken: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                        tokenType: Bearer
+                        expiresIn: 900
+                    error: null
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Refresh access token
+      description: |
+        refresh token を利用して、新しい access token を発行する。
+
+        refresh token rotation は現時点では行わず、access token のみ返す。
+      operationId: refreshAccessToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+            examples:
+              default:
+                value:
+                  refreshToken: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      responses:
+        "200":
+          description: Refresh success response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessTokenSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      tokenType: Bearer
+                      expiresIn: 900
+                    error: null
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout
+      description: |
+        refresh token を revoke してログアウトする。
+
+        このAPIは access token による認証と customer role が必要。
+      operationId: logout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogoutRequest"
+            examples:
+              default:
+                value:
+                  refreshToken: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      responses:
+        "200":
+          description: Logout success response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      message: logged out
+                    error: null
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/me:
+    get:
+      tags:
+        - Auth
+      summary: Current user
+      description: |
+        ログイン中ユーザーの情報を取得する。
+
+        このAPIは access token による認証と customer role が必要。
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      id: 1
+                      name: Alice
+                      email: alice@example.com
+                      roles:
+                        - customer
+                    error: null
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/products:
     get:
       tags:
@@ -123,7 +357,55 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            validationError:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: email
+                      code: INVALID_FORMAT
+                      message: email is invalid
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            unauthorized:
+              value:
+                data: null
+                error:
+                  code: UNAUTHORIZED
+                  message: unauthorized
+    ForbiddenError:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            forbidden:
+              value:
+                data: null
+                error:
+                  code: FORBIDDEN
+                  message: forbidden
     InternalServerError:
       description: Internal server error
       content:
@@ -138,6 +420,198 @@ components:
                   code: INTERNAL_SERVER_ERROR
                   message: internal server error
   schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Alice
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: alice@example.com
+        password:
+          type: string
+          format: password
+          minLength: 6
+          maxLength: 128
+          example: secret123
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: alice@example.com
+        password:
+          type: string
+          format: password
+          minLength: 1
+          example: secret123
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+          example: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    LogoutRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+          example: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    AuthSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AuthData"
+        error:
+          nullable: true
+          example: null
+    AccessTokenSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AccessTokenData"
+        error:
+          nullable: true
+          example: null
+    LogoutSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/LogoutData"
+        error:
+          nullable: true
+          example: null
+    MeSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AuthUser"
+        error:
+          nullable: true
+          example: null
+    AuthData:
+      type: object
+      required:
+        - user
+        - tokens
+      properties:
+        user:
+          $ref: "#/components/schemas/AuthUser"
+        tokens:
+          $ref: "#/components/schemas/TokenPair"
+    AuthUser:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - roles
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Alice
+        email:
+          type: string
+          format: email
+          example: alice@example.com
+        roles:
+          type: array
+          items:
+            type: string
+            enum:
+              - customer
+              - admin
+          example:
+            - customer
+    TokenPair:
+      type: object
+      required:
+        - accessToken
+        - refreshToken
+        - tokenType
+        - expiresIn
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: Raw refresh token. DB stores only its hash.
+          example: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        tokenType:
+          type: string
+          enum:
+            - Bearer
+          example: Bearer
+        expiresIn:
+          type: integer
+          description: Access token TTL in seconds.
+          example: 900
+    AccessTokenData:
+      type: object
+      required:
+        - accessToken
+        - tokenType
+        - expiresIn
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        tokenType:
+          type: string
+          enum:
+            - Bearer
+          example: Bearer
+        expiresIn:
+          type: integer
+          description: Access token TTL in seconds.
+          example: 900
+    LogoutData:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: logged out
     ProductListSuccessResponse:
       type: object
       required:
