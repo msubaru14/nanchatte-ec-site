@@ -32,6 +32,8 @@ services:
     container_name: ec-frontend
     environment:
       API_BASE_URL: http://backend:8080
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
     ports:
       - "3000:3000"
     volumes:

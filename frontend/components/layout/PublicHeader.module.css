@@ -1,0 +1,93 @@
+.header {
+  background: linear-gradient(90deg, #0d1117 0%, #111827 55%, #07111f 100%);
+  color: #ffffff;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.18);
+}
+
+.inner {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.brand {
+  color: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0;
+}
+
+.brandMark {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8 0%, var(--primary) 70%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nav a {
+  color: #e5e7eb;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.nav a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.nav .registerLink {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+}
+
+.nav .registerLink:hover {
+  background: var(--primary-dark);
+}
+
+@media (max-width: 520px) {
+  .inner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .brand {
+    white-space: normal;
+  }
+
+  .nav {
+    justify-content: flex-start;
+  }
+}

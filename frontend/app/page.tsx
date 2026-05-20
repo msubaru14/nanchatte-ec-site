@@ -1,3 +1,5 @@
+import styles from "./Home.module.css";
+
 type HealthResponse = {
   data?: {
     status?: string;
@@ -31,21 +33,23 @@ export default async function Home() {
   const backendStatus = await getBackendStatus();
 
   return (
-    <main className="shell">
-      <section className="panel" aria-labelledby="app-title">
-        <p className="eyebrow">Development Environment</p>
-        <h1 id="app-title">なんちゃってECサイト</h1>
-        <dl className="statusGrid">
-          <div>
-            <dt>Frontend</dt>
-            <dd>ok</dd>
+    <section className={styles.shell} aria-labelledby="app-title">
+      <div className={styles.panel}>
+        <p className={styles.eyebrow}>Development Environment</p>
+        <h1 className={styles.title} id="app-title">
+          なんちゃってECサイト
+        </h1>
+        <dl className={styles.statusGrid}>
+          <div className={styles.statusItem}>
+            <dt className={styles.statusLabel}>Frontend</dt>
+            <dd className={styles.statusValue}>ok</dd>
           </div>
-          <div>
-            <dt>Backend</dt>
-            <dd>{backendStatus}</dd>
+          <div className={styles.statusItem}>
+            <dt className={styles.statusLabel}>Backend</dt>
+            <dd className={styles.statusValue}>{backendStatus}</dd>
           </div>
         </dl>
-      </section>
-    </main>
+      </div>
+    </section>
   );
 }
