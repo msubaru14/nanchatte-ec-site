@@ -130,21 +130,16 @@ test.describe("/products/:id", () => {
     await expect(page.getByRole("button", { name: "在庫なし" })).toBeDisabled();
   });
 
-  test("存在しない商品ではNot Foundが表示される", async ({ page }) => {
+  test("存在しない商品ではNot Found扱いになる", async ({ page }) => {
     await page.goto("/products/999999");
 
     await expect(
-      page.getByRole("heading", {
-        level: 1,
-        name: "商品が見つかりませんでした",
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByText("指定された商品は存在しないか、現在は公開されていません。"),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "商品一覧へ戻る" }),
-    ).toBeVisible();
+      page.locator('meta[name="next-error"][content="not-found"]'),
+    ).toHaveCount(1);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      "noindex",
+    );
   });
 
   test("商品詳細が横スクロールなしでレスポンシブ表示される", async ({
