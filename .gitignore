@@ -4,6 +4,8 @@ dist/
 .next/
 out/
 coverage/
+playwright-report/
+test-results/
 
 # Go
 bin/

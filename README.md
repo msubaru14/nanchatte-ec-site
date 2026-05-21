@@ -38,7 +38,9 @@
     │       ├── api
     │       ├── components
     │       └── types
-    └── lib
+    ├── lib
+    └── tests
+        └── e2e
 ```
 
 設計資料の入口は [docs/設計ドキュメント索引.md](docs/設計ドキュメント索引.md) です。
@@ -134,6 +136,25 @@ cd frontend
 npm install
 npm run build
 npm run dev
+```
+
+E2E:
+
+Playwright は frontend 配下で実行します。事前に Docker Compose で backend / db を起動し、必要に応じて seed を投入します。
+
+```powershell
+docker compose up --build -d
+docker compose exec backend go run ./cmd/seed
+cd frontend
+npx playwright install chromium
+npm run test:e2e
+```
+
+UI モードで確認する場合:
+
+```powershell
+cd frontend
+npm run test:e2e:ui
 ```
 
 ## 現在の実装状態
