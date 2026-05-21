@@ -1,0 +1,163 @@
+.card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.card:hover {
+  border-color: rgba(37, 99, 235, 0.32);
+  box-shadow: 0 16px 32px rgba(17, 24, 39, 0.12);
+  transform: translateY(-2px);
+}
+
+.card:focus-within {
+  border-color: var(--primary);
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.24),
+    0 16px 32px rgba(17, 24, 39, 0.12);
+}
+
+.link {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.link:focus-visible {
+  outline: none;
+}
+
+.imageFrame {
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
+  border-bottom: 1px solid var(--line);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.placeholder {
+  width: min(64%, 180px);
+  aspect-ratio: 16 / 10;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dbe4f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.body {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.category {
+  min-width: 0;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.inStock {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.lowStock {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.outOfStock {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.name {
+  min-height: 48px;
+  margin: 0;
+  color: var(--foreground);
+  font-size: 18px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.maker {
+  min-height: 18px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.taxLabel {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .imageFrame {
+    aspect-ratio: 16 / 10;
+  }
+
+  .body {
+    gap: 8px;
+    padding: 14px;
+  }
+
+  .name {
+    min-height: auto;
+    font-size: 16px;
+  }
+
+  .price {
+    font-size: 18px;
+  }
+}

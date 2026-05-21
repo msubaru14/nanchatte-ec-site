@@ -22,12 +22,23 @@
 │       ├── auth
 │       ├── health
 │       ├── middleware
+│       ├── product
 │       ├── router
 │       └── shared
-├── db
 ├── docs
 └── frontend
-    └── app
+    ├── app
+    │   └── products
+    ├── components
+    │   └── layout
+    ├── constants
+    ├── contexts
+    ├── features
+    │   └── products
+    │       ├── api
+    │       ├── components
+    │       └── types
+    └── lib
 ```
 
 設計資料の入口は [docs/設計ドキュメント索引.md](docs/設計ドキュメント索引.md) です。
@@ -59,6 +70,7 @@ docker compose up --build -d
 起動後の確認先:
 
 - Frontend: http://localhost:3000
+- 商品一覧画面: http://localhost:3000/products
 - Backend health check: http://localhost:8080/api/health
 - PostgreSQL: localhost:5432
 
@@ -133,10 +145,18 @@ npm run dev
   - `POST /api/auth/refresh`
   - `POST /api/auth/logout`
   - `GET /api/me`
-- Next.js の最小トップページ
+- product API
+  - `GET /api/products`
+  - `GET /api/products/:id`
+- Next.js App Router によるトップページ
+- 商品一覧画面
+  - `GET /api/products` を利用した商品カード表示
+  - loading / error / empty state
+  - 商品詳細画面への導線
 - Docker Compose による `db` / `backend` / `frontend` 起動
 - `internal/auth` による auth domain 構成
 - auth の repository 分離
+- `internal/product` による product domain 構成
 - `internal/shared` によるGo共通レスポンス・エラー基盤
 - DB接続・migration実行基盤
 
