@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ERROR_CODES } from "../../../constants/errorCodes";
 import { fetchProductDetail } from "../../../features/products/api/productsApi";
 import type { Product, StockStatus } from "../../../features/products/types/product";
 import { ApiError } from "../../../lib/errors";
+import ProductDetailNotFound from "./not-found";
 import styles from "./ProductDetailPage.module.css";
 
 type ProductDetailPageProps = {
@@ -36,12 +36,12 @@ const formatReleasedAt = (releasedAt: string) => {
   return `${year}年${Number(month)}月${Number(day)}日`;
 };
 
-async function getProductDetail(productId: string): Promise<Product> {
+async function getProductDetail(productId: string): Promise<Product | null> {
   try {
     return await fetchProductDetail(productId);
   } catch (error) {
     if (error instanceof ApiError && error.code === ERROR_CODES.NOT_FOUND) {
-      notFound();
+      return null;
     }
 
     throw error;
@@ -53,6 +53,11 @@ export default async function ProductDetailPage({
 }: ProductDetailPageProps) {
   const { id } = await params;
   const product = await getProductDetail(id);
+
+  if (!product) {
+    return <ProductDetailNotFound />;
+  }
+
   const isOutOfStock = product.stockStatus === "out_of_stock";
 
   return (
