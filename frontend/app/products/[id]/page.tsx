@@ -53,6 +53,7 @@ export default async function ProductDetailPage({
 }: ProductDetailPageProps) {
   const { id } = await params;
   const product = await getProductDetail(id);
+  const isOutOfStock = product.stockStatus === "out_of_stock";
 
   return (
     <section className={styles.page} aria-labelledby="product-detail-title">
@@ -87,6 +88,14 @@ export default async function ProductDetailPage({
             {priceFormatter.format(product.priceIncludingTax)}
             <span className={styles.taxLabel}>(税込)</span>
           </p>
+
+          <button
+            className={styles.cartButton}
+            type="button"
+            disabled={isOutOfStock}
+          >
+            {isOutOfStock ? "在庫なし" : "カートに追加"}
+          </button>
 
           <dl className={styles.metaList}>
             <div className={styles.metaItem}>
