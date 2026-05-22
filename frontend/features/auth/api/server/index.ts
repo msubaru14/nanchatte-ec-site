@@ -7,6 +7,13 @@ export {
 } from "./backendClient";
 export { backendFetchWithAuth } from "./authFetch";
 export {
+  fetchCurrentUserWithBackend,
+  loginWithBackend,
+  logoutWithBackend,
+  refreshWithBackend,
+  registerWithBackend,
+} from "./authServer";
+export {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
   clearAuthCookies,
