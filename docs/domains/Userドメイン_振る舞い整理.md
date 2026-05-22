@@ -294,6 +294,7 @@ Phase1では以下を採用する。
 - refresh tokenのDB保存
 - refresh token失効管理
 - logout時のrefresh token revoke
+- Next.js BFF による httpOnly cookie 管理
 
 ---
 
@@ -334,6 +335,39 @@ payload例:
 
 ---
 
+## BFF / cookie 管理
+
+Browser は Go API を直接呼び出さず、Next.js Route Handler を BFF として経由する。
+
+```txt
+Browser
+↓
+Next.js Route Handler(BFF)
+↓
+Go API
+```
+
+access token / refresh token は Browser JavaScript から直接参照しない。
+BFF が Go API の認証レスポンスを受け取り、以下の httpOnly cookie として管理する。
+
+```txt
+access_token
+- httpOnly: true
+- sameSite: lax
+- path: /
+- secure: productionのみtrue
+
+refresh_token
+- httpOnly: true
+- sameSite: lax
+- path: /
+- secure: productionのみtrue
+```
+
+frontend の認証状態は token の有無ではなく、BFF の `GET /api/auth/me` の成功可否で判断する。
+
+---
+
 ## refresh_tokens
 
 ```txt
@@ -360,32 +394,42 @@ refresh_tokens
 5. access token を発行する
 6. refresh token を発行する
 7. refresh token hash をDB保存する
+8. BFF が access token / refresh token を httpOnly cookie に保存する
 
 ---
 
 ## 通常APIアクセス
 
-1. Authorization header に access token を付与
-2. JWTを検証する
-3. user_id / roles を取得する
-4. 認証・認可を行う
+1. Browser は BFF API を呼び出す
+2. BFF が `access_token` cookie から access token を取得する
+3. BFF が Go API へ Authorization header を付与して呼び出す
+4. Go API が JWTを検証する
+5. Go API が user_id / roles を取得する
+6. Go API が認証・認可を行う
 
 ---
 
 ## access token期限切れ
 
-1. refresh token を送信する
-2. token_hash を照合する
-3. revoked_at / expires_at を確認する
-4. 新しい access token を発行する
+1. BFF が access token で Go API を呼び出す
+2. Go API が 401 を返した場合、BFF が `refresh_token` cookie で refresh を実行する
+3. Go API が token_hash を照合する
+4. Go API が revoked_at / expires_at を確認する
+5. Go API が新しい access token を発行する
+6. BFF が `access_token` cookie を更新する
+7. BFF が元の Go API 呼び出しを1回だけ再実行する
+8. refresh 失敗時は BFF が認証 cookie を削除する
 
 ---
 
 ## ログアウト
 
-1. refresh token を送信する
-2. 対象refresh tokenを revoke する
-3. クライアント側tokenを削除する
+1. Browser が BFF の logout API を呼び出す
+2. BFF が cookie から refresh token を取得する
+3. BFF が Go API の logout API へ refresh token を送信する
+4. Go API が対象 refresh token を revoke する
+5. BFF は Go API の成功/失敗に関わらず認証 cookie を削除する
+6. revoke 失敗時は BFF が Go API の HTTP status / error を返し、UI 側はログアウト済み状態へ遷移してよい
 
 ---
 

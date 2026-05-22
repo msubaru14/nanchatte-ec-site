@@ -65,6 +65,40 @@ access token は不要だが、refresh token が必要。
 
 ## 認証
 
+### Browser向け認証BFF
+
+Browser は Go API を直接呼び出さず、Next.js Route Handler の BFF API を経由する。
+
+```txt
+Browser
+↓
+Next.js Route Handler(BFF)
+↓
+Go API
+```
+
+BFF は Go API から受け取った access token / refresh token を以下の httpOnly cookie に保存する。
+
+- `access_token`
+- `refresh_token`
+
+frontend は token を直接保持しない。
+認証状態は BFF の `GET /api/auth/me` の成功可否で判断する。
+
+BFF の auth API は Browser 向けに以下を提供する。
+
+```txt
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/refresh
+POST /api/auth/logout
+GET  /api/auth/me
+```
+
+Go API の `GET /api/me` は BFF 側では `GET /api/auth/me` として公開する。
+
+---
+
 ### POST /api/auth/register
 
 ユーザー登録を行う。
@@ -75,6 +109,8 @@ access token は不要だが、refresh token が必要。
 - customer role付与
 - cart作成
 - access token / refresh token発行
+- BFF 経由では register 成功後に login を実行し、token を httpOnly cookie に保存する
+- BFF レスポンスでは token を Browser JavaScript へ返さない
 
 ---
 
@@ -85,6 +121,8 @@ access token は不要だが、refresh token が必要。
 - email / password を受け取る
 - 認証成功時に access token / refresh token を発行
 - user情報とrole一覧を返す
+- BFF 経由では token を httpOnly cookie に保存する
+- BFF レスポンスでは token を Browser JavaScript へ返さない
 
 ---
 
@@ -96,6 +134,9 @@ access tokenを再発行する。
 - token hash照合
 - revoked / expires確認
 - 新しいaccess tokenを返す
+- BFF 経由では `refresh_token` cookie を利用する
+- refresh 成功時は `access_token` cookie を更新する
+- refresh 失敗時は認証 cookie を削除する
 
 ---
 
@@ -104,7 +145,10 @@ access tokenを再発行する。
 ログアウトする。
 
 - refresh token をrevokeする
-- クライアント側token削除はフロント側で行う
+- BFF 経由では cookie から refresh token を取得する
+- BFF は Go API の成功/失敗に関わらず認証 cookie を削除する
+- revoke 失敗時は Go API の HTTP status / error を返す
+- UI 側は logout 体験を壊さず、ログアウト済み状態へ遷移してよい
 
 ---
 
@@ -116,6 +160,7 @@ access tokenを再発行する。
 - name
 - email
 - roles
+- BFF 経由では `GET /api/auth/me` として公開する
 
 ---
 

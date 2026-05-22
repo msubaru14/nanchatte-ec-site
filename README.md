@@ -28,12 +28,21 @@
 ├── docs
 └── frontend
     ├── app
+    │   ├── api
+    │   │   └── auth
     │   └── products
     ├── components
     │   └── layout
     ├── constants
     ├── contexts
     ├── features
+    │   ├── auth
+    │   │   └── api
+    │   │       ├── client
+    │   │       ├── handler
+    │   │       ├── schemas
+    │   │       ├── server
+    │   │       └── types
     │   └── products
     │       ├── api
     │       ├── components
@@ -61,7 +70,8 @@ Copy-Item frontend\.env.local.example frontend\.env.local
 
 `API_BASE_URL` は Next.js の Server Component など、frontend サーバー側から backend へ接続するためのURLです。
 Docker Compose では `http://backend:8080` を使用します。
-`NEXT_PUBLIC_API_BASE_URL` はブラウザ側から backend へ接続する実装で使用します。
+認証APIは Next.js Route Handler を BFF として経由し、Browser から Go API を直接呼び出しません。
+`NEXT_PUBLIC_API_BASE_URL` は公開APIなど、Browser または frontend 側から直接 backend へ接続する実装で必要になった場合に使用します。
 
 ## Dockerで起動
 
@@ -166,6 +176,13 @@ npm run test:e2e:ui
   - `POST /api/auth/refresh`
   - `POST /api/auth/logout`
   - `GET /api/me`
+- auth BFF API
+  - `POST /api/auth/register`
+  - `POST /api/auth/login`
+  - `POST /api/auth/refresh`
+  - `POST /api/auth/logout`
+  - `GET /api/auth/me`
+  - access token / refresh token を httpOnly cookie で管理
 - product API
   - `GET /api/products`
   - `GET /api/products/:id`
