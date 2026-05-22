@@ -1,5 +1,13 @@
 import { expect, test } from "@playwright/test";
 
+const getCookieValue = (setCookie: string, cookieName: string) => {
+  const match = setCookie.match(new RegExp(`${cookieName}=([^;]+)`));
+
+  expect(match).not.toBeNull();
+
+  return match![1];
+};
+
 test.describe("認証BFF API", () => {
   test("ユーザー登録後にhttpOnly cookieが保存されログアウトでセッションが削除される", async ({
     request,
@@ -68,6 +76,76 @@ test.describe("認証BFF API", () => {
     const loggedOutMeResponse = await request.get("/api/auth/me");
 
     expect(loggedOutMeResponse.status()).toBe(401);
+  });
+
+  test("access token cookieが無くrefresh token cookieがある場合はrefreshしてmeを取得できる", async ({
+    request,
+  }) => {
+    const email = `auth-bff-refresh-me-${Date.now()}@example.com`;
+    const registerResponse = await request.post("/api/auth/register", {
+      data: {
+        name: "Auth BFF Refresh User",
+        email,
+        password: "secret123",
+      },
+    });
+    const refreshToken = getCookieValue(
+      registerResponse.headers()["set-cookie"],
+      "refresh_token",
+    );
+
+    const meResponse = await request.get("/api/auth/me", {
+      headers: {
+        cookie: `refresh_token=${refreshToken}`,
+      },
+    });
+    const meJson = await meResponse.json();
+
+    expect(meResponse.status()).toBe(200);
+    expect(meJson).toMatchObject({
+      data: {
+        email,
+        roles: expect.arrayContaining(["customer"]),
+      },
+      error: null,
+    });
+    expect(meResponse.headers()["set-cookie"]).toContain("access_token=");
+  });
+
+  test("access token cookieが無くrefresh token cookieがある場合もlogoutでrevokeできる", async ({
+    request,
+  }) => {
+    const email = `auth-bff-refresh-logout-${Date.now()}@example.com`;
+    const registerResponse = await request.post("/api/auth/register", {
+      data: {
+        name: "Auth BFF Logout User",
+        email,
+        password: "secret123",
+      },
+    });
+    const refreshToken = getCookieValue(
+      registerResponse.headers()["set-cookie"],
+      "refresh_token",
+    );
+
+    const logoutResponse = await request.post("/api/auth/logout", {
+      headers: {
+        cookie: `refresh_token=${refreshToken}`,
+      },
+    });
+    const logoutJson = await logoutResponse.json();
+    const setCookie = logoutResponse.headers()["set-cookie"];
+
+    expect(logoutResponse.status()).toBe(200);
+    expect(logoutJson).toEqual({
+      data: {
+        message: "logged out",
+      },
+      error: null,
+    });
+    expect(setCookie).toContain("access_token=");
+    expect(setCookie).toContain("refresh_token=");
+    expect(setCookie).toContain("Max-Age=0");
   });
 
   test("ログインのバリデーションエラーがAPIレスポンス形式で返る", async ({

@@ -50,24 +50,26 @@ export const backendFetchWithAuth = async (
 ) => {
   const { accessToken, refreshToken } = await getAuthCookies();
 
-  if (!accessToken) {
-    return backendFetch(path, init);
+  if (accessToken) {
+    const authInit: RequestInit = {
+      ...init,
+      headers: mergeHeaders(init?.headers ?? {}, getBearerHeaders(accessToken)),
+    };
+    const response = await backendFetch(path, authInit);
+
+    if (response.status !== 401 || !refreshToken) {
+      return response;
+    }
   }
 
-  const authInit: RequestInit = {
-    ...init,
-    headers: mergeHeaders(init?.headers ?? {}, getBearerHeaders(accessToken)),
-  };
-  const response = await backendFetch(path, authInit);
-
-  if (response.status !== 401 || !refreshToken) {
-    return response;
+  if (!refreshToken) {
+    return backendFetch(path, init);
   }
 
   const refreshedAccessToken = await refreshAccessToken(refreshToken);
 
   if (!refreshedAccessToken) {
-    return response;
+    return backendFetch(path, init);
   }
 
   return backendFetch(path, {
