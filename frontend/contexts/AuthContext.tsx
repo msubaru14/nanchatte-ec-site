@@ -2,20 +2,14 @@
 
 import { createContext, useContext } from "react";
 
-export type AuthUser = {
-  id: number;
-  name: string;
-  email: string;
-};
+import type { AuthUser } from "../features/auth/api";
 
 export type AuthContextValue = {
-  token: string | null;
   user: AuthUser | null;
   isAuthenticated: boolean;
 };
 
 const defaultAuthContextValue: AuthContextValue = {
-  token: null,
   user: null,
   isAuthenticated: false,
 };

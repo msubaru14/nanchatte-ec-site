@@ -12,20 +12,6 @@ export type APIResponse<T> = {
   error: unknown;
 };
 
-export const getToken = () => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  return localStorage.getItem("token");
-};
-
-export const getAuthHeaders = () => {
-  const token = getToken();
-
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
 export const getJsonHeaders = () => ({
   "Content-Type": "application/json",
 });
