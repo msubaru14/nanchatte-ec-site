@@ -121,23 +121,33 @@ export const refreshWithBackend = async () => {
 
 export const logoutWithBackend = async () => {
   const { refreshToken } = await getAuthCookies();
+  let status = 200;
+  let json: BackendResponse<LogoutData> = {
+    data: { message: "logged out" },
+    error: null,
+  };
 
   try {
     if (refreshToken) {
-      await backendFetchWithAuth("/api/auth/logout", {
+      const response = await backendFetchWithAuth("/api/auth/logout", {
         method: "POST",
         headers: getJsonHeaders(),
         body: JSON.stringify({ refreshToken }),
       });
+
+      if (!response.ok) {
+        status = response.status;
+        json = await parseBackendResponse<LogoutData>(response);
+      } else {
+        status = response.status;
+        json = await parseBackendResponse<LogoutData>(response);
+      }
     }
   } finally {
     await clearAuthCookies();
   }
 
-  return {
-    data: { message: "logged out" },
-    error: null,
-  } satisfies BackendResponse<LogoutData>;
+  return { status, json };
 };
 
 export const fetchCurrentUserWithBackend = async () => {

@@ -44,9 +44,9 @@ export const handleRefresh = async () => {
 };
 
 export const handleLogout = async () => {
-  const json = await logoutWithBackend();
+  const { status, json } = await logoutWithBackend();
 
-  return NextResponse.json(json);
+  return NextResponse.json(json, { status });
 };
 
 export const handleMe = async () => {
