@@ -40,6 +40,7 @@
 │       ├── auth
 │       ├── health
 │       ├── middleware
+│       ├── product
 │       ├── router
 │       └── shared
 ├── docs
@@ -48,7 +49,29 @@
 │   ├── domains
 │   └── ui
 └── frontend
-    └── app
+    ├── app
+    │   ├── api
+    │   │   └── auth
+    │   └── products
+    ├── components
+    │   └── layout
+    ├── constants
+    ├── contexts
+    ├── features
+    │   ├── auth
+    │   │   └── api
+    │   │       ├── client
+    │   │       ├── handler
+    │   │       ├── schemas
+    │   │       ├── server
+    │   │       └── types
+    │   └── products
+    │       ├── api
+    │       ├── components
+    │       └── types
+    ├── lib
+    └── tests
+        └── e2e
 ```
 
 今後 backend は必要に応じて domain 単位で以下のファイル・層を追加する。
@@ -138,7 +161,10 @@ go test ./...
 
 - Next.js App Router を使う
 - 画面実装前に `docs/ui/画面一覧.md` と関連API・ドメイン資料を確認する
-- API通信のベースURLは `NEXT_PUBLIC_API_BASE_URL` を使う
+- Browser から Go API を直接呼ばない BFF 構成のAPIでは、Next.js Route Handler を経由する
+- frontend サーバー側から Go API へ接続する場合は `API_BASE_URL` を使う
+- Browser から直接 backend 公開APIを呼ぶ実装では `NEXT_PUBLIC_API_BASE_URL` を使う
+- 認証 token は Browser JavaScript で保持せず、BFF 側の httpOnly cookie 管理を優先する
 - 業務ロジックはできるだけ Go API 側へ寄せる
 - UI状態管理と表示責務を frontend に置く
 - 生成物の `.next`、`node_modules` はコミットしない
