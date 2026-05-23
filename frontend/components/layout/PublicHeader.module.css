@@ -47,20 +47,25 @@
   flex-wrap: wrap;
 }
 
-.nav a {
+.nav a,
+.nav button {
   color: #e5e7eb;
+  background: transparent;
+  border: 0;
   border-radius: 8px;
   padding: 9px 12px;
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
+  cursor: pointer;
   transition:
     background-color 160ms ease,
     color 160ms ease,
     box-shadow 160ms ease;
 }
 
-.nav a:hover {
+.nav a:hover,
+.nav button:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
@@ -73,6 +78,26 @@
 
 .nav .registerLink:hover {
   background: var(--primary-dark);
+}
+
+.authStatus,
+.userName {
+  color: #e5e7eb;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.logoutButton:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.logoutError {
+  color: #fecaca;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 @media (max-width: 520px) {
