@@ -194,6 +194,11 @@ npm run test:e2e:ui
   - 認証成功時の `AuthContext` 反映
   - 内部パスに限定した `returnTo` 遷移
   - APIエラーおよび validation details の表示
+- 共通 Header の認証導線
+  - 未ログイン時のログイン・ユーザー登録導線表示
+  - ログイン済み時のユーザー名・ログアウト導線表示
+  - logout 後の `AuthContext` 更新と `/products` 遷移
+  - logout API の失敗時も cookie 削除後は未ログイン状態へ更新
 - product API
   - `GET /api/products`
   - `GET /api/products/:id`
