@@ -30,19 +30,23 @@
     ├── app
     │   ├── api
     │   │   └── auth
-    │   └── products
+    │   ├── login
+    │   ├── products
+    │   └── register
     ├── components
     │   └── layout
     ├── constants
     ├── contexts
     ├── features
     │   ├── auth
-    │   │   └── api
-    │   │       ├── client
-    │   │       ├── handler
-    │   │       ├── schemas
-    │   │       ├── server
-    │   │       └── types
+    │   │   ├── api
+    │   │   │   ├── client
+    │   │   │   ├── handler
+    │   │   │   ├── schemas
+    │   │   │   ├── server
+    │   │   │   └── types
+    │   │   ├── components
+    │   │   └── utils
     │   └── products
     │       ├── api
     │       ├── components
@@ -82,6 +86,8 @@ docker compose up --build -d
 起動後の確認先:
 
 - Frontend: http://localhost:3000
+- ログイン画面: http://localhost:3000/login
+- ユーザー登録画面: http://localhost:3000/register
 - 商品一覧画面: http://localhost:3000/products
 - Backend health check: http://localhost:8080/api/health
 - PostgreSQL: localhost:5432
@@ -183,6 +189,11 @@ npm run test:e2e:ui
   - `POST /api/auth/logout`
   - `GET /api/auth/me`
   - access token / refresh token を httpOnly cookie で管理
+- 認証画面
+  - `/login` と `/register` のフォーム表示
+  - 認証成功時の `AuthContext` 反映
+  - 内部パスに限定した `returnTo` 遷移
+  - APIエラーおよび validation details の表示
 - product API
   - `GET /api/products`
   - `GET /api/products/:id`
