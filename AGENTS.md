@@ -52,19 +52,23 @@
     ├── app
     │   ├── api
     │   │   └── auth
-    │   └── products
+    │   ├── login
+    │   ├── products
+    │   └── register
     ├── components
     │   └── layout
     ├── constants
     ├── contexts
     ├── features
     │   ├── auth
-    │   │   └── api
-    │   │       ├── client
-    │   │       ├── handler
-    │   │       ├── schemas
-    │   │       ├── server
-    │   │       └── types
+    │   │   ├── api
+    │   │   │   ├── client
+    │   │   │   ├── handler
+    │   │   │   ├── schemas
+    │   │   │   ├── server
+    │   │   │   └── types
+    │   │   ├── components
+    │   │   └── utils
     │   └── products
     │       ├── api
     │       ├── components
