@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = process.env.PORT ?? "3000";
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${PORT}`;
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -19,9 +19,9 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
     env: {
-      API_BASE_URL: process.env.API_BASE_URL ?? "http://127.0.0.1:8080",
+      API_BASE_URL: process.env.API_BASE_URL ?? "http://localhost:8080",
       NEXT_PUBLIC_API_BASE_URL:
-        process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8080",
+        process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080",
       PORT,
     },
   },
