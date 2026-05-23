@@ -209,6 +209,9 @@ docker compose ps
 - 古いブランチを安易に再利用しない
 - 作業を行った場合、原則としてコミット前で止める
 - commit、push、PR作成は、Commander から明示的に依頼された場合のみ行う
+- ファイルを編集した後は、commit の直前に必ず Commander へ変更内容と検証結果を報告し、commit してよいか確認する
+- この確認は、同じ作業内で過去に commit、push、PR作成または既存PR反映の許可を受けていた場合でも省略しない
+- Commander の確認を受ける前に、編集後の差分を commit してはならない
 - PR作成の依頼は、その時点で確認済みの変更を公開する許可として扱い、PR作成後に追加した変更の commit、push、PR本文更新の許可まで含むものとは扱わない
 - 既存PRに追加変更を反映する場合も、commit、push、PR本文更新を行う前に、Commander からその追加反映について明示的な指示を受ける
 - コミット前に `git status` と staged diff を確認する

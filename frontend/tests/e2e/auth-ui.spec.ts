@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 const unauthorizedResponse = {
   data: null,
@@ -7,6 +7,24 @@ const unauthorizedResponse = {
     message: "unauthorized",
   },
 };
+
+function watchUnexpectedBrowserErrors(page: Page) {
+  const errors: string[] = [];
+
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      errors.push(`console.error: ${message.text()}`);
+    }
+  });
+
+  page.on("pageerror", (error) => {
+    errors.push(`pageerror: ${error.message}`);
+  });
+
+  return () => {
+    expect(errors).toEqual([]);
+  };
+}
 
 test.describe("認証画面", () => {
   test.beforeEach(async ({ page }) => {
@@ -151,5 +169,122 @@ test.describe("認証画面", () => {
     await expect(page.getByText("validation error", { exact: true })).toBeVisible();
     await expect(page.getByText("name is required")).toBeVisible();
     await expect(page.getByText("password is too short")).toBeVisible();
+  });
+
+  test("未ログイン時はHeaderに認証導線を表示する", async ({ page }) => {
+    await page.goto("/login");
+
+    await expect(page.getByRole("link", { name: "ログイン" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "ユーザー登録" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "ログアウト" })).toHaveCount(0);
+  });
+
+  test("ログイン済み時はHeaderにユーザー名とlogout導線を表示する", async ({
+    page,
+  }) => {
+    const expectNoBrowserErrors = watchUnexpectedBrowserErrors(page);
+
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 3,
+            name: "Header User",
+            email: "header@example.com",
+            roles: ["customer"],
+          },
+          error: null,
+        }),
+      });
+    });
+
+    await page.goto("/login");
+
+    await expect(page.getByText("Header User")).toBeVisible();
+    await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "ユーザー登録" })).toHaveCount(0);
+    expectNoBrowserErrors();
+  });
+
+  test("logout成功時は未ログイン状態に更新して商品一覧へ遷移する", async ({
+    page,
+  }) => {
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 4,
+            name: "Logout User",
+            email: "logout@example.com",
+            roles: ["customer"],
+          },
+          error: null,
+        }),
+      });
+    });
+    await page.route("**/api/auth/logout", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: { message: "logged out" },
+          error: null,
+        }),
+      });
+    });
+
+    await page.goto("/login");
+    await page.getByRole("button", { name: "ログアウト" }).click();
+
+    await expect(page).toHaveURL(/\/products$/);
+    await expect(page.getByRole("link", { name: "ログイン" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "ユーザー登録" })).toBeVisible();
+  });
+
+  test("logout失敗時も未ログイン状態に更新して商品一覧へ遷移する", async ({
+    page,
+  }) => {
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 5,
+            name: "Revoke Error User",
+            email: "revoke-error@example.com",
+            roles: ["customer"],
+          },
+          error: null,
+        }),
+      });
+    });
+    await page.route("**/api/auth/logout", async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: null,
+          error: {
+            code: "INTERNAL_SERVER_ERROR",
+            message: "revoke failed",
+          },
+        }),
+      });
+    });
+
+    await page.goto("/login");
+    await page.getByRole("button", { name: "ログアウト" }).click();
+
+    await expect(page).toHaveURL(/\/products$/);
+    await expect(page.getByRole("link", { name: "ログイン" })).toBeVisible();
+    await expect(page.getByText("revoke failed", { exact: true })).toBeVisible();
   });
 });
