@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 const unauthorizedResponse = {
   data: null,
@@ -7,6 +7,24 @@ const unauthorizedResponse = {
     message: "unauthorized",
   },
 };
+
+function watchUnexpectedBrowserErrors(page: Page) {
+  const errors: string[] = [];
+
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      errors.push(`console.error: ${message.text()}`);
+    }
+  });
+
+  page.on("pageerror", (error) => {
+    errors.push(`pageerror: ${error.message}`);
+  });
+
+  return () => {
+    expect(errors).toEqual([]);
+  };
+}
 
 test.describe("認証画面", () => {
   test.beforeEach(async ({ page }) => {
@@ -164,6 +182,8 @@ test.describe("認証画面", () => {
   test("ログイン済み時はHeaderにユーザー名とlogout導線を表示する", async ({
     page,
   }) => {
+    const expectNoBrowserErrors = watchUnexpectedBrowserErrors(page);
+
     await page.unroute("**/api/auth/me");
     await page.route("**/api/auth/me", async (route) => {
       await route.fulfill({
@@ -186,6 +206,7 @@ test.describe("認証画面", () => {
     await expect(page.getByText("Header User")).toBeVisible();
     await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
     await expect(page.getByRole("link", { name: "ユーザー登録" })).toHaveCount(0);
+    expectNoBrowserErrors();
   });
 
   test("logout成功時は未ログイン状態に更新して商品一覧へ遷移する", async ({
