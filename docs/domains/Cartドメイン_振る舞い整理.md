@@ -185,27 +185,36 @@ cart_items
 
 ## Phase1方針
 
-数量入力UIはドロップダウン方式とする。
+数量入力UIはステッパー方式とする。
 
 ---
 
 ## 理由
 
-- 不正入力を減らせる
-- バリデーションを簡単にできる
-- UXがシンプル
-- ECサイトで一般的
-- 数量上限を自然に制御できる
+- `+` / `-` で数量を直感的に変更できる
+- 不正な文字入力を発生させない
+- 選択可能最大数量を UI 制御に反映できる
 
 ---
 
-## 選択可能範囲
+## 操作可能範囲
 
 ```txt
-1 ～ 在庫数
+1 ～ maxSelectableQuantity
 ```
 
-ただし、一般ユーザーには実在庫数そのものは表示しない。
+Phase1では以下とする。
+
+```txt
+maxSelectableQuantity = stock_quantity
+```
+
+`maxSelectableQuantity` はステッパーの上限制御に使う「選択可能最大数量」であり、
+実在庫数として画面に表示するための値ではない。
+
+- `quantity <= 1` の場合は `-` ボタンを disabled にする
+- `quantity >= maxSelectableQuantity` の場合は `+` ボタンを disabled にする
+- 一般ユーザーには実在庫数そのものを表示しない
 
 ---
 
@@ -285,6 +294,8 @@ products と結合して表示する。
 
 - `items` と `totalAmount` を返す
 - 商品ごとに `canBePurchased` を返す
+- 商品ごとにステッパー上限制御用の `maxSelectableQuantity` を返す
+- Phase1では `maxSelectableQuantity = stock_quantity` とし、実在庫数の表示には使わない
 - `priceIncludingTax` と `totalAmount` は取得時点の現在価格・税率で計算する
 - 一般ユーザーには `stock_quantity` を返さず、`stockStatus` のみ返す
 - 購入不可商品も cart_items から自動削除せず、`canBePurchased: false` として返す
@@ -559,7 +570,8 @@ updated_at < now() - interval '30 days'
 - carts は最小構成
 - cart_items は商品ごとに1レコード
 - quantity は1以上の整数
-- 数量入力UIはドロップダウン方式
+- 数量入力UIはステッパー方式
+- `maxSelectableQuantity` はステッパーの上限制御に使い、Phase1では `stock_quantity` と同値とする
 - 一般ユーザーには実在庫数を直接表示しない
 - CartItemには価格スナップショットを持たない
 - カート表示時は現在価格を参照する
