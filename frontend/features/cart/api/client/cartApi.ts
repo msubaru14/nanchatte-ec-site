@@ -74,3 +74,18 @@ export const deleteCartItem = async (productId: number) => {
 
   return json.data;
 };
+
+export const deleteAllCartItems = async () => {
+  const json = await requestJson<CartMessage>("/api/cart/items", {
+    method: "DELETE",
+  });
+
+  if (!json.data) {
+    throw new ApiError(
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+      "Cart items response is empty",
+    );
+  }
+
+  return json.data;
+};

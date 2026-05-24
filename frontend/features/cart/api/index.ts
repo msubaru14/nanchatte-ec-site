@@ -1,5 +1,6 @@
 export {
   addCartItem,
+  deleteAllCartItems,
   deleteCartItem,
   fetchCart,
   updateCartItemQuantity,

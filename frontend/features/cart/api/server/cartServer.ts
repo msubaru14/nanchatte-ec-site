@@ -55,3 +55,12 @@ export const deleteCartItemWithBackend = async (productId: string) => {
 
   return { response, json };
 };
+
+export const deleteAllCartItemsWithBackend = async () => {
+  const response = await backendFetchWithAuth("/api/cart/items", {
+    method: "DELETE",
+  });
+  const json = await parseBackendResponse<CartMessage>(response);
+
+  return { response, json };
+};

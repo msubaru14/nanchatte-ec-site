@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   addCartItemWithBackend,
+  deleteAllCartItemsWithBackend,
   deleteCartItemWithBackend,
   fetchCartWithBackend,
   updateCartItemQuantityWithBackend,
@@ -38,6 +39,12 @@ export const handleDeleteCartItem = async (
 ) => {
   const { productId } = await params;
   const { response, json } = await deleteCartItemWithBackend(productId);
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handleDeleteAllCartItems = async () => {
+  const { response, json } = await deleteAllCartItemsWithBackend();
 
   return NextResponse.json(json, { status: response.status });
 };
