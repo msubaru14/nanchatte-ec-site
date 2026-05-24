@@ -1,1 +1,5 @@
-export { addCartItemWithBackend, fetchCartWithBackend } from "./cartServer";
+export {
+  addCartItemWithBackend,
+  fetchCartWithBackend,
+  updateCartItemQuantityWithBackend,
+} from "./cartServer";

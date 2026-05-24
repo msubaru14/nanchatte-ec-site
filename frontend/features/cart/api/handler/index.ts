@@ -1,1 +1,5 @@
-export { handleAddCartItem, handleGetCart } from "./cartHandlers";
+export {
+  handleAddCartItem,
+  handleGetCart,
+  handleUpdateCartItemQuantity,
+} from "./cartHandlers";

@@ -23,3 +23,7 @@ export type AddCartItemInput = {
   productId: number;
   quantity: number;
 };
+
+export type UpdateCartItemQuantityInput = {
+  quantity: number;
+};

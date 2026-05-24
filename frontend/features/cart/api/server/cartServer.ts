@@ -26,3 +26,20 @@ export const addCartItemWithBackend = async (body: string) => {
 
   return { response, json };
 };
+
+export const updateCartItemQuantityWithBackend = async (
+  productId: string,
+  body: string,
+) => {
+  const response = await backendFetchWithAuth(
+    `/api/cart/items/${encodeURIComponent(productId)}`,
+    {
+      method: "PATCH",
+      headers: getJsonHeaders(),
+      body,
+    },
+  );
+  const json = await parseBackendResponse<CartMessage>(response);
+
+  return { response, json };
+};
