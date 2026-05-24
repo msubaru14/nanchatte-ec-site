@@ -110,7 +110,7 @@
 
 - プロジェクト概要: `docs/構想メモ.md`
 - 初期設計: `docs/基本設計_初期案.md`
-- API: `docs/api/API.md`
+- API: `docs/api/API.md`, `docs/api/openapi.yaml`
 - 画面: `docs/ui/画面一覧.md`
 - DB: `docs/database/DB制約整理.md`, `docs/database/dbdiagram.dbml`, `docs/database/ER.md`
 - ドメインルール: `docs/domains/*_ドメイン_振る舞い整理.md`
