@@ -368,6 +368,8 @@ paths:
 
         access token による認証と customer role が必要。
         商品の価格、税率、在庫状態は取得時点の情報から計算する。
+        maxSelectableQuantity は数量操作の上限制御用に返し、Phase1では現在在庫数と同値とする。
+        frontend は maxSelectableQuantity を実在庫数として画面表示しない。
         購入不可となった商品もカートから自動削除せず返す。
       operationId: getCart
       security:
@@ -390,6 +392,7 @@ paths:
                           priceIncludingTax: 39600
                           stockStatus: in_stock
                           quantity: 2
+                          maxSelectableQuantity: 12
                           canBePurchased: true
                       totalAmount: 79200
                     error: null
@@ -1056,6 +1059,7 @@ components:
         - priceIncludingTax
         - stockStatus
         - quantity
+        - maxSelectableQuantity
         - canBePurchased
       properties:
         productId:
@@ -1084,6 +1088,13 @@ components:
           type: integer
           minimum: 1
           example: 2
+        maxSelectableQuantity:
+          type: integer
+          minimum: 0
+          description: |
+            Quantity upper bound for cart quantity controls.
+            In Phase1 this equals the current stock quantity, but must not be displayed as actual stock.
+          example: 12
         canBePurchased:
           type: boolean
           example: true

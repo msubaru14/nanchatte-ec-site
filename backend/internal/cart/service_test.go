@@ -73,6 +73,7 @@ func TestToItemResult(t *testing.T) {
 		item                  CartItem
 		wantPriceIncludingTax int
 		wantStockStatus       product.StockStatus
+		wantMaxSelectable     int
 		wantCanBePurchased    bool
 	}{
 		{
@@ -89,6 +90,7 @@ func TestToItemResult(t *testing.T) {
 			},
 			wantPriceIncludingTax: 1100,
 			wantStockStatus:       product.StockStatusLowStock,
+			wantMaxSelectable:     3,
 			wantCanBePurchased:    true,
 		},
 		{
@@ -102,6 +104,7 @@ func TestToItemResult(t *testing.T) {
 				},
 			},
 			wantStockStatus:    product.StockStatusInStock,
+			wantMaxSelectable:  5,
 			wantCanBePurchased: false,
 		},
 		{
@@ -115,6 +118,7 @@ func TestToItemResult(t *testing.T) {
 				},
 			},
 			wantStockStatus:    product.StockStatusLowStock,
+			wantMaxSelectable:  1,
 			wantCanBePurchased: false,
 		},
 		{
@@ -128,6 +132,7 @@ func TestToItemResult(t *testing.T) {
 				},
 			},
 			wantStockStatus:    product.StockStatusOutOfStock,
+			wantMaxSelectable:  0,
 			wantCanBePurchased: false,
 		},
 	}
@@ -143,6 +148,9 @@ func TestToItemResult(t *testing.T) {
 			}
 			if got.StockStatus != tt.wantStockStatus {
 				t.Fatalf("toItemResult().StockStatus = %s, want %s", got.StockStatus, tt.wantStockStatus)
+			}
+			if got.MaxSelectableQuantity != tt.wantMaxSelectable {
+				t.Fatalf("toItemResult().MaxSelectableQuantity = %d, want %d", got.MaxSelectableQuantity, tt.wantMaxSelectable)
 			}
 			if got.CanBePurchased != tt.wantCanBePurchased {
 				t.Fatalf("toItemResult().CanBePurchased = %t, want %t", got.CanBePurchased, tt.wantCanBePurchased)

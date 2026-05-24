@@ -280,6 +280,8 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 ログインユーザーのカート内容を取得する。
 
 - 現在の価格・在庫状態・購入可否・合計金額を返す
+- 数量操作の上限制御用に `maxSelectableQuantity` を返す
+- Phase1では `maxSelectableQuantity` は現在在庫数と同値だが、実在庫数表示には利用しない
 - 投入後に購入不可となった商品も自動削除しない
 
 ---
