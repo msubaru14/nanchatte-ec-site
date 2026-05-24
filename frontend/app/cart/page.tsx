@@ -5,7 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { useAuth } from "../../contexts/AuthContext";
-import { fetchCart, updateCartItemQuantity } from "../../features/cart/api";
+import {
+  deleteCartItem,
+  fetchCart,
+  updateCartItemQuantity,
+} from "../../features/cart/api";
 import type { Cart, CartItem, CartStockStatus } from "../../features/cart/api";
 import { ApiError } from "../../lib/errors";
 import styles from "./CartPage.module.css";
@@ -70,6 +74,7 @@ export default function CartPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [updatingProductId, setUpdatingProductId] = useState<number | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<number | null>(null);
   const [operationError, setOperationError] = useState<OperationError | null>(null);
   const [draftQuantities, setDraftQuantities] = useState<DraftQuantities>({});
 
@@ -113,9 +118,18 @@ export default function CartPage() {
     void loadCart();
   }, [loadCart]);
 
+  const applyRefreshedCart = (nextCart: Cart, reflectedProductId: number) => {
+    setCart(nextCart);
+    setDraftQuantities((current) =>
+      retainDraftQuantities(nextCart, current, reflectedProductId),
+    );
+  };
+
+  const isOperating = updatingProductId !== null || deletingProductId !== null;
+
   const handleDraftQuantityChange = (item: CartItem, nextQuantity: number) => {
     if (
-      updatingProductId !== null ||
+      isOperating ||
       !item.canBePurchased ||
       nextQuantity < 1 ||
       nextQuantity > item.maxSelectableQuantity
@@ -136,7 +150,7 @@ export default function CartPage() {
     const draftQuantity = draftQuantities[item.productId] ?? item.quantity;
 
     if (
-      updatingProductId !== null ||
+      isOperating ||
       !item.canBePurchased ||
       draftQuantity === item.quantity ||
       draftQuantity < 1 ||
@@ -163,10 +177,7 @@ export default function CartPage() {
 
           try {
             const nextCart = await fetchCart();
-            setCart(nextCart);
-            setDraftQuantities((current) =>
-              retainDraftQuantities(nextCart, current, item.productId),
-            );
+            applyRefreshedCart(nextCart, item.productId);
           } catch (refreshError) {
             if (
               refreshError instanceof ApiError &&
@@ -189,10 +200,7 @@ export default function CartPage() {
 
       try {
         const nextCart = await fetchCart();
-        setCart(nextCart);
-        setDraftQuantities((current) =>
-          retainDraftQuantities(nextCart, current, item.productId),
-        );
+        applyRefreshedCart(nextCart, item.productId);
       } catch (error) {
         if (error instanceof ApiError && error.code === ERROR_CODES.UNAUTHORIZED) {
           redirectToLogin();
@@ -209,7 +217,49 @@ export default function CartPage() {
     }
   };
 
-  const isUpdating = updatingProductId !== null;
+  const handleDeleteItem = async (item: CartItem) => {
+    if (isOperating) {
+      return;
+    }
+
+    setDeletingProductId(item.productId);
+    setOperationError(null);
+
+    try {
+      try {
+        await deleteCartItem(item.productId);
+      } catch (error) {
+        if (error instanceof ApiError && error.code === ERROR_CODES.UNAUTHORIZED) {
+          redirectToLogin();
+          return;
+        }
+
+        setOperationError({
+          productId: item.productId,
+          message: "商品の削除に失敗しました。",
+        });
+        return;
+      }
+
+      try {
+        const nextCart = await fetchCart();
+        applyRefreshedCart(nextCart, item.productId);
+      } catch (error) {
+        if (error instanceof ApiError && error.code === ERROR_CODES.UNAUTHORIZED) {
+          redirectToLogin();
+          return;
+        }
+
+        setOperationError({
+          productId: item.productId,
+          message: "商品は削除されましたが、最新のカート情報を取得できませんでした。",
+        });
+      }
+    } finally {
+      setDeletingProductId(null);
+    }
+  };
+
   const hasDraftChanges =
     cart?.items.some(
       (item) => (draftQuantities[item.productId] ?? item.quantity) !== item.quantity,
@@ -277,7 +327,7 @@ export default function CartPage() {
                             type="button"
                             aria-label={`${item.name}の数量を減らす`}
                             disabled={
-                              isUpdating ||
+                              isOperating ||
                               !item.canBePurchased ||
                               draftQuantity <= 1
                             }
@@ -293,7 +343,7 @@ export default function CartPage() {
                             type="button"
                             aria-label={`${item.name}の数量を増やす`}
                             disabled={
-                              isUpdating ||
+                              isOperating ||
                               !item.canBePurchased ||
                               draftQuantity >= item.maxSelectableQuantity
                             }
@@ -314,12 +364,22 @@ export default function CartPage() {
                         <button
                           className={styles.reflectButton}
                           type="button"
-                          disabled={isUpdating || !item.canBePurchased}
+                          disabled={isOperating || !item.canBePurchased}
                           onClick={() => void handleQuantityReflect(item)}
                         >
                           料金を再計算
                         </button>
                       )}
+                      <button
+                        className={styles.deleteButton}
+                        type="button"
+                        disabled={isOperating}
+                        onClick={() => void handleDeleteItem(item)}
+                      >
+                        {deletingProductId === item.productId
+                          ? "削除中..."
+                          : "カートから削除"}
+                      </button>
                       {operationError?.productId === item.productId && (
                         <p className={styles.operationError} role="alert">
                           {operationError.message}

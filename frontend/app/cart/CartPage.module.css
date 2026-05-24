@@ -220,6 +220,28 @@
   cursor: not-allowed;
 }
 
+.deleteButton {
+  display: block;
+  margin-top: 12px;
+  border: 0;
+  background: transparent;
+  color: #991b1b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 0;
+}
+
+.deleteButton:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.deleteButton:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
 .operationError {
   margin: 12px 0 0;
   color: #991b1b;
