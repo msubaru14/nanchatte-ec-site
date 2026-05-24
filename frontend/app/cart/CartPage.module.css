@@ -35,8 +35,27 @@
   border-radius: 8px;
   background: var(--surface);
   padding: 48px 32px;
-  color: var(--muted);
   text-align: center;
+}
+
+.emptyMessage {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.shopLink {
+  display: inline-flex;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 16px;
+  text-decoration: none;
+}
+
+.shopLink:hover {
+  background: var(--primary-dark);
 }
 
 .cartLayout {

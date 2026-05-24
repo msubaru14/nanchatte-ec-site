@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -149,6 +150,7 @@ export default function CartPage() {
     setOperationError((current) =>
       current?.productId === item.productId ? null : current,
     );
+    setClearErrorMessage(null);
   };
 
   const handleQuantityReflect = async (item: CartItem) => {
@@ -323,7 +325,7 @@ export default function CartPage() {
       </div>
 
       {isLoading ? (
-        <p className={styles.status} aria-live="polite">
+        <p className={styles.status} role="status" aria-live="polite">
           カート情報を読み込み中...
         </p>
       ) : errorMessage ? (
@@ -336,9 +338,14 @@ export default function CartPage() {
         </div>
       ) : cart ? (
         cart.items.length === 0 ? (
-          <p className={styles.empty}>カートに商品がありません。</p>
+          <div className={styles.empty}>
+            <p className={styles.emptyMessage}>カートに商品がありません。</p>
+            <Link className={styles.shopLink} href="/products">
+              商品を探す
+            </Link>
+          </div>
         ) : (
-          <div className={styles.cartLayout}>
+          <div className={styles.cartLayout} aria-busy={isOperating}>
             <ul className={styles.itemList}>
               {cart.items.map((item) => {
                 const draftQuantity = draftQuantities[item.productId] ?? item.quantity;
