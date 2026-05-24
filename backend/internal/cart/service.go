@@ -31,13 +31,14 @@ type Result struct {
 }
 
 type ItemResult struct {
-	ProductID         int64
-	Name              string
-	ImageURL          *string
-	PriceIncludingTax int
-	StockStatus       product.StockStatus
-	Quantity          int
-	CanBePurchased    bool
+	ProductID             int64
+	Name                  string
+	ImageURL              *string
+	PriceIncludingTax     int
+	StockStatus           product.StockStatus
+	Quantity              int
+	MaxSelectableQuantity int
+	CanBePurchased        bool
 }
 
 func NewService(db *gorm.DB) *Service {
@@ -177,13 +178,14 @@ func toItemResult(item CartItem) ItemResult {
 		itemProduct.StockQuantity > 0
 
 	return ItemResult{
-		ProductID:         itemProduct.ID,
-		Name:              itemProduct.Name,
-		ImageURL:          itemProduct.ImageURL,
-		PriceIncludingTax: priceIncludingTax(itemProduct.PriceExcludingTax, itemProduct.TaxRate.Rate),
-		StockStatus:       stockStatus(itemProduct.StockQuantity, itemProduct.LowStockThreshold),
-		Quantity:          item.Quantity,
-		CanBePurchased:    canBePurchased,
+		ProductID:             itemProduct.ID,
+		Name:                  itemProduct.Name,
+		ImageURL:              itemProduct.ImageURL,
+		PriceIncludingTax:     priceIncludingTax(itemProduct.PriceExcludingTax, itemProduct.TaxRate.Rate),
+		StockStatus:           stockStatus(itemProduct.StockQuantity, itemProduct.LowStockThreshold),
+		Quantity:              item.Quantity,
+		MaxSelectableQuantity: itemProduct.StockQuantity,
+		CanBePurchased:        canBePurchased,
 	}
 }
 

@@ -7,6 +7,7 @@ export type CartItem = {
   priceIncludingTax: number;
   stockStatus: CartStockStatus;
   quantity: number;
+  maxSelectableQuantity: number;
   canBePurchased: boolean;
 };
 

@@ -17,26 +17,28 @@ type cartResponse struct {
 }
 
 type cartItemResponse struct {
-	ProductID         int64               `json:"productId"`
-	Name              string              `json:"name"`
-	ImageURL          *string             `json:"imageUrl"`
-	PriceIncludingTax int                 `json:"priceIncludingTax"`
-	StockStatus       product.StockStatus `json:"stockStatus"`
-	Quantity          int                 `json:"quantity"`
-	CanBePurchased    bool                `json:"canBePurchased"`
+	ProductID             int64               `json:"productId"`
+	Name                  string              `json:"name"`
+	ImageURL              *string             `json:"imageUrl"`
+	PriceIncludingTax     int                 `json:"priceIncludingTax"`
+	StockStatus           product.StockStatus `json:"stockStatus"`
+	Quantity              int                 `json:"quantity"`
+	MaxSelectableQuantity int                 `json:"maxSelectableQuantity"`
+	CanBePurchased        bool                `json:"canBePurchased"`
 }
 
 func newCartResponse(result *Result) cartResponse {
 	items := make([]cartItemResponse, 0, len(result.Items))
 	for _, item := range result.Items {
 		items = append(items, cartItemResponse{
-			ProductID:         item.ProductID,
-			Name:              item.Name,
-			ImageURL:          item.ImageURL,
-			PriceIncludingTax: item.PriceIncludingTax,
-			StockStatus:       item.StockStatus,
-			Quantity:          item.Quantity,
-			CanBePurchased:    item.CanBePurchased,
+			ProductID:             item.ProductID,
+			Name:                  item.Name,
+			ImageURL:              item.ImageURL,
+			PriceIncludingTax:     item.PriceIncludingTax,
+			StockStatus:           item.StockStatus,
+			Quantity:              item.Quantity,
+			MaxSelectableQuantity: item.MaxSelectableQuantity,
+			CanBePurchased:        item.CanBePurchased,
 		})
 	}
 
