@@ -293,6 +293,38 @@
   line-height: 1.5;
 }
 
+.clearError {
+  margin: 18px 0 0;
+  color: #991b1b;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.clearButton {
+  width: 100%;
+  margin-top: 22px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #991b1b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 11px 14px;
+}
+
+.clearButton:hover:not(:disabled) {
+  background: #fff7f7;
+}
+
+.clearButton:disabled {
+  color: #9ca3af;
+  border-color: var(--line);
+  cursor: not-allowed;
+}
+
 .errorPanel {
   border: 1px solid #fecaca;
   border-radius: 8px;

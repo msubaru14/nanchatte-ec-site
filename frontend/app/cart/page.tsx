@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { useAuth } from "../../contexts/AuthContext";
 import {
+  deleteAllCartItems,
   deleteCartItem,
   fetchCart,
   updateCartItemQuantity,
@@ -75,7 +76,9 @@ export default function CartPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [updatingProductId, setUpdatingProductId] = useState<number | null>(null);
   const [deletingProductId, setDeletingProductId] = useState<number | null>(null);
+  const [isClearingCart, setIsClearingCart] = useState(false);
   const [operationError, setOperationError] = useState<OperationError | null>(null);
+  const [clearErrorMessage, setClearErrorMessage] = useState<string | null>(null);
   const [draftQuantities, setDraftQuantities] = useState<DraftQuantities>({});
 
   const redirectToLogin = useCallback(() => {
@@ -89,6 +92,7 @@ export default function CartPage() {
     setIsLoading(true);
     setErrorMessage(null);
     setOperationError(null);
+    setClearErrorMessage(null);
 
     try {
       const nextCart = await fetchCart();
@@ -125,7 +129,8 @@ export default function CartPage() {
     );
   };
 
-  const isOperating = updatingProductId !== null || deletingProductId !== null;
+  const isOperating =
+    updatingProductId !== null || deletingProductId !== null || isClearingCart;
 
   const handleDraftQuantityChange = (item: CartItem, nextQuantity: number) => {
     if (
@@ -161,6 +166,7 @@ export default function CartPage() {
 
     setUpdatingProductId(item.productId);
     setOperationError(null);
+    setClearErrorMessage(null);
 
     try {
       try {
@@ -224,6 +230,7 @@ export default function CartPage() {
 
     setDeletingProductId(item.productId);
     setOperationError(null);
+    setClearErrorMessage(null);
 
     try {
       try {
@@ -257,6 +264,47 @@ export default function CartPage() {
       }
     } finally {
       setDeletingProductId(null);
+    }
+  };
+
+  const handleDeleteAllItems = async () => {
+    if (isOperating) {
+      return;
+    }
+
+    setIsClearingCart(true);
+    setOperationError(null);
+    setClearErrorMessage(null);
+
+    try {
+      try {
+        await deleteAllCartItems();
+      } catch (error) {
+        if (error instanceof ApiError && error.code === ERROR_CODES.UNAUTHORIZED) {
+          redirectToLogin();
+          return;
+        }
+
+        setClearErrorMessage("カート内の商品をすべて削除できませんでした。");
+        return;
+      }
+
+      try {
+        const nextCart = await fetchCart();
+        setCart(nextCart);
+        setDraftQuantities(createDraftQuantities(nextCart));
+      } catch (error) {
+        if (error instanceof ApiError && error.code === ERROR_CODES.UNAUTHORIZED) {
+          redirectToLogin();
+          return;
+        }
+
+        setClearErrorMessage(
+          "商品は削除されましたが、最新のカート情報を取得できませんでした。",
+        );
+      }
+    } finally {
+      setIsClearingCart(false);
     }
   };
 
@@ -405,6 +453,19 @@ export default function CartPage() {
                   変更した数量は「料金を再計算」で合計に反映されます。
                 </p>
               )}
+              {clearErrorMessage && (
+                <p className={styles.clearError} role="alert">
+                  {clearErrorMessage}
+                </p>
+              )}
+              <button
+                className={styles.clearButton}
+                type="button"
+                disabled={isOperating}
+                onClick={() => void handleDeleteAllItems()}
+              >
+                {isClearingCart ? "全削除中..." : "カートを空にする"}
+              </button>
             </aside>
           </div>
         )
