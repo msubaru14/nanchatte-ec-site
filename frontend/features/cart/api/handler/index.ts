@@ -1,1 +1,1 @@
-export { handleGetCart } from "./cartHandlers";
+export { handleAddCartItem, handleGetCart } from "./cartHandlers";

@@ -1,1 +1,1 @@
-export { fetchCartWithBackend } from "./cartServer";
+export { addCartItemWithBackend, fetchCartWithBackend } from "./cartServer";

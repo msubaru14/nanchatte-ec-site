@@ -14,3 +14,12 @@ export type Cart = {
   items: CartItem[];
   totalAmount: number;
 };
+
+export type CartMessage = {
+  message: string;
+};
+
+export type AddCartItemInput = {
+  productId: number;
+  quantity: number;
+};

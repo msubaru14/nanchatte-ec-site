@@ -1,7 +1,7 @@
 import { ERROR_CODES } from "../../../../constants/errorCodes";
-import { requestJson } from "../../../../lib/api";
+import { getJsonHeaders, requestJson } from "../../../../lib/api";
 import { ApiError } from "../../../../lib/errors";
-import type { Cart } from "../types";
+import type { AddCartItemInput, Cart, CartMessage } from "../types";
 
 export const fetchCart = async () => {
   const json = await requestJson<Cart>("/api/cart", {
@@ -12,6 +12,23 @@ export const fetchCart = async () => {
     throw new ApiError(
       ERROR_CODES.INTERNAL_SERVER_ERROR,
       "Cart response is empty",
+    );
+  }
+
+  return json.data;
+};
+
+export const addCartItem = async (input: AddCartItemInput) => {
+  const json = await requestJson<CartMessage>("/api/cart/items", {
+    method: "POST",
+    headers: getJsonHeaders(),
+    body: JSON.stringify(input),
+  });
+
+  if (!json.data) {
+    throw new ApiError(
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+      "Cart item response is empty",
     );
   }
 

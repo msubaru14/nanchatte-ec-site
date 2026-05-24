@@ -1,1 +1,1 @@
-export { fetchCart } from "./cartApi";
+export { addCartItem, fetchCart } from "./cartApi";
