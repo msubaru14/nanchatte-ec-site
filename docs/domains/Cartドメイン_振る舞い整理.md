@@ -215,6 +215,8 @@ maxSelectableQuantity = stock_quantity
 - `quantity <= 1` の場合は `-` ボタンを disabled にする
 - `quantity >= maxSelectableQuantity` の場合は `+` ボタンを disabled にする
 - 一般ユーザーには実在庫数そのものを表示しない
+- `+` / `-` 操作では画面ローカルの数量のみ変更し、API は呼び出さない
+- 数量を変更した商品ごとの「料金を再計算」操作で数量変更APIを呼び出し、Cart を再取得する
 
 ---
 

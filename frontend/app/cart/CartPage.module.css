@@ -141,10 +141,90 @@
   font-weight: 500;
 }
 
-.quantity {
-  margin: 0;
+.quantityRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quantityLabel {
   color: var(--muted);
   font-size: 14px;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.stepperButton {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: #f8fafc;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.stepperButton:hover:not(:disabled) {
+  background: #e5eaf1;
+}
+
+.stepperButton:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.quantityValue {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 36px;
+  border-right: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.updating {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.reflectButton {
+  margin-top: 12px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--primary-dark);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 12px;
+}
+
+.reflectButton:hover:not(:disabled) {
+  background: #eef6ff;
+}
+
+.reflectButton:disabled {
+  color: #9ca3af;
+  border-color: var(--line);
+  cursor: not-allowed;
+}
+
+.operationError {
+  margin: 12px 0 0;
+  color: #991b1b;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .unavailable {
@@ -180,6 +260,15 @@
   color: var(--muted);
   font-size: 12px;
   text-align: right;
+}
+
+.pendingNote {
+  margin: 18px 0 0;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .errorPanel {
