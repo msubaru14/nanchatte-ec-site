@@ -63,11 +63,9 @@ access token は不要だが、refresh token が必要。
 
 ---
 
-## 認証
+## Browser向けBFF共通方針
 
-### Browser向け認証BFF
-
-Browser は Go API を直接呼び出さず、Next.js Route Handler の BFF API を経由する。
+Browser から Go API を利用する機能は、Next.js Route Handler の BFF API を経由して実装する。
 
 ```txt
 Browser
@@ -77,12 +75,21 @@ Next.js Route Handler(BFF)
 Go API
 ```
 
+認証を要する BFF API は `access_token` cookie を利用して Go API を呼び出し、access token の期限切れ時は `refresh_token` cookie を利用した refresh retry を適用する。
+frontend は token を直接保持しない。
+BFF は Go API の HTTP status と response / error code を維持して Browser へ返す。
+
+---
+
+## 認証
+
+### 認証BFF固有の扱い
+
 BFF は Go API から受け取った access token / refresh token を以下の httpOnly cookie に保存する。
 
 - `access_token`
 - `refresh_token`
 
-frontend は token を直接保持しない。
 認証状態は BFF の `GET /api/auth/me` の成功可否で判断する。
 
 BFF の auth API は Browser 向けに以下を提供する。
