@@ -277,9 +277,17 @@ products と結合して表示する。
 - 商品名
 - 商品画像
 - 現在価格
-- stock_status
+- stockStatus
 - quantity
 ```
+
+## API返却方針
+
+- `items` と `totalAmount` を返す
+- 商品ごとに `canBePurchased` を返す
+- `priceIncludingTax` と `totalAmount` は取得時点の現在価格・税率で計算する
+- 一般ユーザーには `stock_quantity` を返さず、`stockStatus` のみ返す
+- 購入不可商品も cart_items から自動削除せず、`canBePurchased: false` として返す
 
 ---
 
@@ -331,7 +339,7 @@ cart_items が0件でも carts は残す。
 以下を確認する。
 
 - 商品が active か
-- 在庫数以上にならないか
+- 追加後の数量が在庫数を超えないか
 
 問題なければ追加する。
 
@@ -342,9 +350,31 @@ cart_items が0件でも carts は残す。
 以下を確認する。
 
 - quantity が1以上か
+- 商品が active か
 - 在庫数以下か
 
 問題なければ更新する。
+
+---
+
+## 同時操作時の整合性
+
+同じカートに対する商品追加と数量変更は、以下を同一トランザクション内で行う。
+
+1. 対象カートを更新ロック付きで取得する
+2. 商品状態と在庫を確認する
+3. cart_item を追加または更新する
+
+これにより、同時リクエストによって quantity が在庫数を超える状態になることを防ぐ。
+
+---
+
+## API error 方針
+
+- `quantity <= 0` は `VALIDATION_ERROR` とする
+- `stopped` 商品の追加・数量変更は `VALIDATION_ERROR` とする
+- 数量が在庫数を超える場合は `OUT_OF_STOCK` とし、HTTP status は `409 Conflict` とする
+- JSON API の商品IDフィールド名は `productId` とする
 
 ---
 
@@ -534,6 +564,8 @@ updated_at < now() - interval '30 days'
 - CartItemには価格スナップショットを持たない
 - カート表示時は現在価格を参照する
 - カート表示・数量変更・注文確定時に在庫再チェックを行う
+- カート追加・数量変更はカート単位の更新ロックを用いたトランザクションで行う
+- 在庫不足は `OUT_OF_STOCK` / `409 Conflict` として返す
 - 購入不可商品は自動削除しない
 - 購入不可商品は注文対象から除外する
 - 注文確定成功後に cart_items を物理削除する

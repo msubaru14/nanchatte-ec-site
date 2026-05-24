@@ -20,6 +20,7 @@
 │   ├── db
 │   └── internal
 │       ├── auth
+│       ├── cart
 │       ├── health
 │       ├── middleware
 │       ├── product
@@ -90,6 +91,7 @@ docker compose up --build -d
 - ユーザー登録画面: http://localhost:3000/register
 - 商品一覧画面: http://localhost:3000/products
 - Backend health check: http://localhost:8080/api/health
+- API仕様（Swagger UI）: http://localhost:8081
 - PostgreSQL: localhost:5432
 
 状態確認:
@@ -103,6 +105,16 @@ docker compose ps
 ```powershell
 docker compose down
 ```
+
+## API仕様の確認
+
+API仕様は Swagger UI で閲覧できます。以下のコマンドで `swagger-ui` コンテナを含む環境を起動します。
+
+```powershell
+docker compose up --build -d
+```
+
+起動後、http://localhost:8081 を開くと `docs/api/openapi.yaml` に記載された実装済みAPIの request / response / error 仕様を確認できます。
 
 ## DB migration / seed
 
@@ -202,6 +214,14 @@ npm run test:e2e:ui
 - product API
   - `GET /api/products`
   - `GET /api/products/:id`
+- cart API
+  - `GET /api/cart`
+  - `POST /api/cart/items`
+  - `PATCH /api/cart/items/:productId`
+  - `DELETE /api/cart/items/:productId`
+  - `DELETE /api/cart/items`
+  - `customer` role の認証済みユーザー向けに、表示・追加・数量変更・削除を提供
+  - 追加・数量変更では販売状態と在庫を確認し、同時操作時の数量超過を防ぐ
 - Next.js App Router によるトップページ
 - 商品一覧画面
   - `GET /api/products` を利用した商品カード表示
@@ -211,6 +231,7 @@ npm run test:e2e:ui
 - `internal/auth` による auth domain 構成
 - auth の repository 分離
 - `internal/product` による product domain 構成
+- `internal/cart` による cart domain 構成
 - `internal/shared` によるGo共通レスポンス・エラー基盤
 - DB接続・migration実行基盤
 

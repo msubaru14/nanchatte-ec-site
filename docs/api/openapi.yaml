@@ -13,6 +13,8 @@ tags:
     description: Authentication APIs
   - name: Products
     description: Public product APIs
+  - name: Cart
+    description: Authenticated customer cart APIs
 paths:
   /api/auth/register:
     post:
@@ -356,6 +358,223 @@ paths:
                       message: product not found
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/cart:
+    get:
+      tags:
+        - Cart
+      summary: Cart detail
+      description: |
+        ログインユーザーのカート内容を取得する。
+
+        access token による認証と customer role が必要。
+        商品の価格、税率、在庫状態は取得時点の情報から計算する。
+        購入不可となった商品もカートから自動削除せず返す。
+      operationId: getCart
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Cart detail response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      items:
+                        - productId: 1
+                          name: HHKB Professional HYBRID Type-S
+                          imageUrl: null
+                          priceIncludingTax: 39600
+                          stockStatus: in_stock
+                          quantity: 2
+                          canBePurchased: true
+                      totalAmount: 79200
+                    error: null
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/CartResourceNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/cart/items:
+    post:
+      tags:
+        - Cart
+      summary: Add cart item
+      description: |
+        商品をログインユーザーのカートへ追加する。
+
+        access token による認証と customer role が必要。
+        同じ商品が既に存在する場合は数量を加算する。
+        active 商品のみ操作可能で、追加後の数量が在庫を超える操作は受け付けない。
+      operationId: addCartItem
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartItemAddRequest"
+            examples:
+              default:
+                value:
+                  productId: 1
+                  quantity: 2
+      responses:
+        "200":
+          description: Cart item added response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartMessageSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      message: cart item added
+                    error: null
+        "400":
+          $ref: "#/components/responses/CartAddItemRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/CartResourceNotFoundError"
+        "409":
+          $ref: "#/components/responses/OutOfStockError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Cart
+      summary: Delete all cart items
+      description: |
+        ログインユーザーのカート内商品をすべて物理削除する。
+
+        access token による認証と customer role が必要。
+        cart 自体は削除しない。
+      operationId: deleteAllCartItems
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Cart items deleted response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartMessageSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      message: cart items deleted
+                    error: null
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/CartResourceNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/cart/items/{productId}:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        description: Product ID
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    patch:
+      tags:
+        - Cart
+      summary: Update cart item quantity
+      description: |
+        ログインユーザーのカート内商品の数量を指定数量で上書きする。
+
+        access token による認証と customer role が必要。
+        active 商品のみ操作可能で、変更後の数量が在庫を超える操作は受け付けない。
+      operationId: updateCartItemQuantity
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartItemQuantityUpdateRequest"
+            examples:
+              default:
+                value:
+                  quantity: 3
+      responses:
+        "200":
+          description: Cart item updated response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartMessageSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      message: cart item updated
+                    error: null
+        "400":
+          $ref: "#/components/responses/CartUpdateItemRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/CartResourceNotFoundError"
+        "409":
+          $ref: "#/components/responses/OutOfStockError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Cart
+      summary: Delete cart item
+      description: |
+        ログインユーザーのカートから指定商品を物理削除する。
+
+        access token による認証と customer role が必要。
+      operationId: deleteCartItem
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Cart item deleted response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartMessageSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      message: cart item deleted
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidProductIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/CartResourceNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 components:
   securitySchemes:
     bearerAuth:
@@ -380,6 +599,139 @@ components:
                     - field: email
                       code: INVALID_FORMAT
                       message: email is invalid
+    InvalidProductIDError:
+      description: Invalid product ID
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidProductId:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid product id
+    CartAddItemRequestError:
+      description: Invalid add item request or cart validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidRequestBody:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid request body
+            missingProductId:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: productId
+                      code: REQUIRED
+                      message: productId is required
+            invalidQuantity:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: quantity
+                      code: OUT_OF_RANGE
+                      message: quantity must be greater than zero
+            productNotActive:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: productId
+                      code: INVALID_FORMAT
+                      message: product is not available
+    CartUpdateItemRequestError:
+      description: Invalid quantity update request or cart validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidRequestBody:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid request body
+            invalidProductId:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid product id
+            invalidQuantity:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: quantity
+                      code: OUT_OF_RANGE
+                      message: quantity must be greater than zero
+            productNotActive:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: productId
+                      code: INVALID_FORMAT
+                      message: product is not available
+    CartResourceNotFoundError:
+      description: Cart resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            cartNotFound:
+              value:
+                data: null
+                error:
+                  code: NOT_FOUND
+                  message: cart not found
+            productNotFound:
+              value:
+                data: null
+                error:
+                  code: NOT_FOUND
+                  message: product not found
+            cartItemNotFound:
+              value:
+                data: null
+                error:
+                  code: NOT_FOUND
+                  message: cart item not found
+    OutOfStockError:
+      description: Cart quantity exceeds current stock
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            outOfStock:
+              value:
+                data: null
+                error:
+                  code: OUT_OF_STOCK
+                  message: out of stock
     UnauthorizedError:
       description: Unauthorized
       content:
@@ -636,6 +988,113 @@ components:
         error:
           nullable: true
           example: null
+    CartItemAddRequest:
+      type: object
+      required:
+        - productId
+        - quantity
+      properties:
+        productId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+    CartItemQuantityUpdateRequest:
+      type: object
+      required:
+        - quantity
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          example: 3
+    CartSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/CartData"
+        error:
+          nullable: true
+          example: null
+    CartMessageSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/CartMessageData"
+        error:
+          nullable: true
+          example: null
+    CartData:
+      type: object
+      required:
+        - items
+        - totalAmount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+        totalAmount:
+          type: integer
+          minimum: 0
+          example: 79200
+    CartItem:
+      type: object
+      required:
+        - productId
+        - name
+        - priceIncludingTax
+        - stockStatus
+        - quantity
+        - canBePurchased
+      properties:
+        productId:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: HHKB Professional HYBRID Type-S
+        imageUrl:
+          type: string
+          nullable: true
+          example: null
+        priceIncludingTax:
+          type: integer
+          minimum: 0
+          example: 39600
+        stockStatus:
+          type: string
+          enum:
+            - in_stock
+            - low_stock
+            - out_of_stock
+          example: in_stock
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+        canBePurchased:
+          type: boolean
+          example: true
+    CartMessageData:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: cart item added
     ErrorResponse:
       type: object
       required:
@@ -662,6 +1121,7 @@ components:
             - UNAUTHORIZED
             - FORBIDDEN
             - NOT_FOUND
+            - OUT_OF_STOCK
             - INTERNAL_SERVER_ERROR
         message:
           type: string
