@@ -1,1 +1,6 @@
-export { addCartItem, fetchCart, updateCartItemQuantity } from "./cartApi";
+export {
+  addCartItem,
+  deleteCartItem,
+  fetchCart,
+  updateCartItemQuantity,
+} from "./cartApi";

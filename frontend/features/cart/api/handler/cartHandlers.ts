@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   addCartItemWithBackend,
+  deleteCartItemWithBackend,
   fetchCartWithBackend,
   updateCartItemQuantityWithBackend,
 } from "../server";
@@ -27,6 +28,16 @@ export const handleUpdateCartItemQuantity = async (
     productId,
     await request.text(),
   );
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handleDeleteCartItem = async (
+  _request: Request,
+  { params }: { params: Promise<{ productId: string }> },
+) => {
+  const { productId } = await params;
+  const { response, json } = await deleteCartItemWithBackend(productId);
 
   return NextResponse.json(json, { status: response.status });
 };

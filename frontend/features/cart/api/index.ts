@@ -1,4 +1,9 @@
-export { addCartItem, fetchCart, updateCartItemQuantity } from "./client";
+export {
+  addCartItem,
+  deleteCartItem,
+  fetchCart,
+  updateCartItemQuantity,
+} from "./client";
 export type {
   AddCartItemInput,
   Cart,
