@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/auth"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/cart"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/health"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/middleware"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/product"
@@ -15,11 +16,13 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 	tokenService := auth.NewTokenService()
 	authService := auth.NewAuthService(database, tokenService)
 	productService := product.NewService(database)
+	cartService := cart.NewService(database)
 
 	healthHandler := health.NewHandler()
 	authHandler := auth.NewAuthHandler(authService)
 	meHandler := auth.NewMeHandler(authService)
 	productHandler := product.NewHandler(productService)
+	cartHandler := cart.NewHandler(cartService)
 
 	api := r.Group("/api")
 	{
@@ -47,6 +50,19 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 			middleware.RequireRole(auth.CustomerRole),
 			meHandler.Show,
 		)
+
+		cartRoutes := api.Group(
+			"/cart",
+			middleware.AuthMiddleware(tokenService),
+			middleware.RequireRole(auth.CustomerRole),
+		)
+		{
+			cartRoutes.GET("", cartHandler.Show)
+			cartRoutes.POST("/items", cartHandler.AddItem)
+			cartRoutes.PATCH("/items/:productId", cartHandler.UpdateItemQuantity)
+			cartRoutes.DELETE("/items/:productId", cartHandler.DeleteItem)
+			cartRoutes.DELETE("/items", cartHandler.DeleteAllItems)
+		}
 	}
 
 	return r

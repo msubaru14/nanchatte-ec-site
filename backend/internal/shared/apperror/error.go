@@ -20,7 +20,7 @@ func MapErrorCodeToStatus(code string) int {
 	switch code {
 	case CodeInvalidRequest, CodeValidationError:
 		return http.StatusBadRequest
-	case CodeConflict:
+	case CodeConflict, CodeOutOfStock:
 		return http.StatusConflict
 	case CodeUnauthorized:
 		return http.StatusUnauthorized
@@ -87,6 +87,13 @@ func NewConflict(message string) *APIError {
 	return &APIError{
 		Code:    CodeConflict,
 		Message: message,
+	}
+}
+
+func NewOutOfStock() *APIError {
+	return &APIError{
+		Code:    CodeOutOfStock,
+		Message: "out of stock",
 	}
 }
 

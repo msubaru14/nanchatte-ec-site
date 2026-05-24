@@ -286,7 +286,7 @@ access tokenを再発行する。
 
 商品をカートに追加する。
 
-- product_id
+- productId
 - quantity
 
 を受け取る。
