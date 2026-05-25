@@ -20,6 +20,10 @@ export type CartMessage = {
   message: string;
 };
 
+export type OutOfStockDetails = {
+  availableQuantity: number;
+};
+
 export type AddCartItemInput = {
   productId: number;
   quantity: number;

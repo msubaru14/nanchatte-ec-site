@@ -82,7 +82,7 @@ export function AuthForm({ mode, returnTo }: AuthFormProps) {
       if (error instanceof ApiError) {
         const nextFieldErrors: FieldErrors = {};
 
-        for (const detail of error.details) {
+        for (const detail of error.validationDetails) {
           if (
             detail.field === "name" ||
             detail.field === "email" ||

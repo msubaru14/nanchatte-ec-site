@@ -36,12 +36,14 @@ export const normalizeValidationDetails = (
 
 export class ApiError extends Error {
   code: AppErrorCode;
-  details: ValidationDetail[];
+  details: unknown;
+  validationDetails: ValidationDetail[];
 
   constructor(code: AppErrorCode, message: string, details?: unknown) {
     super(message);
     this.name = "ApiError";
     this.code = code;
-    this.details = normalizeValidationDetails(details);
+    this.details = details;
+    this.validationDetails = normalizeValidationDetails(details);
   }
 }

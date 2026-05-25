@@ -293,6 +293,7 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 - `productId` と `quantity` を受け取る
 - 同じ商品が既にある場合は数量を加算する
 - 販売停止商品と在庫不足の商品は追加不可
+- 在庫不足の場合は `OUT_OF_STOCK` と、今回追加可能な数量 `availableQuantity` を返す
 
 ---
 
@@ -302,6 +303,7 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 - `quantity` で指定数量を上書きする
 - 販売停止商品と在庫不足となる変更は不可
+- 在庫不足の場合は `OUT_OF_STOCK` と、設定可能な数量 `availableQuantity` を返す
 
 ---
 

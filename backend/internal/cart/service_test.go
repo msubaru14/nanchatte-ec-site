@@ -163,11 +163,12 @@ func TestServiceAddItem(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		setup        func(*fakeRepository)
-		quantity     int
-		wantCode     string
-		wantQuantity int
+		name                  string
+		setup                 func(*fakeRepository)
+		quantity              int
+		wantCode              string
+		wantQuantity          int
+		wantAvailableQuantity *int
 	}{
 		{
 			name:         "商品をカートへ追加できる",
@@ -195,9 +196,10 @@ func TestServiceAddItem(t *testing.T) {
 			setup: func(repository *fakeRepository) {
 				repository.items[1] = CartItem{CartID: 10, ProductID: 1, Quantity: 4}
 			},
-			quantity:     2,
-			wantCode:     apperror.CodeOutOfStock,
-			wantQuantity: 4,
+			quantity:              2,
+			wantCode:              apperror.CodeOutOfStock,
+			wantQuantity:          4,
+			wantAvailableQuantity: intPtr(1),
 		},
 	}
 
@@ -214,6 +216,7 @@ func TestServiceAddItem(t *testing.T) {
 			apiErr := service.AddItem(1, 1, tt.quantity)
 
 			assertAPIErrorCode(t, apiErr, tt.wantCode)
+			assertAvailableQuantity(t, apiErr, tt.wantAvailableQuantity)
 			if got := repository.items[1].Quantity; got != tt.wantQuantity {
 				t.Fatalf("quantity = %d, want %d", got, tt.wantQuantity)
 			}
@@ -225,11 +228,12 @@ func TestServiceUpdateItemQuantity(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		setup        func(*fakeRepository)
-		quantity     int
-		wantCode     string
-		wantQuantity int
+		name                  string
+		setup                 func(*fakeRepository)
+		quantity              int
+		wantCode              string
+		wantQuantity          int
+		wantAvailableQuantity *int
 	}{
 		{
 			name:         "数量を指定値へ変更できる",
@@ -237,10 +241,11 @@ func TestServiceUpdateItemQuantity(t *testing.T) {
 			wantQuantity: 3,
 		},
 		{
-			name:         "在庫を超える数量へ変更すると在庫不足を返す",
-			quantity:     6,
-			wantCode:     apperror.CodeOutOfStock,
-			wantQuantity: 1,
+			name:                  "在庫を超える数量へ変更すると購入可能数量付きの在庫不足を返す",
+			quantity:              6,
+			wantCode:              apperror.CodeOutOfStock,
+			wantQuantity:          1,
+			wantAvailableQuantity: intPtr(5),
 		},
 		{
 			name: "販売停止商品は数量を変更できない",
@@ -267,6 +272,7 @@ func TestServiceUpdateItemQuantity(t *testing.T) {
 			apiErr := service.UpdateItemQuantity(1, 1, tt.quantity)
 
 			assertAPIErrorCode(t, apiErr, tt.wantCode)
+			assertAvailableQuantity(t, apiErr, tt.wantAvailableQuantity)
 			if repository.transactionCalls != 1 {
 				t.Fatalf("transaction calls = %d, want %d", repository.transactionCalls, 1)
 			}
@@ -448,5 +454,28 @@ func assertAPIErrorCode(t *testing.T, apiErr *apperror.APIError, wantCode string
 	}
 	if apiErr.Code != wantCode {
 		t.Fatalf("api error code = %q, want %q", apiErr.Code, wantCode)
+	}
+}
+
+func intPtr(value int) *int {
+	return &value
+}
+
+func assertAvailableQuantity(t *testing.T, apiErr *apperror.APIError, want *int) {
+	t.Helper()
+
+	if want == nil {
+		return
+	}
+	if apiErr == nil {
+		t.Fatal("api error = nil, want out of stock details")
+	}
+
+	details, ok := apiErr.Details.(apperror.OutOfStockDetails)
+	if !ok {
+		t.Fatalf("api error details = %#v, want OutOfStockDetails", apiErr.Details)
+	}
+	if details.AvailableQuantity != *want {
+		t.Fatalf("available quantity = %d, want %d", details.AvailableQuantity, *want)
 	}
 }
