@@ -90,13 +90,19 @@ export default async function ProductDetailPage({
             <span className={styles.taxLabel}>(税込)</span>
           </p>
 
-          <button
-            className={styles.cartButton}
-            type="button"
-            disabled={isOutOfStock}
-          >
-            {isOutOfStock ? "在庫なし" : "カートに追加"}
-          </button>
+          <section className={styles.cartArea} aria-label="カート追加">
+            <p className={styles.quantity}>
+              数量: <span className={styles.quantityValue}>1</span>
+            </p>
+
+            <button
+              className={styles.cartButton}
+              type="button"
+              disabled={isOutOfStock}
+            >
+              {isOutOfStock ? "在庫なし" : "カートに追加"}
+            </button>
+          </section>
 
           <dl className={styles.metaList}>
             <div className={styles.metaItem}>

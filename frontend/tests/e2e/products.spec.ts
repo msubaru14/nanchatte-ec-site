@@ -110,8 +110,10 @@ test.describe("/products/:id", () => {
     await expect(
       page.getByText("Compact keyboard with electrostatic capacitive switches."),
     ).toBeVisible();
+    const cartArea = page.getByRole("region", { name: "カート追加" });
+    await expect(cartArea.getByText("数量: 1")).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "カートに追加" }),
+      cartArea.getByRole("button", { name: "カートに追加" }),
     ).toBeEnabled();
     await expect(
       page.getByRole("link", { name: "商品一覧へ戻る" }),
@@ -127,7 +129,9 @@ test.describe("/products/:id", () => {
       page.getByRole("heading", { level: 1, name: "Sony INZONE H5" }),
     ).toBeVisible();
     await expect(page.locator("span").getByText("在庫なし")).toBeVisible();
-    await expect(page.getByRole("button", { name: "在庫なし" })).toBeDisabled();
+    const cartArea = page.getByRole("region", { name: "カート追加" });
+    await expect(cartArea.getByText("数量: 1")).toBeVisible();
+    await expect(cartArea.getByRole("button", { name: "在庫なし" })).toBeDisabled();
   });
 
   test("存在しない商品ではNot Found扱いになる", async ({ page }) => {
