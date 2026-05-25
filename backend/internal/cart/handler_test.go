@@ -118,3 +118,45 @@ func TestAddItemInvalidRequestBody(t *testing.T) {
 		})
 	}
 }
+
+func TestAddItemOutOfStockReturnsAvailableQuantity(t *testing.T) {
+	t.Parallel()
+
+	repository := newFakeRepository()
+	repository.items[1] = CartItem{CartID: 10, ProductID: 1, Quantity: 4}
+	handler := NewHandler(&Service{repository: repository})
+	router := gin.New()
+	router.POST("/api/cart/items", func(c *gin.Context) {
+		c.Set("auth.userID", int64(1))
+		handler.AddItem(c)
+	})
+
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/cart/items",
+		strings.NewReader(`{"productId":1,"quantity":2}`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	if res.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusConflict)
+	}
+
+	var body struct {
+		Error struct {
+			Code    string                     `json:"code"`
+			Details apperror.OutOfStockDetails `json:"details"`
+		} `json:"error"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+		t.Fatalf("response body decode failed: %v", err)
+	}
+	if body.Error.Code != apperror.CodeOutOfStock {
+		t.Fatalf("error code = %q, want %q", body.Error.Code, apperror.CodeOutOfStock)
+	}
+	if body.Error.Details.AvailableQuantity != 1 {
+		t.Fatalf("available quantity = %d, want %d", body.Error.Details.AvailableQuantity, 1)
+	}
+}

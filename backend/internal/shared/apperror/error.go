@@ -4,9 +4,9 @@ import "net/http"
 
 // エラーレスポンス
 type APIError struct {
-	Code    string        `json:"code"`
-	Message string        `json:"message"`
-	Details []ErrorDetail `json:"details,omitempty"`
+	Code    string      `json:"code"`
+	Message string      `json:"message"`
+	Details interface{} `json:"details,omitempty"`
 }
 
 // エラー詳細
@@ -14,6 +14,10 @@ type ErrorDetail struct {
 	Field   string `json:"field"`
 	Code    string `json:"code"`
 	Message string `json:"message"`
+}
+
+type OutOfStockDetails struct {
+	AvailableQuantity int `json:"availableQuantity"`
 }
 
 func MapErrorCodeToStatus(code string) int {
@@ -90,10 +94,11 @@ func NewConflict(message string) *APIError {
 	}
 }
 
-func NewOutOfStock() *APIError {
+func NewOutOfStock(availableQuantity int) *APIError {
 	return &APIError{
 		Code:    CodeOutOfStock,
 		Message: "out of stock",
+		Details: OutOfStockDetails{AvailableQuantity: availableQuantity},
 	}
 }
 

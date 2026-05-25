@@ -4,5 +4,6 @@ export type {
   CartItem,
   CartMessage,
   CartStockStatus,
+  OutOfStockDetails,
   UpdateCartItemQuantityInput,
 } from "./cart";

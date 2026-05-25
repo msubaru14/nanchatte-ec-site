@@ -415,6 +415,7 @@ paths:
         access token による認証と customer role が必要。
         同じ商品が既に存在する場合は数量を加算する。
         active 商品のみ操作可能で、追加後の数量が在庫を超える操作は受け付けない。
+        在庫不足の場合は、今回さらに追加可能な数量を availableQuantity として返す。
       operationId: addCartItem
       security:
         - bearerAuth: []
@@ -506,6 +507,7 @@ paths:
 
         access token による認証と customer role が必要。
         active 商品のみ操作可能で、変更後の数量が在庫を超える操作は受け付けない。
+        在庫不足の場合は、設定可能な最大数量を availableQuantity として返す。
       operationId: updateCartItemQuantity
       security:
         - bearerAuth: []
@@ -735,6 +737,8 @@ components:
                 error:
                   code: OUT_OF_STOCK
                   message: out of stock
+                  details:
+                    availableQuantity: 3
     UnauthorizedError:
       description: Unauthorized
       content:
@@ -1137,9 +1141,11 @@ components:
         message:
           type: string
         details:
-          type: array
-          items:
-            $ref: "#/components/schemas/ErrorDetail"
+          oneOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/ErrorDetail"
+            - $ref: "#/components/schemas/OutOfStockDetails"
     ErrorDetail:
       type: object
       required:
@@ -1153,6 +1159,15 @@ components:
           type: string
         message:
           type: string
+    OutOfStockDetails:
+      type: object
+      required:
+        - availableQuantity
+      properties:
+        availableQuantity:
+          type: integer
+          minimum: 0
+          description: Quantity that can be applied by retrying the rejected Cart operation.
     Product:
       type: object
       required:

@@ -387,6 +387,9 @@ cart_items が0件でも carts は残す。
 - `quantity <= 0` は `VALIDATION_ERROR` とする
 - `stopped` 商品の追加・数量変更は `VALIDATION_ERROR` とする
 - 数量が在庫数を超える場合は `OUT_OF_STOCK` とし、HTTP status は `409 Conflict` とする
+- `OUT_OF_STOCK` の `details.availableQuantity` で再操作可能な数量を返す
+  - カート追加では、現在のカート数量を考慮した上でさらに追加可能な数量を返す
+  - 数量変更では、指定可能な最大数量を返す
 - JSON API の商品IDフィールド名は `productId` とする
 
 ---

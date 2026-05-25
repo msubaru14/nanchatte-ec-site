@@ -4,6 +4,7 @@ import { ERROR_CODES } from "../../../constants/errorCodes";
 import { fetchProductDetail } from "../../../features/products/api/productsApi";
 import type { Product, StockStatus } from "../../../features/products/types/product";
 import { ApiError } from "../../../lib/errors";
+import ProductCartAction from "./ProductCartAction";
 import styles from "./ProductDetailPage.module.css";
 
 type ProductDetailPageProps = {
@@ -90,13 +91,11 @@ export default async function ProductDetailPage({
             <span className={styles.taxLabel}>(税込)</span>
           </p>
 
-          <button
-            className={styles.cartButton}
-            type="button"
-            disabled={isOutOfStock}
-          >
-            {isOutOfStock ? "在庫なし" : "カートに追加"}
-          </button>
+          <ProductCartAction
+            isOutOfStock={isOutOfStock}
+            productId={product.id}
+            productName={product.name}
+          />
 
           <dl className={styles.metaList}>
             <div className={styles.metaItem}>

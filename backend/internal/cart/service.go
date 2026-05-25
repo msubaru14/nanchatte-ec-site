@@ -80,7 +80,8 @@ func (s *Service) AddItem(userID int64, productID int64, quantity int) *apperror
 			return err
 		}
 		if currentQuantity+quantity > itemProduct.StockQuantity {
-			return apperror.NewOutOfStock()
+			availableQuantity := max(itemProduct.StockQuantity-currentQuantity, 0)
+			return apperror.NewOutOfStock(availableQuantity)
 		}
 
 		return repository.AddItem(cart.ID, productID, quantity)
@@ -107,7 +108,7 @@ func (s *Service) UpdateItemQuantity(userID int64, productID int64, quantity int
 			return productNotActiveValidationError()
 		}
 		if quantity > itemProduct.StockQuantity {
-			return apperror.NewOutOfStock()
+			return apperror.NewOutOfStock(itemProduct.StockQuantity)
 		}
 
 		rowsAffected, err := repository.UpdateItemQuantity(cart.ID, productID, quantity)
