@@ -241,6 +241,11 @@ npm run test:e2e:ui
   - `GET /api/products` を利用した商品カード表示
   - loading / error / empty state
   - 商品詳細画面への導線
+- 商品詳細画面
+  - `GET /api/products/:id` を利用した商品詳細表示
+  - 数量ステッパーからの Cart追加
+  - 在庫不足時の購入可能数量による再追加提案
+  - 未ログイン時のログイン画面への復帰導線
 - Docker Compose による `db` / `backend` / `frontend` 起動
 - `internal/auth` による auth domain 構成
 - auth の repository 分離
