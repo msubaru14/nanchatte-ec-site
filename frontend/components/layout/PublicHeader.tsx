@@ -49,6 +49,7 @@ export function PublicHeader() {
             <span className={styles.authStatus}>認証状態を確認中...</span>
           ) : user ? (
             <>
+              <Link href="/cart">カート</Link>
               <span className={styles.userName}>{user.name}</span>
               <button
                 className={styles.logoutButton}

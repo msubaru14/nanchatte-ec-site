@@ -174,6 +174,7 @@ test.describe("認証画面", () => {
   test("未ログイン時はHeaderに認証導線を表示する", async ({ page }) => {
     await page.goto("/login");
 
+    await expect(page.getByRole("link", { name: "カート" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "ログイン" }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "ユーザー登録" })).toBeVisible();
     await expect(page.getByRole("button", { name: "ログアウト" })).toHaveCount(0);
@@ -203,10 +204,54 @@ test.describe("認証画面", () => {
 
     await page.goto("/login");
 
+    await expect(page.getByRole("link", { name: "カート" })).toHaveAttribute(
+      "href",
+      "/cart",
+    );
     await expect(page.getByText("Header User")).toBeVisible();
     await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
     await expect(page.getByRole("link", { name: "ユーザー登録" })).toHaveCount(0);
     expectNoBrowserErrors();
+  });
+
+  test("ログイン済み時はHeaderのカート導線からCart画面へ遷移する", async ({
+    page,
+  }) => {
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 3,
+            name: "Header User",
+            email: "header@example.com",
+            roles: ["customer"],
+          },
+          error: null,
+        }),
+      });
+    });
+    await page.route("**/api/cart", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            items: [],
+            totalAmount: 0,
+          },
+          error: null,
+        }),
+      });
+    });
+
+    await page.goto("/login");
+    await page.getByRole("link", { name: "カート" }).click();
+
+    await expect(page).toHaveURL(/\/cart$/);
+    await expect(page.getByRole("heading", { name: "カート" })).toBeVisible();
   });
 
   test("logout成功時は未ログイン状態に更新して商品一覧へ遷移する", async ({
