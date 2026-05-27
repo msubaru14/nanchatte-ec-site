@@ -470,11 +470,22 @@ test.describe("認証画面", () => {
         }),
       });
     });
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(cartWithItemsResponse),
+      });
+    });
 
     await page.goto("/login");
+    await expect(page.getByLabel("カート内の商品数 3件")).toBeVisible();
     await page.getByRole("button", { name: "ログアウト" }).click();
 
     await expect(page).toHaveURL(/\/products$/);
+    await expect(page.getByRole("link", { name: /カート/ })).toHaveCount(0);
+    await expect(page.getByLabel(/カート内の商品数/)).toHaveCount(0);
     await expect(page.getByRole("link", { name: "ログイン" })).toBeVisible();
     await expect(page.getByRole("link", { name: "ユーザー登録" })).toBeVisible();
   });
@@ -511,11 +522,22 @@ test.describe("認証画面", () => {
         }),
       });
     });
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(cartWithItemsResponse),
+      });
+    });
 
     await page.goto("/login");
+    await expect(page.getByLabel("カート内の商品数 3件")).toBeVisible();
     await page.getByRole("button", { name: "ログアウト" }).click();
 
     await expect(page).toHaveURL(/\/products$/);
+    await expect(page.getByRole("link", { name: /カート/ })).toHaveCount(0);
+    await expect(page.getByLabel(/カート内の商品数/)).toHaveCount(0);
     await expect(page.getByRole("link", { name: "ログイン" })).toBeVisible();
     await expect(page.getByText("revoke failed", { exact: true })).toBeVisible();
   });
