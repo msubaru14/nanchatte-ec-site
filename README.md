@@ -50,11 +50,12 @@
     │   │   ├── components
     │   │   └── utils
     │   ├── cart
-    │   │   └── api
-    │   │       ├── client
-    │   │       ├── handler
-    │   │       ├── server
-    │   │       └── types
+    │   │   ├── api
+    │   │   │   ├── client
+    │   │   │   ├── handler
+    │   │   │   ├── server
+    │   │   │   └── types
+    │   │   └── utils
     │   └── products
     │       ├── api
     │       ├── components
@@ -223,6 +224,8 @@ npm run test:e2e:ui
 - 共通 Header の認証導線
   - 未ログイン時のログイン・ユーザー登録導線表示
   - ログイン済み時のユーザー名・ログアウト導線表示
+  - ログイン済み時のCart導線と、商品がある場合の数量合計バッジ表示
+  - Cart追加・数量変更・削除後のCart件数再取得
   - logout 後の `AuthContext` 更新と `/products` 遷移
   - logout API の失敗時も cookie 削除後は未ログイン状態へ更新
 - product API

@@ -304,6 +304,25 @@ products と結合して表示する。
 
 ---
 
+# ■ HeaderのCart件数表示
+
+## Phase1方針
+
+- ログイン済みユーザーにのみ Header の `カート` 導線を表示する
+- Header の件数は `cart_items.quantity` の合計を、Cart取得結果からfrontendで算出する
+- 件数が1以上の場合のみバッジ表示し、空Cartでは `カート` 導線だけを表示する
+- 未ログイン時は Header からCart取得を行わない
+- Cart取得が失敗した場合も Header 全体は維持し、件数なし表示へフォールバックする
+
+## 更新タイミング
+
+- ログイン済みHeaderの初回表示時とlogin後にCartを取得する
+- Cart追加、数量変更、商品削除、全削除の成功後にCartを再取得する
+- logout後は `カート` 導線と件数を表示しない
+- Phase1では複数タブ間や他デバイス操作によるリアルタイム同期は扱わない
+
+---
+
 # ■ 空カート
 
 cart_items が0件でも carts は残す。
@@ -578,6 +597,7 @@ updated_at < now() - interval '30 days'
 - 数量入力UIはステッパー方式
 - `maxSelectableQuantity` はステッパーの上限制御に使い、Phase1では `stock_quantity` と同値とする
 - 一般ユーザーには実在庫数を直接表示しない
+- Header のCart件数は `quantity` 合計を派生値として表示し、空Cartでは件数バッジを表示しない
 - CartItemには価格スナップショットを持たない
 - カート表示時は現在価格を参照する
 - カート表示・数量変更・注文確定時に在庫再チェックを行う

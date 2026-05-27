@@ -8,6 +8,25 @@ const unauthorizedResponse = {
   },
 };
 
+const emptyCartResponse = {
+  data: {
+    items: [],
+    totalAmount: 0,
+  },
+  error: null,
+};
+
+const cartWithItemsResponse = {
+  data: {
+    items: [
+      { quantity: 2 },
+      { quantity: 1 },
+    ],
+    totalAmount: 0,
+  },
+  error: null,
+};
+
 function watchUnexpectedBrowserErrors(page: Page) {
   const errors: string[] = [];
 
@@ -35,6 +54,13 @@ test.describe("認証画面", () => {
         body: JSON.stringify(unauthorizedResponse),
       });
     });
+    await page.route("**/api/cart", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(emptyCartResponse),
+      });
+    });
   });
 
   test("ログイン成功時は指定された内部パスへ遷移する", async ({ page }) => {
@@ -53,6 +79,14 @@ test.describe("認証画面", () => {
         }),
       });
     });
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(cartWithItemsResponse),
+      });
+    });
 
     await page.goto("/login?returnTo=%2Fregister%3Ffrom%3Dlogin");
     await page.getByLabel("メールアドレス").fill("login@example.com");
@@ -60,6 +94,7 @@ test.describe("認証画面", () => {
     await page.getByRole("button", { name: "ログイン" }).click();
 
     await expect(page).toHaveURL(/\/register\?from=login$/);
+    await expect(page.getByLabel("カート内の商品数 3件")).toBeVisible();
   });
 
   test("外部returnToは破棄して商品一覧へ遷移する", async ({ page }) => {
@@ -172,18 +207,75 @@ test.describe("認証画面", () => {
   });
 
   test("未ログイン時はHeaderに認証導線を表示する", async ({ page }) => {
+    let cartRequestCount = 0;
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      cartRequestCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(emptyCartResponse),
+      });
+    });
+
     await page.goto("/login");
 
+    await expect(page.getByRole("link", { name: "カート" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "ログイン" }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "ユーザー登録" })).toBeVisible();
     await expect(page.getByRole("button", { name: "ログアウト" })).toHaveCount(0);
+    expect(cartRequestCount).toBe(0);
   });
 
   test("ログイン済み時はHeaderにユーザー名とlogout導線を表示する", async ({
     page,
   }) => {
     const expectNoBrowserErrors = watchUnexpectedBrowserErrors(page);
+    let cartRequestCount = 0;
 
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 3,
+            name: "Header User",
+            email: "header@example.com",
+            roles: ["customer"],
+          },
+          error: null,
+        }),
+      });
+    });
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      cartRequestCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(cartWithItemsResponse),
+      });
+    });
+
+    await page.goto("/login");
+
+    await expect(page.getByRole("link", { name: /カート/ })).toHaveAttribute(
+      "href",
+      "/cart",
+    );
+    await expect(page.getByLabel("カート内の商品数 3件")).toBeVisible();
+    await expect(page.getByText("Header User")).toBeVisible();
+    await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "ユーザー登録" })).toHaveCount(0);
+    await expect.poll(() => cartRequestCount).toBe(1);
+    expectNoBrowserErrors();
+  });
+
+  test("空Cartの場合はHeaderのCartリンクだけを表示する", async ({
+    page,
+  }) => {
     await page.unroute("**/api/auth/me");
     await page.route("**/api/auth/me", async (route) => {
       await route.fulfill({
@@ -203,10 +295,150 @@ test.describe("認証画面", () => {
 
     await page.goto("/login");
 
+    await expect(page.getByRole("link", { name: "カート", exact: true })).toHaveAttribute(
+      "href",
+      "/cart",
+    );
+    await expect(page.getByLabel(/カート内の商品数/)).toHaveCount(0);
+  });
+
+  test("Cart取得中はHeaderのCartリンクに読み込み表示を出す", async ({
+    page,
+  }) => {
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 3,
+            name: "Header User",
+            email: "header@example.com",
+            roles: ["customer"],
+          },
+          error: null,
+        }),
+      });
+    });
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(emptyCartResponse),
+      });
+    });
+
+    await page.goto("/login");
+
+    await expect(page.getByLabel("カート件数を取得中")).toBeVisible();
+  });
+
+  test("Cart取得に失敗してもHeaderのCartリンクを表示する", async ({
+    page,
+  }) => {
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 3,
+            name: "Header User",
+            email: "header@example.com",
+            roles: ["customer"],
+          },
+          error: null,
+        }),
+      });
+    });
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: null,
+          error: {
+            code: "INTERNAL_SERVER_ERROR",
+            message: "cart load failed",
+          },
+        }),
+      });
+    });
+
+    await page.goto("/login");
+
+    await expect(page.getByRole("link", { name: "カート", exact: true })).toHaveAttribute(
+      "href",
+      "/cart",
+    );
     await expect(page.getByText("Header User")).toBeVisible();
-    await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "ユーザー登録" })).toHaveCount(0);
-    expectNoBrowserErrors();
+    await expect(page.getByLabel(/カート内の商品数/)).toHaveCount(0);
+  });
+
+  test("Cart取得が未認証の場合はHeaderを未ログイン表示に戻す", async ({
+    page,
+  }) => {
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 3,
+            name: "Header User",
+            email: "header@example.com",
+            roles: ["customer"],
+          },
+          error: null,
+        }),
+      });
+    });
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify(unauthorizedResponse),
+      });
+    });
+
+    await page.goto("/login");
+
+    await expect(page.getByRole("link", { name: "カート" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "ログイン" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "ユーザー登録" })).toBeVisible();
+  });
+
+  test("ログイン済み時はHeaderのカート導線からCart画面へ遷移する", async ({
+    page,
+  }) => {
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 3,
+            name: "Header User",
+            email: "header@example.com",
+            roles: ["customer"],
+          },
+          error: null,
+        }),
+      });
+    });
+    await page.goto("/login");
+    await page.getByRole("link", { name: /カート/ }).click();
+
+    await expect(page).toHaveURL(/\/cart$/);
+    await expect(page.getByRole("heading", { name: "カート" })).toBeVisible();
   });
 
   test("logout成功時は未ログイン状態に更新して商品一覧へ遷移する", async ({
@@ -238,11 +470,22 @@ test.describe("認証画面", () => {
         }),
       });
     });
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(cartWithItemsResponse),
+      });
+    });
 
     await page.goto("/login");
+    await expect(page.getByLabel("カート内の商品数 3件")).toBeVisible();
     await page.getByRole("button", { name: "ログアウト" }).click();
 
     await expect(page).toHaveURL(/\/products$/);
+    await expect(page.getByRole("link", { name: /カート/ })).toHaveCount(0);
+    await expect(page.getByLabel(/カート内の商品数/)).toHaveCount(0);
     await expect(page.getByRole("link", { name: "ログイン" })).toBeVisible();
     await expect(page.getByRole("link", { name: "ユーザー登録" })).toBeVisible();
   });
@@ -279,11 +522,22 @@ test.describe("認証画面", () => {
         }),
       });
     });
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(cartWithItemsResponse),
+      });
+    });
 
     await page.goto("/login");
+    await expect(page.getByLabel("カート内の商品数 3件")).toBeVisible();
     await page.getByRole("button", { name: "ログアウト" }).click();
 
     await expect(page).toHaveURL(/\/products$/);
+    await expect(page.getByRole("link", { name: /カート/ })).toHaveCount(0);
+    await expect(page.getByLabel(/カート内の商品数/)).toHaveCount(0);
     await expect(page.getByRole("link", { name: "ログイン" })).toBeVisible();
     await expect(page.getByText("revoke failed", { exact: true })).toBeVisible();
   });
