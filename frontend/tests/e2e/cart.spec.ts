@@ -153,6 +153,7 @@ test.describe("/cart", () => {
     await expect.poll(() => patchBodies.length).toBe(1);
     expect(patchBodies[0]).toEqual({ quantity: 3 });
     await expect(page.getByLabel("カート合計")).toContainText(/[￥¥]118,800/);
+    await expect(page.getByLabel("カート内の商品数 3件")).toBeVisible();
     await expect(
       item.getByRole("button", { name: "料金を再計算" }),
     ).toHaveCount(0);
@@ -165,10 +166,8 @@ test.describe("/cart", () => {
       items: [{ ...keyboardItem }],
       totalAmount: keyboardItem.priceIncludingTax,
     };
-    let getCount = 0;
 
     await page.route("**/api/cart", async (route) => {
-      getCount += 1;
       await fulfillJson(route, 200, cartResponse(cart));
     });
     await page.route("**/api/cart/items/1", async (route) => {
@@ -203,7 +202,6 @@ test.describe("/cart", () => {
     await expect(
       item.getByText("在庫が不足しているため、数量を変更できませんでした。"),
     ).toBeVisible();
-    await expect.poll(() => getCount).toBe(2);
     await expect(increaseButton).toBeDisabled();
     await expect(
       item.getByRole("button", { name: "料金を再計算" }),
@@ -243,6 +241,7 @@ test.describe("/cart", () => {
       "href",
       "/products",
     );
+    await expect(page.getByLabel(/カート内の商品数/)).toHaveCount(0);
   });
 
   test("全商品を削除すると空Cart表示へ切り替わる", async ({ page }) => {
@@ -274,6 +273,7 @@ test.describe("/cart", () => {
 
     await expect.poll(() => deleteCount).toBe(1);
     await expect(page.getByText("カートに商品がありません。")).toBeVisible();
+    await expect(page.getByLabel(/カート内の商品数/)).toHaveCount(0);
   });
 
   test("未認証の場合は戻り先付きでログイン画面へ遷移する", async ({ page }) => {

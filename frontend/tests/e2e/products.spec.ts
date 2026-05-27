@@ -184,12 +184,35 @@ test.describe("/products/:id", () => {
 
   test("選択した数量でカートに追加しCart導線を表示する", async ({ page }) => {
     const requests: Array<{ productId: number; quantity: number }> = [];
+    let cartQuantity = 0;
+
+    await page.route("**/api/auth/me", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          id: 1,
+          name: "Cart Header User",
+          email: "cart-header@example.com",
+          roles: ["customer"],
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/cart", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          items: cartQuantity > 0 ? [{ quantity: cartQuantity }] : [],
+          totalAmount: 0,
+        },
+        error: null,
+      });
+    });
 
     await page.route("**/api/cart/items", async (route) => {
       requests.push(route.request().postDataJSON() as {
         productId: number;
         quantity: number;
       });
+      cartQuantity = 2;
       await fulfillJson(route, 200, {
         data: { message: "cart item added" },
         error: null,
@@ -212,6 +235,7 @@ test.describe("/products/:id", () => {
       "href",
       "/cart",
     );
+    await expect(page.getByLabel("カート内の商品数 2件")).toBeVisible();
   });
 
   test("在庫不足なら提示数量での再追加を確認して実行できる", async ({ page }) => {

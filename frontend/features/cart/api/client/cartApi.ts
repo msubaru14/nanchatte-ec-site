@@ -1,6 +1,7 @@
 import { ERROR_CODES } from "../../../../constants/errorCodes";
 import { getJsonHeaders, requestJson } from "../../../../lib/api";
 import { ApiError } from "../../../../lib/errors";
+import { notifyCartUpdated } from "../../utils/cartEvents";
 import type {
   AddCartItemInput,
   Cart,
@@ -37,6 +38,7 @@ export const addCartItem = async (input: AddCartItemInput) => {
     );
   }
 
+  notifyCartUpdated();
   return json.data;
 };
 
@@ -57,6 +59,7 @@ export const updateCartItemQuantity = async (
     );
   }
 
+  notifyCartUpdated();
   return json.data;
 };
 
@@ -72,6 +75,7 @@ export const deleteCartItem = async (productId: number) => {
     );
   }
 
+  notifyCartUpdated();
   return json.data;
 };
 
@@ -87,5 +91,6 @@ export const deleteAllCartItems = async () => {
     );
   }
 
+  notifyCartUpdated();
   return json.data;
 };

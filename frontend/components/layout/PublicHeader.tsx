@@ -8,6 +8,7 @@ import { ERROR_CODES } from "../../constants/errorCodes";
 import { useAuth } from "../../contexts/AuthContext";
 import { logout } from "../../features/auth/api";
 import { fetchCart } from "../../features/cart/api";
+import { onCartUpdated } from "../../features/cart/utils/cartEvents";
 import { ApiError } from "../../lib/errors";
 import styles from "./PublicHeader.module.css";
 
@@ -18,6 +19,13 @@ export function PublicHeader() {
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [cartItemCount, setCartItemCount] = useState<number | null>(null);
   const [isCartLoading, setIsCartLoading] = useState(false);
+  const [cartRefreshVersion, setCartRefreshVersion] = useState(0);
+
+  useEffect(() => {
+    return onCartUpdated(() => {
+      setCartRefreshVersion((current) => current + 1);
+    });
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -65,7 +73,7 @@ export function PublicHeader() {
     return () => {
       isCancelled = true;
     };
-  }, [isLoading, setUser, user]);
+  }, [cartRefreshVersion, isLoading, setUser, user]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);

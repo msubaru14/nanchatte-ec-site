@@ -79,6 +79,14 @@ test.describe("認証画面", () => {
         }),
       });
     });
+    await page.unroute("**/api/cart");
+    await page.route("**/api/cart", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(cartWithItemsResponse),
+      });
+    });
 
     await page.goto("/login?returnTo=%2Fregister%3Ffrom%3Dlogin");
     await page.getByLabel("メールアドレス").fill("login@example.com");
@@ -86,6 +94,7 @@ test.describe("認証画面", () => {
     await page.getByRole("button", { name: "ログイン" }).click();
 
     await expect(page).toHaveURL(/\/register\?from=login$/);
+    await expect(page.getByLabel("カート内の商品数 3件")).toBeVisible();
   });
 
   test("外部returnToは破棄して商品一覧へ遷移する", async ({ page }) => {
