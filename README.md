@@ -31,8 +31,11 @@
     ├── app
     │   ├── api
     │   │   ├── auth
-    │   │   └── cart
+    │   │   ├── cart
+    │   │   └── orders
+    │   ├── cart
     │   ├── login
+    │   ├── orders
     │   ├── products
     │   └── register
     ├── components
@@ -50,6 +53,13 @@
     │   │   ├── components
     │   │   └── utils
     │   ├── cart
+    │   │   ├── api
+    │   │   │   ├── client
+    │   │   │   ├── handler
+    │   │   │   ├── server
+    │   │   │   └── types
+    │   │   └── utils
+    │   ├── order
     │   │   ├── api
     │   │   │   ├── client
     │   │   │   ├── handler
@@ -98,6 +108,9 @@ docker compose up --build -d
 - ログイン画面: http://localhost:3000/login
 - ユーザー登録画面: http://localhost:3000/register
 - 商品一覧画面: http://localhost:3000/products
+- カート画面: http://localhost:3000/cart
+- 注文確認画面: http://localhost:3000/orders/confirm
+- 注文完了画面: http://localhost:3000/orders/complete
 - Backend health check: http://localhost:8080/api/health
 - API仕様（Swagger UI）: http://localhost:8081
 - PostgreSQL: localhost:5432
@@ -213,6 +226,7 @@ npm run test:e2e:ui
   - `PATCH /api/cart/items/:productId`
   - `DELETE /api/cart/items/:productId`
   - `DELETE /api/cart/items`
+  - `POST /api/orders`
   - access token / refresh token を httpOnly cookie で管理
   - 認証対象 API では 401 時に refresh retry を行う
   - backend の response / error code を Browser 向けにも維持する
@@ -239,6 +253,18 @@ npm run test:e2e:ui
   - `DELETE /api/cart/items`
   - `customer` role の認証済みユーザー向けに、表示・追加・数量変更・削除を提供
   - 追加・数量変更では販売状態と在庫を確認し、同時操作時の数量超過を防ぐ
+- order API
+  - `POST /api/orders`
+  - `customer` role の認証済みユーザー向けに、Cart内容から注文を作成
+  - 注文確定時に商品状態・在庫・価格・税率を再確認
+  - 注文成功時に在庫減算、order_items作成、cart_items削除を同一transactionで実行
+- 注文確認 / 注文完了画面
+  - Cart画面から注文確認画面への導線
+  - Cart BFFを利用した注文前確認
+  - Order BFFを利用した注文確定
+  - 注文確定中の二重送信防止
+  - `EMPTY_CART` / `OUT_OF_STOCK` / `VALIDATION_ERROR` の表示
+  - 注文完了画面で注文番号と合計金額を表示
 - Next.js App Router によるトップページ
 - 商品一覧画面
   - `GET /api/products` を利用した商品カード表示
