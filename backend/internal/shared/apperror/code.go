@@ -4,6 +4,7 @@ const (
 	CodeInvalidRequest      = "INVALID_REQUEST"
 	CodeValidationError     = "VALIDATION_ERROR"
 	CodeConflict            = "CONFLICT"
+	CodeEmptyCart           = "EMPTY_CART"
 	CodeOutOfStock          = "OUT_OF_STOCK"
 	CodeUnauthorized        = "UNAUTHORIZED"
 	CodeForbidden           = "FORBIDDEN"

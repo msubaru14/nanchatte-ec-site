@@ -22,7 +22,7 @@ type OutOfStockDetails struct {
 
 func MapErrorCodeToStatus(code string) int {
 	switch code {
-	case CodeInvalidRequest, CodeValidationError:
+	case CodeInvalidRequest, CodeValidationError, CodeEmptyCart:
 		return http.StatusBadRequest
 	case CodeConflict, CodeOutOfStock:
 		return http.StatusConflict
@@ -91,6 +91,13 @@ func NewConflict(message string) *APIError {
 	return &APIError{
 		Code:    CodeConflict,
 		Message: message,
+	}
+}
+
+func NewEmptyCart() *APIError {
+	return &APIError{
+		Code:    CodeEmptyCart,
+		Message: "cart is empty",
 	}
 }
 

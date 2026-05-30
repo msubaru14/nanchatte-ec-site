@@ -15,7 +15,7 @@ func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) Transaction(fn func(*Repository) error) error {
+func (r *Repository) Transaction(fn func(orderRepository) error) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		return fn(NewRepository(tx))
 	})
