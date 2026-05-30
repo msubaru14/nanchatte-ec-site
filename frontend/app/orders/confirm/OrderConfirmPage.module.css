@@ -43,8 +43,16 @@
   color: var(--muted);
 }
 
+.emptyNotice {
+  margin: 0 0 12px;
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .primaryLink,
-.secondaryLink {
+.secondaryLink,
+.secondaryEmptyLink {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -62,6 +70,17 @@
 
 .primaryLink:hover {
   background: var(--primary-dark);
+}
+
+.secondaryEmptyLink {
+  margin-right: 10px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--text);
+}
+
+.secondaryEmptyLink:hover {
+  background: #f8fafc;
 }
 
 .confirmLayout {

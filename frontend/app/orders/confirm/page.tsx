@@ -45,6 +45,7 @@ export default function OrderConfirmPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [orderErrorMessage, setOrderErrorMessage] = useState<string | null>(null);
+  const [emptyCartMessage, setEmptyCartMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const redirectToLogin = useCallback(() => {
@@ -58,6 +59,7 @@ export default function OrderConfirmPage() {
     setIsLoading(true);
     setErrorMessage(null);
     setOrderErrorMessage(null);
+    setEmptyCartMessage(null);
 
     try {
       setCart(await fetchCart());
@@ -90,6 +92,16 @@ export default function OrderConfirmPage() {
   const canSubmitOrder =
     Boolean(cart && cart.items.length > 0) && !includesUnavailableItem && !isSubmitting;
 
+  const refreshCartAfterOrderError = async () => {
+    try {
+      setCart(await fetchCart());
+    } catch (error) {
+      if (error instanceof ApiError && error.code === ERROR_CODES.UNAUTHORIZED) {
+        redirectToLogin();
+      }
+    }
+  };
+
   const handleCreateOrder = async () => {
     if (!canSubmitOrder) {
       return;
@@ -97,6 +109,7 @@ export default function OrderConfirmPage() {
 
     setIsSubmitting(true);
     setOrderErrorMessage(null);
+    setEmptyCartMessage(null);
 
     try {
       const order = await createOrder();
@@ -105,6 +118,28 @@ export default function OrderConfirmPage() {
     } catch (error) {
       if (error instanceof ApiError && error.code === ERROR_CODES.UNAUTHORIZED) {
         redirectToLogin();
+        return;
+      }
+
+      if (error instanceof ApiError && error.code === ERROR_CODES.EMPTY_CART) {
+        setCart({ items: [], totalAmount: 0 });
+        setEmptyCartMessage("カートが空のため注文できません。");
+        return;
+      }
+
+      if (error instanceof ApiError && error.code === ERROR_CODES.OUT_OF_STOCK) {
+        setOrderErrorMessage(
+          "注文確定直前に在庫不足の商品がありました。カートで数量を確認してください。",
+        );
+        await refreshCartAfterOrderError();
+        return;
+      }
+
+      if (error instanceof ApiError && error.code === ERROR_CODES.VALIDATION_ERROR) {
+        setOrderErrorMessage(
+          "販売停止などにより注文できない商品が含まれています。カートで内容を確認してください。",
+        );
+        await refreshCartAfterOrderError();
         return;
       }
 
@@ -140,7 +175,15 @@ export default function OrderConfirmPage() {
       ) : cart ? (
         isCartEmpty ? (
           <div className={styles.empty}>
+            {emptyCartMessage && (
+              <p className={styles.emptyNotice} role="alert">
+                {emptyCartMessage}
+              </p>
+            )}
             <p className={styles.emptyMessage}>カートに商品がありません。</p>
+            <Link className={styles.secondaryEmptyLink} href="/cart">
+              カートへ戻る
+            </Link>
             <Link className={styles.primaryLink} href="/products">
               商品を探す
             </Link>
