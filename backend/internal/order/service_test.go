@@ -43,6 +43,14 @@ func TestServiceCreateOrder(t *testing.T) {
 			wantStock: 5,
 		},
 		{
+			name: "ユーザーCartが存在しない場合もEMPTY_CARTを返す",
+			setup: func(repository *fakeRepository) {
+				repository.cart.UserID = 2
+			},
+			wantCode:  apperror.CodeEmptyCart,
+			wantStock: 5,
+		},
+		{
 			name: "販売停止商品が含まれる場合は注文失敗する",
 			setup: func(repository *fakeRepository) {
 				repository.cart.Items[0].Product.Status = product.ProductStatusStopped
@@ -94,6 +102,9 @@ func TestServiceCreateOrder(t *testing.T) {
 				if result.TotalIncludingTax != tt.wantTotalIncludingTax {
 					t.Fatalf("total including tax = %d, want %d", result.TotalIncludingTax, tt.wantTotalIncludingTax)
 				}
+				assertCreatedOrder(t, repository.orders[0], orderedAt)
+				assertCreatedOrderItem(t, repository.orderItems[0])
+				assertDeletedCartItemIDs(t, repository.deletedCartItemIDs, []int64{100})
 			}
 			if got := len(repository.orders); got != tt.wantOrderCount {
 				t.Fatalf("order count = %d, want %d", got, tt.wantOrderCount)
@@ -108,6 +119,56 @@ func TestServiceCreateOrder(t *testing.T) {
 				t.Fatalf("stock = %d, want %d", got, tt.wantStock)
 			}
 		})
+	}
+}
+
+func assertCreatedOrder(t *testing.T, order Order, orderedAt time.Time) {
+	t.Helper()
+
+	if order.OrderNumber != "ORD-20260528-A8K3D2" {
+		t.Fatalf("order number = %q, want %q", order.OrderNumber, "ORD-20260528-A8K3D2")
+	}
+	if order.OrderStatus != OrderStatusOrdered {
+		t.Fatalf("order status = %q, want %q", order.OrderStatus, OrderStatusOrdered)
+	}
+	if order.TotalExcludingTax != 2000 || order.TotalTax != 200 || order.TotalIncludingTax != 2200 {
+		t.Fatalf("order total = (%d, %d, %d), want (2000, 200, 2200)", order.TotalExcludingTax, order.TotalTax, order.TotalIncludingTax)
+	}
+	if !order.OrderedAt.Equal(orderedAt) {
+		t.Fatalf("ordered at = %s, want %s", order.OrderedAt, orderedAt)
+	}
+}
+
+func assertCreatedOrderItem(t *testing.T, item OrderItem) {
+	t.Helper()
+
+	if item.OrderID != 1 {
+		t.Fatalf("order ID = %d, want 1", item.OrderID)
+	}
+	if item.ProductID != 1 || item.ProductName != "Keyboard" {
+		t.Fatalf("product snapshot = (%d, %q), want (1, %q)", item.ProductID, item.ProductName, "Keyboard")
+	}
+	if item.UnitPriceExcludingTax != 1000 || item.TaxRate != 0.10 || item.UnitPriceIncludingTax != 1100 {
+		t.Fatalf("unit price snapshot = (%d, %.2f, %d), want (1000, 0.10, 1100)", item.UnitPriceExcludingTax, item.TaxRate, item.UnitPriceIncludingTax)
+	}
+	if item.Quantity != 2 {
+		t.Fatalf("quantity = %d, want 2", item.Quantity)
+	}
+	if item.SubtotalExcludingTax != 2000 || item.SubtotalTax != 200 || item.SubtotalIncludingTax != 2200 {
+		t.Fatalf("subtotal = (%d, %d, %d), want (2000, 200, 2200)", item.SubtotalExcludingTax, item.SubtotalTax, item.SubtotalIncludingTax)
+	}
+}
+
+func assertDeletedCartItemIDs(t *testing.T, got []int64, want []int64) {
+	t.Helper()
+
+	if len(got) != len(want) {
+		t.Fatalf("deleted cart item IDs = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("deleted cart item IDs = %v, want %v", got, want)
+		}
 	}
 }
 
