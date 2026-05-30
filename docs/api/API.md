@@ -337,6 +337,10 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 - 注文成功後に対象 cart_items を物理削除する
 - 注文番号、合計金額、注文日時、注文明細を返す
 - 注文確定処理は transaction 内で行い、部分成功させない
+- BFF 経由では `POST /api/orders` として公開し、Browser から Go API を直接呼ばない
+- BFF は `access_token` cookie を利用して Go API を呼び出し、期限切れ時は refresh retry を適用する
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
+- BFF レスポンスでは token を Browser JavaScript へ返さない
 
 主なエラー:
 
