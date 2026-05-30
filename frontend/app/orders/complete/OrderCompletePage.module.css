@@ -1,0 +1,174 @@
+.page {
+  width: min(100%, 960px);
+  margin: 0 auto;
+  padding: 40px 24px 56px;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.title {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.status,
+.emptyPanel,
+.messagePanel,
+.nextActions {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.status {
+  padding: 32px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.completeLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  align-items: start;
+  gap: 24px;
+}
+
+.messagePanel {
+  padding: 28px;
+}
+
+.completeMessage {
+  margin: 0 0 22px;
+  color: var(--primary-dark);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.orderSummary {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.summaryRow dt {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.summaryRow dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.nextActions {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+}
+
+.emptyPanel {
+  padding: 28px;
+}
+
+.emptyTitle {
+  margin: 0 0 10px;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.emptyMessage {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.primaryLink,
+.secondaryLink {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 16px;
+  text-decoration: none;
+}
+
+.primaryLink {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.primaryLink:hover {
+  background: var(--primary-dark);
+}
+
+.secondaryLink {
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--text);
+}
+
+.secondaryLink:hover {
+  background: #f8fafc;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 28px 16px 40px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+
+  .completeLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryRow {
+    display: grid;
+    gap: 6px;
+  }
+
+  .summaryRow dd {
+    text-align: left;
+  }
+
+  .nextActions,
+  .linkRow {
+    display: grid;
+  }
+}

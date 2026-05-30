@@ -9,13 +9,12 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { fetchCart } from "../../../features/cart/api";
 import type { Cart, CartItem, CartStockStatus } from "../../../features/cart/api";
 import { createOrder } from "../../../features/order/api";
-import type { OrderCreateResult } from "../../../features/order/api";
+import { storeLatestOrder } from "../../../features/order/utils/latestOrder";
 import { ApiError } from "../../../lib/errors";
 import styles from "./OrderConfirmPage.module.css";
 
 const ORDER_CONFIRM_RETURN_TO = "/orders/confirm";
 const ORDER_COMPLETE_PATH = "/orders/complete";
-const LATEST_ORDER_STORAGE_KEY = "latestOrder";
 
 const priceFormatter = new Intl.NumberFormat("ja-JP", {
   style: "currency",
@@ -37,14 +36,6 @@ const stockStatusClassNames: Record<CartStockStatus, string> = {
 
 const hasUnavailableItem = (items: CartItem[]) => {
   return items.some((item) => !item.canBePurchased);
-};
-
-const storeLatestOrder = (order: OrderCreateResult) => {
-  try {
-    sessionStorage.setItem(LATEST_ORDER_STORAGE_KEY, JSON.stringify(order));
-  } catch {
-    // 注文自体は成功しているため、保存失敗では遷移を止めない。
-  }
 };
 
 export default function OrderConfirmPage() {
