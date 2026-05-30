@@ -15,6 +15,8 @@ tags:
     description: Public product APIs
   - name: Cart
     description: Authenticated customer cart APIs
+  - name: Orders
+    description: Authenticated customer order APIs
 paths:
   /api/auth/register:
     post:
@@ -580,6 +582,72 @@ paths:
           $ref: "#/components/responses/CartResourceNotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/orders:
+    post:
+      tags:
+        - Orders
+      summary: Create order
+      description: |
+        ログインユーザーのCart内商品を注文確定する。
+
+        access token による認証と customer role が必要。
+        request body は持たない。
+        Cartに残っている商品を一括で注文対象とし、部分成功は行わない。
+        注文確定時点の商品状態、在庫、価格、税率を再確認する。
+        成功時は同一transaction内で orders / order_items 作成、在庫減算、対象 cart_items 物理削除を行う。
+      operationId: createOrder
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Order created response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderCreateSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      orderId: 1
+                      orderNumber: ORD-20260528-A8K3D2
+                      totalIncludingTax: 79200
+                      orderedAt: "2026-05-28T12:00:00Z"
+                      items:
+                        - productId: 1
+                          productName: HHKB Professional
+                          productImageUrl: null
+                          quantity: 2
+                          unitPriceIncludingTax: 39600
+                          subtotalIncludingTax: 79200
+                    error: null
+        "400":
+          description: Empty cart or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                emptyCart:
+                  value:
+                    data: null
+                    error:
+                      code: EMPTY_CART
+                      message: cart is empty
+                validationError:
+                  value:
+                    data: null
+                    error:
+                      code: VALIDATION_ERROR
+                      message: validation error
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "409":
+          $ref: "#/components/responses/OrderOutOfStockError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 components:
   securitySchemes:
     bearerAuth:
@@ -739,6 +807,19 @@ components:
                   message: out of stock
                   details:
                     availableQuantity: 3
+    OrderOutOfStockError:
+      description: Order contains an out-of-stock item
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            outOfStock:
+              value:
+                data: null
+                error:
+                  code: OUT_OF_STOCK
+                  message: out of stock
     UnauthorizedError:
       description: Unauthorized
       content:
@@ -1041,6 +1122,78 @@ components:
         error:
           nullable: true
           example: null
+    OrderCreateSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/OrderCreateData"
+        error:
+          nullable: true
+          example: null
+    OrderCreateData:
+      type: object
+      required:
+        - orderId
+        - orderNumber
+        - totalIncludingTax
+        - orderedAt
+        - items
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          example: 1
+        orderNumber:
+          type: string
+          pattern: "^ORD-[0-9]{8}-[A-Z0-9]{6}$"
+          example: ORD-20260528-A8K3D2
+        totalIncludingTax:
+          type: integer
+          minimum: 0
+          example: 79200
+        orderedAt:
+          type: string
+          format: date-time
+          example: "2026-05-28T12:00:00Z"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderCreateItem"
+    OrderCreateItem:
+      type: object
+      required:
+        - productId
+        - productName
+        - quantity
+        - unitPriceIncludingTax
+        - subtotalIncludingTax
+      properties:
+        productId:
+          type: integer
+          format: int64
+          example: 1
+        productName:
+          type: string
+          example: HHKB Professional
+        productImageUrl:
+          type: string
+          nullable: true
+          example: null
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+        unitPriceIncludingTax:
+          type: integer
+          minimum: 0
+          example: 39600
+        subtotalIncludingTax:
+          type: integer
+          minimum: 0
+          example: 79200
     CartData:
       type: object
       required:
@@ -1133,6 +1286,7 @@ components:
             - INVALID_REQUEST
             - VALIDATION_ERROR
             - CONFLICT
+            - EMPTY_CART
             - UNAUTHORIZED
             - FORBIDDEN
             - NOT_FOUND

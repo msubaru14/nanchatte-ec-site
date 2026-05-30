@@ -329,12 +329,20 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 カート内容から注文を作成する。
 
-- 購入可能商品を抽出
+- request body は持たない
 - 商品状態・在庫・価格・税率を最終確認
+- 1件でも購入不可商品があれば注文作成せずエラーを返す
 - orders / order_items 作成
 - 在庫減算
-- 購入対象 cart_items 削除
-- 注文番号を返す
+- 注文成功後に対象 cart_items を物理削除する
+- 注文番号、合計金額、注文日時、注文明細を返す
+- 注文確定処理は transaction 内で行い、部分成功させない
+
+主なエラー:
+
+- `EMPTY_CART`: Cartが空の場合。HTTP status は `400 Bad Request`
+- `OUT_OF_STOCK`: 注文確定時点で在庫不足になっている商品がある場合。HTTP status は `409 Conflict`
+- `VALIDATION_ERROR`: 販売停止商品など、注文対象として不正な商品が含まれる場合。HTTP status は `400 Bad Request`
 
 ---
 
