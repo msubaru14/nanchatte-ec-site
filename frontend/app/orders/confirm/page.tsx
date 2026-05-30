@@ -8,10 +8,14 @@ import { ERROR_CODES } from "../../../constants/errorCodes";
 import { useAuth } from "../../../contexts/AuthContext";
 import { fetchCart } from "../../../features/cart/api";
 import type { Cart, CartItem, CartStockStatus } from "../../../features/cart/api";
+import { createOrder } from "../../../features/order/api";
+import type { OrderCreateResult } from "../../../features/order/api";
 import { ApiError } from "../../../lib/errors";
 import styles from "./OrderConfirmPage.module.css";
 
 const ORDER_CONFIRM_RETURN_TO = "/orders/confirm";
+const ORDER_COMPLETE_PATH = "/orders/complete";
+const LATEST_ORDER_STORAGE_KEY = "latestOrder";
 
 const priceFormatter = new Intl.NumberFormat("ja-JP", {
   style: "currency",
@@ -35,12 +39,22 @@ const hasUnavailableItem = (items: CartItem[]) => {
   return items.some((item) => !item.canBePurchased);
 };
 
+const storeLatestOrder = (order: OrderCreateResult) => {
+  try {
+    sessionStorage.setItem(LATEST_ORDER_STORAGE_KEY, JSON.stringify(order));
+  } catch {
+    // 注文自体は成功しているため、保存失敗では遷移を止めない。
+  }
+};
+
 export default function OrderConfirmPage() {
   const router = useRouter();
   const { setUser } = useAuth();
   const [cart, setCart] = useState<Cart | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [orderErrorMessage, setOrderErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const redirectToLogin = useCallback(() => {
     setUser(null);
@@ -52,6 +66,7 @@ export default function OrderConfirmPage() {
 
     setIsLoading(true);
     setErrorMessage(null);
+    setOrderErrorMessage(null);
 
     try {
       setCart(await fetchCart());
@@ -81,6 +96,34 @@ export default function OrderConfirmPage() {
 
   const isCartEmpty = cart?.items.length === 0;
   const includesUnavailableItem = cart ? hasUnavailableItem(cart.items) : false;
+  const canSubmitOrder =
+    Boolean(cart && cart.items.length > 0) && !includesUnavailableItem && !isSubmitting;
+
+  const handleCreateOrder = async () => {
+    if (!canSubmitOrder) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setOrderErrorMessage(null);
+
+    try {
+      const order = await createOrder();
+      storeLatestOrder(order);
+      router.push(ORDER_COMPLETE_PATH);
+    } catch (error) {
+      if (error instanceof ApiError && error.code === ERROR_CODES.UNAUTHORIZED) {
+        redirectToLogin();
+        return;
+      }
+
+      setOrderErrorMessage(
+        error instanceof ApiError ? error.message : "注文を確定できませんでした。",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section className={styles.page} aria-labelledby="order-confirm-title">
@@ -174,6 +217,19 @@ export default function OrderConfirmPage() {
                   購入できない商品が含まれています。カートで内容を確認してください。
                 </p>
               )}
+              {orderErrorMessage && (
+                <p className={styles.orderError} role="alert">
+                  {orderErrorMessage}
+                </p>
+              )}
+              <button
+                className={styles.submitButton}
+                type="button"
+                disabled={!canSubmitOrder}
+                onClick={() => void handleCreateOrder()}
+              >
+                {isSubmitting ? "注文確定中..." : "注文を確定する"}
+              </button>
               <Link className={styles.secondaryLink} href="/cart">
                 カートに戻る
               </Link>
