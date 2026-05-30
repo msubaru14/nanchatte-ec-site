@@ -314,6 +314,8 @@ export default function CartPage() {
     cart?.items.some(
       (item) => (draftQuantities[item.productId] ?? item.quantity) !== item.quantity,
     ) ?? false;
+  const canProceedToOrderConfirm =
+    Boolean(cart && cart.items.length > 0) && !hasDraftChanges && !isOperating;
 
   return (
     <section className={styles.page} aria-labelledby="cart-title">
@@ -464,6 +466,19 @@ export default function CartPage() {
                 <p className={styles.clearError} role="alert">
                   {clearErrorMessage}
                 </p>
+              )}
+              {canProceedToOrderConfirm ? (
+                <Link className={styles.checkoutLink} href="/orders/confirm">
+                  注文確認へ進む
+                </Link>
+              ) : (
+                <span
+                  className={styles.checkoutLinkDisabled}
+                  aria-disabled="true"
+                  role="link"
+                >
+                  注文確認へ進む
+                </span>
               )}
               <button
                 className={styles.clearButton}
