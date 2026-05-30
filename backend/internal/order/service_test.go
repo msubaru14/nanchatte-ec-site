@@ -67,7 +67,7 @@ func TestServiceCreateOrder(t *testing.T) {
 			wantStock: 5,
 		},
 		{
-			name: "在庫減算が失敗した場合もOUT_OF_STOCKを返しtransactionを巻き戻す",
+			name: "在庫減算時に対象外になった場合もOUT_OF_STOCKを返しtransactionを巻き戻す",
 			setup: func(repository *fakeRepository) {
 				repository.decrementRowsAffected = 0
 			},

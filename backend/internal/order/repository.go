@@ -53,7 +53,7 @@ func (r *Repository) CreateOrderItems(items []OrderItem) error {
 
 func (r *Repository) DecrementProductStock(productID int64, quantity int) (int64, error) {
 	result := r.db.Model(&product.Product{}).
-		Where("id = ? AND stock_quantity >= ?", productID, quantity).
+		Where("id = ? AND status = ? AND stock_quantity >= ?", productID, product.ProductStatusActive, quantity).
 		Update("stock_quantity", gorm.Expr("stock_quantity - ?", quantity))
 
 	return result.RowsAffected, result.Error
