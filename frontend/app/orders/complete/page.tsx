@@ -52,6 +52,12 @@ export default function OrderCompletePage() {
           </div>
 
           <aside className={styles.nextActions} aria-label="次の操作">
+            <Link className={styles.primaryLink} href={`/orders/${order.orderId}`}>
+              注文詳細へ
+            </Link>
+            <Link className={styles.secondaryLink} href="/orders">
+              注文履歴へ
+            </Link>
             <Link className={styles.primaryLink} href="/products">
               商品一覧へ
             </Link>
@@ -67,6 +73,9 @@ export default function OrderCompletePage() {
             注文完了画面を再読み込みした場合は、注文結果を再表示できないことがあります。
           </p>
           <div className={styles.linkRow}>
+            <Link className={styles.primaryLink} href="/orders">
+              注文履歴へ
+            </Link>
             <Link className={styles.primaryLink} href="/products">
               商品一覧へ
             </Link>
