@@ -73,6 +73,8 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 			middleware.RequireRole(auth.CustomerRole),
 		)
 		{
+			orderRoutes.GET("", orderHandler.List)
+			orderRoutes.GET("/:id", orderHandler.Show)
 			orderRoutes.POST("", orderHandler.Create)
 		}
 	}

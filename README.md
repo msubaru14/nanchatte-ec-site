@@ -23,6 +23,7 @@
 │       ├── cart
 │       ├── health
 │       ├── middleware
+│       ├── order
 │       ├── product
 │       ├── router
 │       └── shared
@@ -255,9 +256,13 @@ npm run test:e2e:ui
   - 追加・数量変更では販売状態と在庫を確認し、同時操作時の数量超過を防ぐ
 - order API
   - `POST /api/orders`
+  - `GET /api/orders`
+  - `GET /api/orders/:id`
   - `customer` role の認証済みユーザー向けに、Cart内容から注文を作成
   - 注文確定時に商品状態・在庫・価格・税率を再確認
   - 注文成功時に在庫減算、order_items作成、cart_items削除を同一transactionで実行
+  - 注文履歴一覧ではログインユーザー自身の注文概要と商品数量合計を返す
+  - 注文履歴詳細では order_items に保存した注文時点のスナップショットを返す
 - 注文確認 / 注文完了画面
   - Cart画面から注文確認画面への導線
   - Cart BFFを利用した注文前確認

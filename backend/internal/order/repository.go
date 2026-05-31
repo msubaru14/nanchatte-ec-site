@@ -81,3 +81,42 @@ func (r *Repository) OrderNumberExists(orderNumber string) (bool, error) {
 
 	return count > 0, nil
 }
+
+func (r *Repository) ListOrdersByUserID(userID int64) ([]OrderSummaryResult, error) {
+	var orders []OrderSummaryResult
+	err := r.db.Table("orders").
+		Select(`
+			orders.id AS order_id,
+			orders.order_number,
+			orders.order_status,
+			orders.total_including_tax,
+			orders.ordered_at,
+			COALESCE(SUM(order_items.quantity), 0) AS item_count
+		`).
+		Joins("LEFT JOIN order_items ON order_items.order_id = orders.id").
+		Where("orders.user_id = ?", userID).
+		Group("orders.id, orders.order_number, orders.order_status, orders.total_including_tax, orders.ordered_at").
+		Order("orders.ordered_at DESC").
+		Scan(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
+func (r *Repository) FindOrderByIDAndUserID(orderID int64, userID int64) (*Order, error) {
+	var order Order
+	err := r.db.
+		Preload("Items", func(db *gorm.DB) *gorm.DB {
+			return db.Order("id ASC")
+		}).
+		Where("id = ? AND user_id = ?", orderID, userID).
+		First(&order).
+		Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &order, nil
+}
