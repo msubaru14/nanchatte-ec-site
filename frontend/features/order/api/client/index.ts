@@ -1,1 +1,1 @@
-export { createOrder } from "./orderApi";
+export { createOrder, fetchOrderDetail, fetchOrders } from "./orderApi";

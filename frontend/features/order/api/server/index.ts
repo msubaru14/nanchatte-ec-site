@@ -1,1 +1,5 @@
-export { createOrderWithBackend } from "./orderServer";
+export {
+  createOrderWithBackend,
+  fetchOrderDetailWithBackend,
+  fetchOrdersWithBackend,
+} from "./orderServer";

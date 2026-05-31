@@ -1,1 +1,5 @@
-export { handleCreateOrder } from "./orderHandlers";
+export {
+  handleCreateOrder,
+  handleGetOrderDetail,
+  handleGetOrders,
+} from "./orderHandlers";

@@ -1,2 +1,9 @@
-export { createOrder } from "./client";
-export type { OrderCreateItem, OrderCreateResult } from "./types";
+export { createOrder, fetchOrderDetail, fetchOrders } from "./client";
+export type {
+  OrderCreateItem,
+  OrderCreateResult,
+  OrderDetail,
+  OrderDetailItem,
+  OrderList,
+  OrderSummary,
+} from "./types";
