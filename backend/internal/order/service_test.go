@@ -174,6 +174,124 @@ func TestServiceListOrders(t *testing.T) {
 	}
 }
 
+func TestServiceGetOrderDetail(t *testing.T) {
+	t.Parallel()
+
+	orderedAt := time.Date(2026, 5, 30, 12, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name           string
+		userID         int64
+		orderID        int64
+		setup          func(*fakeRepository)
+		wantCode       string
+		wantOrderID    int64
+		wantItemNames  []string
+		wantModelValue string
+	}{
+		{
+			name:           "ログインユーザー自身の注文詳細を取得できる",
+			userID:         1,
+			orderID:        10,
+			wantOrderID:    10,
+			wantItemNames:  []string{"HHKB Professional", "Trackball"},
+			wantModelValue: "PD-KB800",
+		},
+		{
+			name:     "他ユーザーの注文はNOT_FOUNDを返す",
+			userID:   2,
+			orderID:  10,
+			wantCode: apperror.CodeNotFound,
+		},
+		{
+			name:     "存在しない注文はNOT_FOUNDを返す",
+			userID:   1,
+			orderID:  99,
+			wantCode: apperror.CodeNotFound,
+		},
+		{
+			name:    "repositoryエラーはINTERNAL_SERVER_ERRORを返す",
+			userID:  1,
+			orderID: 10,
+			setup: func(repository *fakeRepository) {
+				repository.findOrderErr = errors.New("db error")
+			},
+			wantCode: apperror.CodeInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			repository := newFakeRepository()
+			repository.detailOrders = []Order{
+				{
+					ID:                10,
+					UserID:            1,
+					OrderNumber:       "ORD-20260530-A8K3D2",
+					OrderStatus:       OrderStatusOrdered,
+					TotalExcludingTax: 82000,
+					TotalTax:          8200,
+					TotalIncludingTax: 90200,
+					OrderedAt:         orderedAt,
+					Items: []OrderItem{
+						{
+							ID:                    1,
+							ProductID:             1,
+							ProductName:           "HHKB Professional",
+							ModelNumber:           stringPtr("PD-KB800"),
+							UnitPriceExcludingTax: 36000,
+							TaxRate:               0.1,
+							UnitPriceIncludingTax: 39600,
+							Quantity:              2,
+							SubtotalExcludingTax:  72000,
+							SubtotalTax:           7200,
+							SubtotalIncludingTax:  79200,
+						},
+						{
+							ID:                    2,
+							ProductID:             2,
+							ProductName:           "Trackball",
+							UnitPriceExcludingTax: 10000,
+							TaxRate:               0.1,
+							UnitPriceIncludingTax: 11000,
+							Quantity:              1,
+							SubtotalExcludingTax:  10000,
+							SubtotalTax:           1000,
+							SubtotalIncludingTax:  11000,
+						},
+					},
+				},
+			}
+			if tt.setup != nil {
+				tt.setup(repository)
+			}
+			service := &Service{repository: repository}
+
+			result, apiErr := service.GetOrderDetail(tt.userID, tt.orderID)
+
+			assertAPIErrorCode(t, apiErr, tt.wantCode)
+			if tt.wantCode != "" {
+				return
+			}
+			if result.OrderID != tt.wantOrderID {
+				t.Fatalf("order ID = %d, want %d", result.OrderID, tt.wantOrderID)
+			}
+			if len(result.Items) != len(tt.wantItemNames) {
+				t.Fatalf("item count = %d, want %d", len(result.Items), len(tt.wantItemNames))
+			}
+			for i, want := range tt.wantItemNames {
+				if result.Items[i].ProductName != want {
+					t.Fatalf("item name at %d = %q, want %q", i, result.Items[i].ProductName, want)
+				}
+			}
+			if result.Items[0].ModelNumber == nil || *result.Items[0].ModelNumber != tt.wantModelValue {
+				t.Fatalf("model number = %v, want %q", result.Items[0].ModelNumber, tt.wantModelValue)
+			}
+		})
+	}
+}
+
 func assertCreatedOrder(t *testing.T, order Order, orderedAt time.Time) {
 	t.Helper()
 
@@ -311,6 +429,8 @@ type fakeRepository struct {
 	deletedCartItemIDs    []int64
 	existingOrderNumbers  map[string]bool
 	listOrdersByUserID    map[int64][]OrderSummaryResult
+	detailOrders          []Order
+	findOrderErr          error
 	decrementRowsAffected int64
 }
 
@@ -409,6 +529,28 @@ func (r *fakeRepository) ListOrdersByUserID(userID int64) ([]OrderSummaryResult,
 	}
 
 	return orders, nil
+}
+
+func (r *fakeRepository) FindOrderByIDAndUserID(orderID int64, userID int64) (*Order, error) {
+	if r.findOrderErr != nil {
+		return nil, r.findOrderErr
+	}
+
+	for _, order := range r.detailOrders {
+		if order.ID == orderID && order.UserID == userID {
+			order.Items = append([]OrderItem(nil), order.Items...)
+			for i := 0; i < len(order.Items); i++ {
+				for j := i + 1; j < len(order.Items); j++ {
+					if order.Items[j].ID < order.Items[i].ID {
+						order.Items[i], order.Items[j] = order.Items[j], order.Items[i]
+					}
+				}
+			}
+			return &order, nil
+		}
+	}
+
+	return nil, gorm.ErrRecordNotFound
 }
 
 type fakeRepositorySnapshot struct {

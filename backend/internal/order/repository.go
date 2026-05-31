@@ -104,3 +104,19 @@ func (r *Repository) ListOrdersByUserID(userID int64) ([]OrderSummaryResult, err
 
 	return orders, nil
 }
+
+func (r *Repository) FindOrderByIDAndUserID(orderID int64, userID int64) (*Order, error) {
+	var order Order
+	err := r.db.
+		Preload("Items", func(db *gorm.DB) *gorm.DB {
+			return db.Order("id ASC")
+		}).
+		Where("id = ? AND user_id = ?", orderID, userID).
+		First(&order).
+		Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &order, nil
+}

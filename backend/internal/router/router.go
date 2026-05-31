@@ -74,6 +74,7 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 		)
 		{
 			orderRoutes.GET("", orderHandler.List)
+			orderRoutes.GET("/:id", orderHandler.Show)
 			orderRoutes.POST("", orderHandler.Create)
 		}
 	}

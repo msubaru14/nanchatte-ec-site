@@ -371,6 +371,8 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 - 自分の注文のみ取得可能
 - order_items はスナップショット情報を返す
+- 他ユーザーの注文IDを指定した場合も NOT_FOUND を返す
+- orderId が数値でない場合は INVALID_REQUEST を返す
 
 ---
 

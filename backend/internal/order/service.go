@@ -28,6 +28,7 @@ type orderRepository interface {
 	DeleteCartItems(cartID int64, itemIDs []int64) error
 	OrderNumberExists(orderNumber string) (bool, error)
 	ListOrdersByUserID(userID int64) ([]OrderSummaryResult, error)
+	FindOrderByIDAndUserID(orderID int64, userID int64) (*Order, error)
 }
 
 func NewService(db *gorm.DB) *Service {
@@ -116,6 +117,18 @@ func (s *Service) ListOrders(userID int64) (*ListResult, *apperror.APIError) {
 	return &ListResult{Orders: orders}, nil
 }
 
+func (s *Service) GetOrderDetail(userID int64, orderID int64) (*DetailResult, *apperror.APIError) {
+	order, err := s.repository.FindOrderByIDAndUserID(orderID, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound("order not found")
+		}
+		return nil, toAPIError(err)
+	}
+
+	return toDetailResult(*order), nil
+}
+
 func (s *Service) generateUniqueOrderNumber(repository orderRepository, orderedAt time.Time) (string, error) {
 	for range maxOrderNumberGenerateAttempts {
 		orderNumber, err := s.orderNumberGenerator(orderedAt)
@@ -202,6 +215,37 @@ func toCreateResult(order Order, items []OrderItem) *CreateResult {
 		TotalIncludingTax: order.TotalIncludingTax,
 		OrderedAt:         order.OrderedAt,
 		Items:             resultItems,
+	}
+}
+
+func toDetailResult(order Order) *DetailResult {
+	items := make([]DetailItemResult, 0, len(order.Items))
+	for _, item := range order.Items {
+		items = append(items, DetailItemResult{
+			ProductID:             item.ProductID,
+			ProductName:           item.ProductName,
+			ProductImageURL:       item.ProductImageURL,
+			MakerName:             item.MakerName,
+			ModelNumber:           item.ModelNumber,
+			UnitPriceExcludingTax: item.UnitPriceExcludingTax,
+			TaxRate:               item.TaxRate,
+			UnitPriceIncludingTax: item.UnitPriceIncludingTax,
+			Quantity:              item.Quantity,
+			SubtotalExcludingTax:  item.SubtotalExcludingTax,
+			SubtotalTax:           item.SubtotalTax,
+			SubtotalIncludingTax:  item.SubtotalIncludingTax,
+		})
+	}
+
+	return &DetailResult{
+		OrderID:           order.ID,
+		OrderNumber:       order.OrderNumber,
+		OrderStatus:       order.OrderStatus,
+		TotalExcludingTax: order.TotalExcludingTax,
+		TotalTax:          order.TotalTax,
+		TotalIncludingTax: order.TotalIncludingTax,
+		OrderedAt:         order.OrderedAt,
+		Items:             items,
 	}
 }
 
