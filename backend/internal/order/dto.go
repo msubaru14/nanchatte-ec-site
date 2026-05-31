@@ -10,6 +10,19 @@ type CreateResult struct {
 	Items             []ItemResult
 }
 
+type ListResult struct {
+	Orders []OrderSummaryResult
+}
+
+type OrderSummaryResult struct {
+	OrderID           int64
+	OrderNumber       string
+	OrderStatus       OrderStatus
+	TotalIncludingTax int
+	OrderedAt         time.Time
+	ItemCount         int
+}
+
 type ItemResult struct {
 	ProductID             int64
 	ProductName           string
@@ -17,6 +30,19 @@ type ItemResult struct {
 	Quantity              int
 	UnitPriceIncludingTax int
 	SubtotalIncludingTax  int
+}
+
+type listOrdersResponse struct {
+	Orders []orderSummaryResponse `json:"orders"`
+}
+
+type orderSummaryResponse struct {
+	OrderID           int64       `json:"orderId"`
+	OrderNumber       string      `json:"orderNumber"`
+	OrderStatus       OrderStatus `json:"orderStatus"`
+	TotalIncludingTax int         `json:"totalIncludingTax"`
+	OrderedAt         time.Time   `json:"orderedAt"`
+	ItemCount         int         `json:"itemCount"`
 }
 
 type createOrderResponse struct {
@@ -34,6 +60,22 @@ type orderItemResponse struct {
 	Quantity              int     `json:"quantity"`
 	UnitPriceIncludingTax int     `json:"unitPriceIncludingTax"`
 	SubtotalIncludingTax  int     `json:"subtotalIncludingTax"`
+}
+
+func newListOrdersResponse(result *ListResult) listOrdersResponse {
+	orders := make([]orderSummaryResponse, 0, len(result.Orders))
+	for _, order := range result.Orders {
+		orders = append(orders, orderSummaryResponse{
+			OrderID:           order.OrderID,
+			OrderNumber:       order.OrderNumber,
+			OrderStatus:       order.OrderStatus,
+			TotalIncludingTax: order.TotalIncludingTax,
+			OrderedAt:         order.OrderedAt,
+			ItemCount:         order.ItemCount,
+		})
+	}
+
+	return listOrdersResponse{Orders: orders}
 }
 
 func newCreateOrderResponse(result *CreateResult) createOrderResponse {

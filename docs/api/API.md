@@ -359,7 +359,7 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 - order_status
 - total_including_tax
 - ordered_at
-- canceled_at
+- item_count
 
 を返す。
 

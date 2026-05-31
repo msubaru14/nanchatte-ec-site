@@ -42,6 +42,7 @@ func TestOrderRoutesRequireAuthentication(t *testing.T) {
 		path   string
 	}{
 		{name: "注文作成は認証必須", method: http.MethodPost, path: "/api/orders"},
+		{name: "注文履歴一覧は認証必須", method: http.MethodGet, path: "/api/orders"},
 	}
 
 	r := SetupRouter(nil)

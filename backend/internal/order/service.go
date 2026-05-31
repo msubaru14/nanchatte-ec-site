@@ -27,6 +27,7 @@ type orderRepository interface {
 	DecrementProductStock(productID int64, quantity int) (int64, error)
 	DeleteCartItems(cartID int64, itemIDs []int64) error
 	OrderNumberExists(orderNumber string) (bool, error)
+	ListOrdersByUserID(userID int64) ([]OrderSummaryResult, error)
 }
 
 func NewService(db *gorm.DB) *Service {
@@ -104,6 +105,15 @@ func (s *Service) CreateOrder(userID int64) (*CreateResult, *apperror.APIError) 
 	}
 
 	return result, nil
+}
+
+func (s *Service) ListOrders(userID int64) (*ListResult, *apperror.APIError) {
+	orders, err := s.repository.ListOrdersByUserID(userID)
+	if err != nil {
+		return nil, toAPIError(err)
+	}
+
+	return &ListResult{Orders: orders}, nil
 }
 
 func (s *Service) generateUniqueOrderNumber(repository orderRepository, orderedAt time.Time) (string, error) {

@@ -1,6 +1,7 @@
 package order
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -94,9 +95,118 @@ func TestHandlerCreateRequiresUserID(t *testing.T) {
 	}
 }
 
+func TestHandlerList(t *testing.T) {
+	t.Parallel()
+
+	orderedAt := time.Date(2026, 5, 30, 12, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name           string
+		result         *ListResult
+		apiErr         *apperror.APIError
+		wantStatus     int
+		wantOrderCount int
+		wantItemCount  int
+	}{
+		{
+			name: "注文履歴一覧を取得できる",
+			result: &ListResult{
+				Orders: []OrderSummaryResult{
+					{
+						OrderID:           1,
+						OrderNumber:       "ORD-20260530-A8K3D2",
+						OrderStatus:       OrderStatusOrdered,
+						TotalIncludingTax: 134000,
+						OrderedAt:         orderedAt,
+						ItemCount:         3,
+					},
+				},
+			},
+			wantStatus:     http.StatusOK,
+			wantOrderCount: 1,
+			wantItemCount:  3,
+		},
+		{
+			name:           "注文が0件なら空配列を返す",
+			result:         &ListResult{Orders: []OrderSummaryResult{}},
+			wantStatus:     http.StatusOK,
+			wantOrderCount: 0,
+		},
+		{
+			name:       "serviceエラーなら500を返す",
+			apiErr:     apperror.NewInternalServerError(),
+			wantStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			gin.SetMode(gin.TestMode)
+			r := gin.New()
+			handler := NewHandler(&fakeOrderService{
+				listResult: tt.result,
+				apiErr:     tt.apiErr,
+			})
+			r.GET("/api/orders", func(c *gin.Context) {
+				c.Set("auth.userID", int64(1))
+				handler.List(c)
+			})
+
+			req := httptest.NewRequest(http.MethodGet, "/api/orders", nil)
+			res := httptest.NewRecorder()
+
+			r.ServeHTTP(res, req)
+
+			if res.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d", res.Code, tt.wantStatus)
+			}
+			if tt.wantStatus != http.StatusOK {
+				return
+			}
+
+			var body struct {
+				Data struct {
+					Orders []struct {
+						ItemCount int `json:"itemCount"`
+					} `json:"orders"`
+				} `json:"data"`
+			}
+			if err := json.Unmarshal(res.Body.Bytes(), &body); err != nil {
+				t.Fatalf("response JSON decode error: %v", err)
+			}
+			if got := len(body.Data.Orders); got != tt.wantOrderCount {
+				t.Fatalf("order count = %d, want %d", got, tt.wantOrderCount)
+			}
+			if tt.wantOrderCount > 0 && body.Data.Orders[0].ItemCount != tt.wantItemCount {
+				t.Fatalf("item count = %d, want %d", body.Data.Orders[0].ItemCount, tt.wantItemCount)
+			}
+		})
+	}
+}
+
+func TestHandlerListRequiresUserID(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	handler := NewHandler(&fakeOrderService{})
+	r.GET("/api/orders", handler.List)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/orders", nil)
+	res := httptest.NewRecorder()
+
+	r.ServeHTTP(res, req)
+
+	if res.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusUnauthorized)
+	}
+}
+
 type fakeOrderService struct {
-	result *CreateResult
-	apiErr *apperror.APIError
+	result     *CreateResult
+	listResult *ListResult
+	apiErr     *apperror.APIError
 }
 
 func (s *fakeOrderService) CreateOrder(userID int64) (*CreateResult, *apperror.APIError) {
@@ -105,4 +215,12 @@ func (s *fakeOrderService) CreateOrder(userID int64) (*CreateResult, *apperror.A
 	}
 
 	return s.result, nil
+}
+
+func (s *fakeOrderService) ListOrders(userID int64) (*ListResult, *apperror.APIError) {
+	if s.apiErr != nil {
+		return nil, s.apiErr
+	}
+
+	return s.listResult, nil
 }

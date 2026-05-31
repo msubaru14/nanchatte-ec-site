@@ -583,6 +583,49 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
   /api/orders:
+    get:
+      tags:
+        - Orders
+      summary: List orders
+      description: |
+        ログインユーザーの注文履歴一覧を取得する。
+
+        access token による認証と customer role が必要。
+        自分の注文のみを ordered_at DESC で返す。
+        一覧では注文単位の概要と、order_items.quantity の合計である itemCount を返す。
+      operationId: listOrders
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Order list response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderListSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      orders:
+                        - orderId: 1
+                          orderNumber: ORD-20260530-A8K3D2
+                          orderStatus: ordered
+                          totalIncludingTax: 134000
+                          orderedAt: "2026-05-30T12:00:00Z"
+                          itemCount: 3
+                    error: null
+                empty:
+                  value:
+                    data:
+                      orders: []
+                    error: null
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     post:
       tags:
         - Orders
@@ -1133,6 +1176,62 @@ components:
         error:
           nullable: true
           example: null
+    OrderListSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/OrderListData"
+        error:
+          nullable: true
+          example: null
+    OrderListData:
+      type: object
+      required:
+        - orders
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderSummary"
+    OrderSummary:
+      type: object
+      required:
+        - orderId
+        - orderNumber
+        - orderStatus
+        - totalIncludingTax
+        - orderedAt
+        - itemCount
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          example: 1
+        orderNumber:
+          type: string
+          pattern: "^ORD-[0-9]{8}-[A-Z0-9]{6}$"
+          example: ORD-20260530-A8K3D2
+        orderStatus:
+          type: string
+          enum:
+            - ordered
+            - canceled
+          example: ordered
+        totalIncludingTax:
+          type: integer
+          minimum: 0
+          example: 134000
+        orderedAt:
+          type: string
+          format: date-time
+          example: "2026-05-30T12:00:00Z"
+        itemCount:
+          type: integer
+          minimum: 0
+          example: 3
     OrderCreateData:
       type: object
       required:

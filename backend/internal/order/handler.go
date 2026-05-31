@@ -13,6 +13,7 @@ type Handler struct {
 
 type orderService interface {
 	CreateOrder(userID int64) (*CreateResult, *apperror.APIError)
+	ListOrders(userID int64) (*ListResult, *apperror.APIError)
 }
 
 func NewHandler(service orderService) *Handler {
@@ -32,6 +33,21 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	response.SuccessCreated(c, newCreateOrderResponse(result))
+}
+
+func (h *Handler) List(c *gin.Context) {
+	userID, ok := userIDFromContext(c)
+	if !ok {
+		return
+	}
+
+	result, apiErr := h.service.ListOrders(userID)
+	if apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, newListOrdersResponse(result))
 }
 
 func userIDFromContext(c *gin.Context) (int64, bool) {
