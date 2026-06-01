@@ -60,6 +60,60 @@ const cartResponse = (cart: Cart) => ({
   error: null,
 });
 
+const emptyCart: Cart = {
+  items: [],
+  totalAmount: 0,
+};
+
+const orderSummary = {
+  orderId: 100,
+  orderNumber: "ORD-20260530-A8K3D2",
+  orderStatus: "ordered",
+  totalIncludingTax: 134000,
+  orderedAt: "2026-05-30T12:00:00Z",
+  itemCount: 3,
+};
+
+const orderDetail = {
+  orderId: 100,
+  orderNumber: "ORD-20260530-A8K3D2",
+  orderStatus: "ordered",
+  totalExcludingTax: 121818,
+  totalTax: 12182,
+  totalIncludingTax: 134000,
+  orderedAt: "2026-05-30T12:00:00Z",
+  items: [
+    {
+      productId: 1,
+      productName: "HHKB Professional",
+      productImageUrl: null,
+      makerName: "PFU",
+      modelNumber: "PD-KB800",
+      unitPriceExcludingTax: 36000,
+      taxRate: 0.1,
+      unitPriceIncludingTax: 39600,
+      quantity: 2,
+      subtotalExcludingTax: 72000,
+      subtotalTax: 7200,
+      subtotalIncludingTax: 79200,
+    },
+    {
+      productId: 2,
+      productName: "4K Monitor",
+      productImageUrl: null,
+      makerName: "Display Maker",
+      modelNumber: "DM-4K27",
+      unitPriceExcludingTax: 49818,
+      taxRate: 0.1,
+      unitPriceIncludingTax: 54800,
+      quantity: 1,
+      subtotalExcludingTax: 49818,
+      subtotalTax: 4982,
+      subtotalIncludingTax: 54800,
+    },
+  ],
+};
+
 async function fulfillJson(route: Route, status: number, body: unknown) {
   await route.fulfill({
     status,
@@ -71,6 +125,12 @@ async function fulfillJson(route: Route, status: number, body: unknown) {
 async function mockAuthenticatedUser(page: Page) {
   await page.route("**/api/auth/me", (route) =>
     fulfillJson(route, 200, authenticatedUserResponse),
+  );
+}
+
+async function mockHeaderCart(page: Page, cart: Cart = emptyCart) {
+  await page.route("**/api/cart", (route) =>
+    fulfillJson(route, 200, cartResponse(cart)),
   );
 }
 
@@ -135,9 +195,10 @@ test.describe("注文導線", () => {
     await page.goto("/cart");
 
     await expect(page.getByLabel("カート内の商品数 3件")).toBeVisible();
-    await page.getByRole("link", { name: "注文確認へ進む" }).click();
-
-    await expect(page).toHaveURL(/\/orders\/confirm$/);
+    await Promise.all([
+      page.waitForURL(/\/orders\/confirm$/),
+      page.getByRole("link", { name: "注文確認へ進む" }).click(),
+    ]);
     await expect(page.getByRole("heading", { name: "注文確認" })).toBeVisible();
     await expect(page.getByText(keyboardItem.name)).toBeVisible();
     await expect(page.getByText(monitorItem.name)).toBeVisible();
@@ -250,5 +311,123 @@ test.describe("注文導線", () => {
       page.getByText("この商品は現在購入できません。カートで内容を確認してください。"),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "注文を確定する" })).toBeDisabled();
+  });
+});
+
+test.describe("注文履歴", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+    await mockHeaderCart(page);
+  });
+
+  test("注文履歴一覧を表示し、詳細へ遷移できる", async ({ page }) => {
+    await page.route("**/api/orders", async (route) => {
+      if (route.request().method() !== "GET") {
+        await route.fallback();
+        return;
+      }
+
+      await fulfillJson(route, 200, {
+        data: {
+          orders: [orderSummary],
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/orders/100", (route) =>
+      fulfillJson(route, 200, {
+        data: orderDetail,
+        error: null,
+      }),
+    );
+
+    await page.goto("/orders");
+
+    await expect(page.getByRole("heading", { name: "注文履歴" })).toBeVisible();
+    await expect(page.getByText(orderSummary.orderNumber)).toBeVisible();
+    await expect(page.getByText("注文済み")).toBeVisible();
+    await expect(page.getByText("3点")).toBeVisible();
+    await expect(page.getByText(/[￥¥]134,000/)).toBeVisible();
+
+    await Promise.all([
+      page.waitForURL(/\/orders\/100$/),
+      page.getByRole("link", { name: "詳細を見る" }).click(),
+    ]);
+    await expect(page.getByRole("heading", { name: "注文詳細" })).toBeVisible();
+    await expect(page.getByText("注文概要")).toBeVisible();
+    await expect(page.getByText("注文明細")).toBeVisible();
+    await expect(page.getByText("HHKB Professional")).toBeVisible();
+    await expect(page.getByText("PFU")).toBeVisible();
+    await expect(page.getByText("PD-KB800")).toBeVisible();
+    await expect(page.getByText("4K Monitor")).toBeVisible();
+    await expect(page.getByText(/[￥¥]79,200/)).toBeVisible();
+  });
+
+  test("注文0件表示を表示できる", async ({ page }) => {
+    await page.route("**/api/orders", (route) =>
+      fulfillJson(route, 200, {
+        data: {
+          orders: [],
+        },
+        error: null,
+      }),
+    );
+
+    await page.goto("/orders");
+
+    await expect(page.getByRole("heading", { name: "注文履歴" })).toBeVisible();
+    await expect(page.getByText("注文履歴はまだありません。")).toBeVisible();
+    await expect(page.getByRole("link", { name: "商品を探す" })).toHaveAttribute(
+      "href",
+      "/products",
+    );
+  });
+
+  test("未ログイン時はreturnTo付きでログインへ遷移する", async ({ page }) => {
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", (route) =>
+      fulfillJson(route, 401, {
+        data: null,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "unauthorized",
+        },
+      }),
+    );
+    await page.route("**/api/orders", (route) =>
+      fulfillJson(route, 401, {
+        data: null,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "unauthorized",
+        },
+      }),
+    );
+
+    await Promise.all([
+      page.waitForURL(/\/login\?returnTo=%2Forders$/),
+      page.goto("/orders"),
+    ]);
+  });
+
+  test("存在しない注文は案内表示になる", async ({ page }) => {
+    await page.route("**/api/orders/999", (route) =>
+      fulfillJson(route, 404, {
+        data: null,
+        error: {
+          code: "NOT_FOUND",
+          message: "order not found",
+        },
+      }),
+    );
+
+    await page.goto("/orders/999");
+
+    await expect(page.getByRole("heading", { name: "注文詳細" })).toBeVisible();
+    await expect(page.getByText("注文が見つかりませんでした。")).toBeVisible();
+    await expect(page.getByRole("link", { name: "注文履歴へ戻る" }).first()).toHaveAttribute(
+      "href",
+      "/orders",
+    );
   });
 });

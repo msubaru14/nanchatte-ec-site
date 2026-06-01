@@ -112,6 +112,7 @@ docker compose up --build -d
 - カート画面: http://localhost:3000/cart
 - 注文確認画面: http://localhost:3000/orders/confirm
 - 注文完了画面: http://localhost:3000/orders/complete
+- 注文履歴一覧画面: http://localhost:3000/orders
 - Backend health check: http://localhost:8080/api/health
 - API仕様（Swagger UI）: http://localhost:8081
 - PostgreSQL: localhost:5432
@@ -228,6 +229,8 @@ npm run test:e2e:ui
   - `DELETE /api/cart/items/:productId`
   - `DELETE /api/cart/items`
   - `POST /api/orders`
+  - `GET /api/orders`
+  - `GET /api/orders/:id`
   - access token / refresh token を httpOnly cookie で管理
   - 認証対象 API では 401 時に refresh retry を行う
   - backend の response / error code を Browser 向けにも維持する
@@ -239,6 +242,7 @@ npm run test:e2e:ui
 - 共通 Header の認証導線
   - 未ログイン時のログイン・ユーザー登録導線表示
   - ログイン済み時のユーザー名・ログアウト導線表示
+  - ログイン済み時の注文履歴導線表示
   - ログイン済み時のCart導線と、商品がある場合の数量合計バッジ表示
   - Cart追加・数量変更・削除後のCart件数再取得
   - logout 後の `AuthContext` 更新と `/products` 遷移
@@ -270,6 +274,14 @@ npm run test:e2e:ui
   - 注文確定中の二重送信防止
   - `EMPTY_CART` / `OUT_OF_STOCK` / `VALIDATION_ERROR` の表示
   - 注文完了画面で注文番号と合計金額を表示
+  - 注文完了画面から注文履歴詳細・注文履歴一覧へ進む導線
+- 注文履歴画面
+  - `GET /api/orders` BFFを利用した注文履歴一覧表示
+  - `GET /api/orders/:id` BFFを利用した注文履歴詳細表示
+  - 一覧から詳細への導線
+  - 注文0件表示
+  - `UNAUTHORIZED` 時の returnTo 付きログイン遷移
+  - `NOT_FOUND` / `INVALID_REQUEST` の案内表示
 - Next.js App Router によるトップページ
 - 商品一覧画面
   - `GET /api/products` を利用した商品カード表示

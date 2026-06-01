@@ -109,6 +109,7 @@ export function PublicHeader() {
             <span className={styles.authStatus}>認証状態を確認中...</span>
           ) : user ? (
             <>
+              <Link href="/orders">注文履歴</Link>
               <Link className={styles.cartLink} href="/cart">
                 カート
                 {isCartLoading ? (
