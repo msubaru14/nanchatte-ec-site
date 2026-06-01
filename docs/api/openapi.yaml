@@ -17,6 +17,8 @@ tags:
     description: Authenticated customer cart APIs
   - name: Orders
     description: Authenticated customer order APIs
+  - name: Reviews
+    description: Product review APIs
 paths:
   /api/auth/register:
     post:
@@ -358,6 +360,74 @@ paths:
                     error:
                       code: NOT_FOUND
                       message: product not found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/products/{productId}/reviews:
+    post:
+      tags:
+        - Reviews
+      summary: Create review
+      description: |
+        ログインユーザーが購入済み商品にレビューを作成する。
+
+        access token による認証と customer role が必要。
+        対象商品が存在し、ログインユーザーが order_status = ordered の注文で対象商品を購入済みであることを確認する。
+        1ユーザー1商品1レビューまで作成できる。
+        作成時の status は draft とする。
+      operationId: createReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewCreateRequest"
+            examples:
+              default:
+                value:
+                  rating: 5
+                  title: 良い商品
+                  comment: 使いやすい
+      responses:
+        "201":
+          description: Review created response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewCreateSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      productId: 1
+                      rating: 5
+                      title: 良い商品
+                      comment: 使いやすい
+                      status: draft
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/ReviewCreateRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewResourceNotFoundError"
+        "409":
+          $ref: "#/components/responses/ReviewAlreadyExistsError"
         "500":
           $ref: "#/components/responses/InternalServerError"
   /api/cart:
@@ -955,6 +1025,81 @@ components:
                 error:
                   code: NOT_FOUND
                   message: order not found
+    ReviewCreateRequestError:
+      description: Invalid review create request or validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidRequestBody:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid request body
+            invalidProductId:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid product id
+            invalidRating:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: rating
+                      code: OUT_OF_RANGE
+                      message: rating must be between 1 and 5
+            titleRequired:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: title
+                      code: REQUIRED
+                      message: title is required when comment is provided
+            notPurchased:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: productId
+                      code: INVALID_FORMAT
+                      message: product has not been purchased
+    ReviewResourceNotFoundError:
+      description: Review target resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            productNotFound:
+              value:
+                data: null
+                error:
+                  code: NOT_FOUND
+                  message: product not found
+    ReviewAlreadyExistsError:
+      description: Review already exists for the user and product
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            reviewAlreadyExists:
+              value:
+                data: null
+                error:
+                  code: CONFLICT
+                  message: review already exists
     UnauthorizedError:
       description: Unauthorized
       content:
@@ -1257,6 +1402,81 @@ components:
         error:
           nullable: true
           example: null
+    ReviewCreateRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: 良い商品
+        comment:
+          type: string
+          nullable: true
+          example: 使いやすい
+    ReviewCreateSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/Review"
+        error:
+          nullable: true
+          example: null
+    Review:
+      type: object
+      required:
+        - reviewId
+        - productId
+        - rating
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        reviewId:
+          type: integer
+          format: int64
+          example: 1
+        productId:
+          type: integer
+          format: int64
+          example: 1
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: 良い商品
+        comment:
+          type: string
+          nullable: true
+          example: 使いやすい
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+            - hidden
+          example: draft
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
     OrderCreateSuccessResponse:
       type: object
       required:

@@ -8,6 +8,7 @@ import (
 	"github.com/msubaru14/nanchatte-ec-backend/internal/middleware"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/order"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/product"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/review"
 	"gorm.io/gorm"
 )
 
@@ -19,6 +20,7 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 	productService := product.NewService(database)
 	cartService := cart.NewService(database)
 	orderService := order.NewService(database)
+	reviewService := review.NewService(database)
 
 	healthHandler := health.NewHandler()
 	authHandler := auth.NewAuthHandler(authService)
@@ -26,6 +28,7 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 	productHandler := product.NewHandler(productService)
 	cartHandler := cart.NewHandler(cartService)
 	orderHandler := order.NewHandler(orderService)
+	reviewHandler := review.NewHandler(reviewService)
 
 	api := r.Group("/api")
 	{
@@ -77,6 +80,13 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 			orderRoutes.GET("/:id", orderHandler.Show)
 			orderRoutes.POST("", orderHandler.Create)
 		}
+
+		api.POST(
+			"/products/:productId/reviews",
+			middleware.AuthMiddleware(tokenService),
+			middleware.RequireRole(auth.CustomerRole),
+			reviewHandler.Create,
+		)
 	}
 
 	return r

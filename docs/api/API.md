@@ -455,7 +455,7 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 - rating 必須
 - title / comment 任意
 - comment がある場合 title 必須
-- 初期statusは draft または published で要検討
+- 初期statusは draft
 
 ---
 
