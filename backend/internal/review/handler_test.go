@@ -131,12 +131,90 @@ func TestHandlerCreateValidation(t *testing.T) {
 	}
 }
 
+func TestHandlerList(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+	service := &fakeReviewService{
+		listResult: &ListResult{
+			Reviews: []PublishedReviewResult{
+				{
+					ReviewID:     1,
+					ReviewerName: "Alice",
+					Rating:       5,
+					Title:        stringPtr("良い商品"),
+					Comment:      stringPtr("使いやすい"),
+					CreatedAt:    createdAt,
+					UpdatedAt:    createdAt,
+				},
+			},
+		},
+	}
+	handler := NewHandler(service)
+	router := gin.New()
+	router.GET("/api/products/:id/reviews", handler.List)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/products/20/reviews", nil)
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+	}
+	if service.productID != 20 {
+		t.Fatalf("productID = %d, want 20", service.productID)
+	}
+
+	var body struct {
+		Data struct {
+			Reviews []struct {
+				ReviewID     int64  `json:"reviewId"`
+				ReviewerName string `json:"reviewerName"`
+				Rating       int    `json:"rating"`
+			} `json:"reviews"`
+		} `json:"data"`
+		Error any `json:"error"`
+	}
+	if err := json.Unmarshal(res.Body.Bytes(), &body); err != nil {
+		t.Fatalf("json.Unmarshal returned error: %v", err)
+	}
+	if len(body.Data.Reviews) != 1 {
+		t.Fatalf("reviews length = %d, want 1", len(body.Data.Reviews))
+	}
+	if body.Data.Reviews[0].ReviewerName != "Alice" {
+		t.Fatalf("reviewerName = %s, want Alice", body.Data.Reviews[0].ReviewerName)
+	}
+	if body.Error != nil {
+		t.Fatalf("error = %#v, want nil", body.Error)
+	}
+}
+
+func TestHandlerListInvalidProductID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	handler := NewHandler(&fakeReviewService{})
+	router := gin.New()
+	router.GET("/api/products/:id/reviews", handler.List)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/products/invalid/reviews", nil)
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+
+	if res.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
+	}
+}
+
 type fakeReviewService struct {
-	userID    int64
-	productID int64
-	input     CreateInput
-	result    *CreateResult
-	apiErr    *apperror.APIError
+	userID       int64
+	productID    int64
+	input        CreateInput
+	result       *CreateResult
+	listResult   *ListResult
+	apiErr       *apperror.APIError
+	listAPIError *apperror.APIError
 }
 
 func (s *fakeReviewService) CreateReview(userID int64, productID int64, input CreateInput) (*CreateResult, *apperror.APIError) {
@@ -144,4 +222,9 @@ func (s *fakeReviewService) CreateReview(userID int64, productID int64, input Cr
 	s.productID = productID
 	s.input = input
 	return s.result, s.apiErr
+}
+
+func (s *fakeReviewService) ListPublishedReviews(productID int64) (*ListResult, *apperror.APIError) {
+	s.productID = productID
+	return s.listResult, s.listAPIError
 }

@@ -38,6 +38,33 @@ func (r *Repository) ReviewExists(userID int64, productID int64) (bool, error) {
 	return count > 0, nil
 }
 
+func (r *Repository) ListPublishedReviewsByProductID(productID int64) ([]PublishedReviewResult, error) {
+	var reviews []PublishedReviewResult
+	err := r.db.Table("reviews").
+		Select(`
+			reviews.id AS review_id,
+			CASE
+				WHEN users.deleted_at IS NULL THEN users.name
+				ELSE '退会済みユーザー'
+			END AS reviewer_name,
+			reviews.rating,
+			reviews.title,
+			reviews.comment,
+			reviews.created_at,
+			reviews.updated_at
+		`).
+		Joins("JOIN users ON users.id = reviews.user_id").
+		Where("reviews.product_id = ?", productID).
+		Where("reviews.status = ?", StatusPublished).
+		Order("reviews.created_at DESC").
+		Scan(&reviews).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return reviews, nil
+}
+
 func (r *Repository) PurchasedOrderedProduct(userID int64, productID int64) (bool, error) {
 	var count int64
 	err := r.db.Model(&order.Order{}).

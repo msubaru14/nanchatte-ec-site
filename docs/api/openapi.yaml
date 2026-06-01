@@ -363,6 +363,57 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
   /api/products/{productId}/reviews:
+    get:
+      tags:
+        - Reviews
+      summary: List product reviews
+      description: |
+        商品に紐づく公開レビュー一覧を取得する。
+
+        認証なしで利用できる。
+        status = published のレビューのみを created_at DESC で返す。
+        draft / hidden は返さない。
+      operationId: listProductReviews
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Product review list response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewListSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviews:
+                        - reviewId: 1
+                          reviewerName: Alice
+                          rating: 5
+                          title: 良い商品
+                          comment: 使いやすい
+                          createdAt: "2026-06-01T12:00:00Z"
+                          updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+                empty:
+                  value:
+                    data:
+                      reviews: []
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidProductIDError"
+        "404":
+          $ref: "#/components/responses/ReviewResourceNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     post:
       tags:
         - Reviews
@@ -1431,6 +1482,63 @@ components:
         error:
           nullable: true
           example: null
+    ReviewListSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/ReviewListData"
+        error:
+          nullable: true
+          example: null
+    ReviewListData:
+      type: object
+      required:
+        - reviews
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublishedReview"
+    PublishedReview:
+      type: object
+      required:
+        - reviewId
+        - reviewerName
+        - rating
+        - createdAt
+        - updatedAt
+      properties:
+        reviewId:
+          type: integer
+          format: int64
+          example: 1
+        reviewerName:
+          type: string
+          example: Alice
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: 良い商品
+        comment:
+          type: string
+          nullable: true
+          example: 使いやすい
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
     Review:
       type: object
       required:

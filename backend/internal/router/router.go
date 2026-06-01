@@ -35,6 +35,7 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 		api.GET("/health", healthHandler.Show)
 		api.GET("/products", productHandler.List)
 		api.GET("/products/:id", productHandler.Show)
+		api.GET("/products/:id/reviews", reviewHandler.List)
 
 		authRoutes := api.Group("/auth")
 		{

@@ -14,6 +14,7 @@ type Service struct {
 type repository interface {
 	ProductExists(productID int64) (bool, error)
 	ReviewExists(userID int64, productID int64) (bool, error)
+	ListPublishedReviewsByProductID(productID int64) ([]PublishedReviewResult, error)
 	PurchasedOrderedProduct(userID int64, productID int64) (bool, error)
 	Create(review *Review) error
 }
@@ -74,6 +75,23 @@ func (s *Service) CreateReview(userID int64, productID int64, input CreateInput)
 		CreatedAt: newReview.CreatedAt,
 		UpdatedAt: newReview.UpdatedAt,
 	}, nil
+}
+
+func (s *Service) ListPublishedReviews(productID int64) (*ListResult, *apperror.APIError) {
+	exists, err := s.repository.ProductExists(productID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError()
+	}
+	if !exists {
+		return nil, apperror.NewNotFound("product not found")
+	}
+
+	reviews, err := s.repository.ListPublishedReviewsByProductID(productID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError()
+	}
+
+	return &ListResult{Reviews: reviews}, nil
 }
 
 func validateCreateInput(input CreateInput) (CreateInput, []apperror.ErrorDetail) {

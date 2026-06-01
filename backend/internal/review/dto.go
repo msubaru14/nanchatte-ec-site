@@ -19,10 +19,38 @@ type CreateResult struct {
 	UpdatedAt time.Time
 }
 
+type ListResult struct {
+	Reviews []PublishedReviewResult
+}
+
+type PublishedReviewResult struct {
+	ReviewID     int64
+	ReviewerName string
+	Rating       int
+	Title        *string
+	Comment      *string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
 type createReviewRequest struct {
 	Rating  int     `json:"rating"`
 	Title   *string `json:"title"`
 	Comment *string `json:"comment"`
+}
+
+type listReviewsResponse struct {
+	Reviews []publishedReviewResponse `json:"reviews"`
+}
+
+type publishedReviewResponse struct {
+	ReviewID     int64     `json:"reviewId"`
+	ReviewerName string    `json:"reviewerName"`
+	Rating       int       `json:"rating"`
+	Title        *string   `json:"title"`
+	Comment      *string   `json:"comment"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 type createReviewResponse struct {
@@ -47,4 +75,21 @@ func newCreateReviewResponse(result *CreateResult) createReviewResponse {
 		CreatedAt: result.CreatedAt,
 		UpdatedAt: result.UpdatedAt,
 	}
+}
+
+func newListReviewsResponse(result *ListResult) listReviewsResponse {
+	reviews := make([]publishedReviewResponse, 0, len(result.Reviews))
+	for _, review := range result.Reviews {
+		reviews = append(reviews, publishedReviewResponse{
+			ReviewID:     review.ReviewID,
+			ReviewerName: review.ReviewerName,
+			Rating:       review.Rating,
+			Title:        review.Title,
+			Comment:      review.Comment,
+			CreatedAt:    review.CreatedAt,
+			UpdatedAt:    review.UpdatedAt,
+		})
+	}
+
+	return listReviewsResponse{Reviews: reviews}
 }

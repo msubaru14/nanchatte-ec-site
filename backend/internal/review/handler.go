@@ -15,10 +15,26 @@ type Handler struct {
 
 type reviewService interface {
 	CreateReview(userID int64, productID int64, input CreateInput) (*CreateResult, *apperror.APIError)
+	ListPublishedReviews(productID int64) (*ListResult, *apperror.APIError)
 }
 
 func NewHandler(service reviewService) *Handler {
 	return &Handler{service: service}
+}
+
+func (h *Handler) List(c *gin.Context) {
+	productID, ok := productIDFromParam(c)
+	if !ok {
+		return
+	}
+
+	result, apiErr := h.service.ListPublishedReviews(productID)
+	if apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, newListReviewsResponse(result))
 }
 
 func (h *Handler) Create(c *gin.Context) {
@@ -69,7 +85,12 @@ func userIDFromContext(c *gin.Context) (int64, bool) {
 }
 
 func productIDFromParam(c *gin.Context) (int64, bool) {
-	productID, err := strconv.ParseInt(c.Param("productId"), 10, 64)
+	rawProductID := c.Param("productId")
+	if rawProductID == "" {
+		rawProductID = c.Param("id")
+	}
+
+	productID, err := strconv.ParseInt(rawProductID, 10, 64)
 	if err != nil || productID <= 0 {
 		writeAPIError(c, apperror.NewInvalidRequest("invalid product id"))
 		return 0, false

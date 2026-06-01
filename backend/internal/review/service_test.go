@@ -174,16 +174,115 @@ func TestServiceCreateReviewRepositoryError(t *testing.T) {
 	}
 }
 
+func TestServiceListPublishedReviews(t *testing.T) {
+	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name          string
+		productExists bool
+		reviews       []PublishedReviewResult
+		wantErrCode   string
+	}{
+		{
+			name:          "商品のpublishedレビュー一覧を取得できる",
+			productExists: true,
+			reviews: []PublishedReviewResult{
+				{ReviewID: 2, ReviewerName: "Bob", Rating: 4, CreatedAt: createdAt, UpdatedAt: createdAt},
+				{ReviewID: 1, ReviewerName: "Alice", Rating: 5, CreatedAt: createdAt.Add(-time.Hour), UpdatedAt: createdAt.Add(-time.Hour)},
+			},
+		},
+		{
+			name:          "レビューがない場合は空配列を返す",
+			productExists: true,
+			reviews:       []PublishedReviewResult{},
+		},
+		{
+			name:          "商品が存在しないならNot Found",
+			productExists: false,
+			wantErrCode:   apperror.CodeNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{
+				productExists:    tt.productExists,
+				publishedReviews: tt.reviews,
+			}
+			service := &Service{repository: repository}
+
+			result, apiErr := service.ListPublishedReviews(20)
+
+			if tt.wantErrCode != "" {
+				if apiErr == nil {
+					t.Fatalf("apiErr = nil, want %s", tt.wantErrCode)
+				}
+				if apiErr.Code != tt.wantErrCode {
+					t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, tt.wantErrCode)
+				}
+				return
+			}
+
+			if apiErr != nil {
+				t.Fatalf("apiErr = %#v, want nil", apiErr)
+			}
+			if len(result.Reviews) != len(tt.reviews) {
+				t.Fatalf("reviews length = %d, want %d", len(result.Reviews), len(tt.reviews))
+			}
+		})
+	}
+}
+
+func TestServiceListPublishedReviewsRepositoryError(t *testing.T) {
+	tests := []struct {
+		name      string
+		configure func(*fakeRepository)
+	}{
+		{
+			name: "商品確認でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.productErr = errors.New("db error")
+			},
+		},
+		{
+			name: "レビュー一覧取得でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.productExists = true
+				r.listReviewsErr = errors.New("db error")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{}
+			tt.configure(repository)
+			service := &Service{repository: repository}
+
+			_, apiErr := service.ListPublishedReviews(20)
+
+			if apiErr == nil {
+				t.Fatal("apiErr = nil, want error")
+			}
+			if apiErr.Code != apperror.CodeInternalServerError {
+				t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, apperror.CodeInternalServerError)
+			}
+		})
+	}
+}
+
 type fakeRepository struct {
-	productExists bool
-	reviewExists  bool
-	purchased     bool
-	now           time.Time
-	productErr    error
-	reviewErr     error
-	purchaseErr   error
-	createErr     error
-	createdReview *Review
+	productExists    bool
+	reviewExists     bool
+	purchased        bool
+	publishedReviews []PublishedReviewResult
+	now              time.Time
+	productErr       error
+	reviewErr        error
+	listReviewsErr   error
+	purchaseErr      error
+	createErr        error
+	createdReview    *Review
 }
 
 func (r *fakeRepository) ProductExists(productID int64) (bool, error) {
@@ -192,6 +291,10 @@ func (r *fakeRepository) ProductExists(productID int64) (bool, error) {
 
 func (r *fakeRepository) ReviewExists(userID int64, productID int64) (bool, error) {
 	return r.reviewExists, r.reviewErr
+}
+
+func (r *fakeRepository) ListPublishedReviewsByProductID(productID int64) ([]PublishedReviewResult, error) {
+	return r.publishedReviews, r.listReviewsErr
 }
 
 func (r *fakeRepository) PurchasedOrderedProduct(userID int64, productID int64) (bool, error) {
