@@ -25,6 +25,7 @@
 │       ├── middleware
 │       ├── order
 │       ├── product
+│       ├── review
 │       ├── router
 │       └── shared
 ├── docs
@@ -267,6 +268,19 @@ npm run test:e2e:ui
   - 注文成功時に在庫減算、order_items作成、cart_items削除を同一transactionで実行
   - 注文履歴一覧ではログインユーザー自身の注文概要と商品数量合計を返す
   - 注文履歴詳細では order_items に保存した注文時点のスナップショットを返す
+- review API
+  - `GET /api/products/:productId/reviews`
+  - `GET /api/products/:productId/reviews/summary`
+  - `POST /api/products/:productId/reviews`
+  - `GET /api/me/reviews`
+  - `GET /api/me/reviews/:id`
+  - `PATCH /api/me/reviews/:id`
+  - `POST /api/me/reviews/:id/publish`
+  - `DELETE /api/me/reviews/:id`
+  - 購入済みユーザーのみレビューを作成可能
+  - 1ユーザー1商品1レビュー制約を適用
+  - published のみ公開一覧・平均評価対象にする
+  - draft レビューのみ編集・公開可能
 - 注文確認 / 注文完了画面
   - Cart画面から注文確認画面への導線
   - Cart BFFを利用した注文前確認
@@ -297,6 +311,7 @@ npm run test:e2e:ui
 - auth の repository 分離
 - `internal/product` による product domain 構成
 - `internal/cart` による cart domain 構成
+- `internal/review` による review domain 構成
 - `internal/shared` によるGo共通レスポンス・エラー基盤
 - DB接続・migration実行基盤
 

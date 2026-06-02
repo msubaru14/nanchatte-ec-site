@@ -17,6 +17,8 @@ tags:
     description: Authenticated customer cart APIs
   - name: Orders
     description: Authenticated customer order APIs
+  - name: Reviews
+    description: Product review APIs
 paths:
   /api/auth/register:
     post:
@@ -250,6 +252,272 @@ paths:
           $ref: "#/components/responses/ForbiddenError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/me/reviews:
+    get:
+      tags:
+        - Reviews
+      summary: List my reviews
+      description: |
+        ログインユーザー自身のレビュー一覧を取得する。
+
+        access token による認証と customer role が必要。
+        draft / published / hidden を含めて返す。
+        自分以外のレビューは返さない。
+      operationId: listMyReviews
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: My review list response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyReviewListSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviews:
+                        - reviewId: 1
+                          productId: 1
+                          productName: HHKB Professional HYBRID Type-S
+                          rating: 5
+                          title: 良い商品
+                          comment: 使いやすい
+                          status: draft
+                          createdAt: "2026-06-01T12:00:00Z"
+                          updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+                empty:
+                  value:
+                    data:
+                      reviews: []
+                    error: null
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/me/reviews/{id}:
+    get:
+      tags:
+        - Reviews
+      summary: Get my review detail
+      description: |
+        ログインユーザー自身のレビュー詳細を取得する。
+
+        access token による認証と customer role が必要。
+        自分のレビューのみ取得可能。
+        指定IDのレビューが存在しない場合と、他ユーザーのレビューIDを指定した場合はいずれも NOT_FOUND を返す。
+      operationId: getMyReviewDetail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: My review detail response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyReviewDetailSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      productId: 1
+                      productName: HHKB Professional HYBRID Type-S
+                      rating: 5
+                      title: 良い商品
+                      comment: 使いやすい
+                      status: draft
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidReviewIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Reviews
+      summary: Update my review
+      description: |
+        ログインユーザー自身のレビューを更新する。
+
+        access token による認証と customer role が必要。
+        自分の draft レビューのみ更新可能。
+        更新可能項目は rating / title / comment。
+        published / hidden は編集不可。
+      operationId: updateMyReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewUpdateRequest"
+            examples:
+              default:
+                value:
+                  rating: 4
+                  title: 更新タイトル
+                  comment: 更新コメント
+      responses:
+        "200":
+          description: My review updated response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyReviewDetailSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      productId: 1
+                      productName: HHKB Professional HYBRID Type-S
+                      rating: 4
+                      title: 更新タイトル
+                      comment: 更新コメント
+                      status: draft
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/ReviewUpdateRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Reviews
+      summary: Delete my review
+      description: |
+        ログインユーザー自身のレビューを物理削除する。
+
+        access token による認証と customer role が必要。
+        自分のレビューのみ削除可能。
+        Phase1では status に関係なく、自分のレビューなら削除可能とする。
+      operationId: deleteMyReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: My review deleted response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewMessageSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      message: review deleted
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidReviewIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/me/reviews/{id}/publish:
+    post:
+      tags:
+        - Reviews
+      summary: Publish my review
+      description: |
+        ログインユーザー自身の draft レビューを公開する。
+
+        access token による認証と customer role が必要。
+        draft -> published のみ許可する。
+        published -> published や hidden -> published はユーザー操作では不可。
+      operationId: publishMyReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: My review published response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyReviewDetailSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      productId: 1
+                      productName: HHKB Professional HYBRID Type-S
+                      rating: 5
+                      title: 良い商品
+                      comment: 使いやすい
+                      status: published
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/ReviewPublishRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/products:
     get:
       tags:
@@ -358,6 +626,172 @@ paths:
                     error:
                       code: NOT_FOUND
                       message: product not found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/products/{productId}/reviews:
+    get:
+      tags:
+        - Reviews
+      summary: List product reviews
+      description: |
+        商品に紐づく公開レビュー一覧を取得する。
+
+        認証なしで利用できる。
+        status = published のレビューのみを created_at DESC で返す。
+        draft / hidden は返さない。
+      operationId: listProductReviews
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Product review list response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewListSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviews:
+                        - reviewId: 1
+                          reviewerName: Alice
+                          rating: 5
+                          title: 良い商品
+                          comment: 使いやすい
+                          createdAt: "2026-06-01T12:00:00Z"
+                          updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+                empty:
+                  value:
+                    data:
+                      reviews: []
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidProductIDError"
+        "404":
+          $ref: "#/components/responses/ReviewResourceNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Reviews
+      summary: Create review
+      description: |
+        ログインユーザーが購入済み商品にレビューを作成する。
+
+        access token による認証と customer role が必要。
+        対象商品が存在し、ログインユーザーが order_status = ordered の注文で対象商品を購入済みであることを確認する。
+        1ユーザー1商品1レビューまで作成できる。
+        作成時の status は draft とする。
+      operationId: createReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewCreateRequest"
+            examples:
+              default:
+                value:
+                  rating: 5
+                  title: 良い商品
+                  comment: 使いやすい
+      responses:
+        "201":
+          description: Review created response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewCreateSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      productId: 1
+                      rating: 5
+                      title: 良い商品
+                      comment: 使いやすい
+                      status: draft
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/ReviewCreateRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewResourceNotFoundError"
+        "409":
+          $ref: "#/components/responses/ReviewAlreadyExistsError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/products/{productId}/reviews/summary:
+    get:
+      tags:
+        - Reviews
+      summary: Get product review summary
+      description: |
+        商品に紐づく公開レビューの平均評価と件数を取得する。
+
+        認証なしで利用できる。
+        集計対象は status = published のレビューのみ。
+        draft / hidden は集計しない。
+      operationId: getProductReviewSummary
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Product review summary response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewSummarySuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      averageRating: 4.5
+                      reviewCount: 2
+                    error: null
+                empty:
+                  value:
+                    data:
+                      averageRating: 0
+                      reviewCount: 0
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidProductIDError"
+        "404":
+          $ref: "#/components/responses/ReviewResourceNotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
   /api/cart:
@@ -807,6 +1241,19 @@ components:
                 error:
                   code: INVALID_REQUEST
                   message: invalid order id
+    InvalidReviewIDError:
+      description: Invalid review ID
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidReviewId:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid review id
     CartAddItemRequestError:
       description: Invalid add item request or cart validation error
       content:
@@ -955,6 +1402,166 @@ components:
                 error:
                   code: NOT_FOUND
                   message: order not found
+    ReviewCreateRequestError:
+      description: Invalid review create request or validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidRequestBody:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid request body
+            invalidProductId:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid product id
+            invalidRating:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: rating
+                      code: OUT_OF_RANGE
+                      message: rating must be between 1 and 5
+            titleRequired:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: title
+                      code: REQUIRED
+                      message: title is required when comment is provided
+            notPurchased:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: productId
+                      code: INVALID_FORMAT
+                      message: product has not been purchased
+    ReviewUpdateRequestError:
+      description: Invalid review update request or validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidRequestBody:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid request body
+            invalidReviewId:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid review id
+            invalidRating:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: rating
+                      code: OUT_OF_RANGE
+                      message: rating must be between 1 and 5
+            titleRequired:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: title
+                      code: REQUIRED
+                      message: title is required when comment is provided
+            notDraft:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: status
+                      code: INVALID_FORMAT
+                      message: only draft review can be edited
+    ReviewPublishRequestError:
+      description: Invalid review publish request or validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidReviewId:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid review id
+            notDraft:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: status
+                      code: INVALID_FORMAT
+                      message: only draft review can be published
+    ReviewResourceNotFoundError:
+      description: Review target resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            productNotFound:
+              value:
+                data: null
+                error:
+                  code: NOT_FOUND
+                  message: product not found
+    ReviewAlreadyExistsError:
+      description: Review already exists for the user and product
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            reviewAlreadyExists:
+              value:
+                data: null
+                error:
+                  code: CONFLICT
+                  message: review already exists
+    ReviewNotFoundError:
+      description: Review not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            reviewNotFound:
+              value:
+                data: null
+                error:
+                  code: NOT_FOUND
+                  message: review not found
     UnauthorizedError:
       description: Unauthorized
       content:
@@ -1257,6 +1864,284 @@ components:
         error:
           nullable: true
           example: null
+    ReviewCreateRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: 良い商品
+        comment:
+          type: string
+          nullable: true
+          example: 使いやすい
+    ReviewUpdateRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 4
+        title:
+          type: string
+          nullable: true
+          example: 更新タイトル
+        comment:
+          type: string
+          nullable: true
+          example: 更新コメント
+    ReviewCreateSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/Review"
+        error:
+          nullable: true
+          example: null
+    ReviewMessageSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/ReviewMessageData"
+        error:
+          nullable: true
+          example: null
+    ReviewMessageData:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: review deleted
+    ReviewListSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/ReviewListData"
+        error:
+          nullable: true
+          example: null
+    ReviewListData:
+      type: object
+      required:
+        - reviews
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublishedReview"
+    ReviewSummarySuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/ReviewSummary"
+        error:
+          nullable: true
+          example: null
+    ReviewSummary:
+      type: object
+      required:
+        - averageRating
+        - reviewCount
+      properties:
+        averageRating:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 5
+          example: 4.5
+        reviewCount:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 2
+    MyReviewListSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/MyReviewListData"
+        error:
+          nullable: true
+          example: null
+    MyReviewListData:
+      type: object
+      required:
+        - reviews
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/MyReview"
+    MyReviewDetailSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/MyReview"
+        error:
+          nullable: true
+          example: null
+    MyReview:
+      type: object
+      required:
+        - reviewId
+        - productId
+        - productName
+        - rating
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        reviewId:
+          type: integer
+          format: int64
+          example: 1
+        productId:
+          type: integer
+          format: int64
+          example: 1
+        productName:
+          type: string
+          example: HHKB Professional HYBRID Type-S
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: 良い商品
+        comment:
+          type: string
+          nullable: true
+          example: 使いやすい
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+            - hidden
+          example: draft
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+    PublishedReview:
+      type: object
+      required:
+        - reviewId
+        - reviewerName
+        - rating
+        - createdAt
+        - updatedAt
+      properties:
+        reviewId:
+          type: integer
+          format: int64
+          example: 1
+        reviewerName:
+          type: string
+          example: Alice
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: 良い商品
+        comment:
+          type: string
+          nullable: true
+          example: 使いやすい
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+    Review:
+      type: object
+      required:
+        - reviewId
+        - productId
+        - rating
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        reviewId:
+          type: integer
+          format: int64
+          example: 1
+        productId:
+          type: integer
+          format: int64
+          example: 1
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: 良い商品
+        comment:
+          type: string
+          nullable: true
+          example: 使いやすい
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+            - hidden
+          example: draft
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
     OrderCreateSuccessResponse:
       type: object
       required:

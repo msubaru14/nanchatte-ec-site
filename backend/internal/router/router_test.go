@@ -61,3 +61,33 @@ func TestOrderRoutesRequireAuthentication(t *testing.T) {
 		})
 	}
 }
+
+func TestReviewRoutesRequireAuthentication(t *testing.T) {
+	tests := []struct {
+		name   string
+		method string
+		path   string
+	}{
+		{name: "レビュー作成は認証必須", method: http.MethodPost, path: "/api/products/1/reviews"},
+		{name: "自分のレビュー一覧は認証必須", method: http.MethodGet, path: "/api/me/reviews"},
+		{name: "自分のレビュー詳細は認証必須", method: http.MethodGet, path: "/api/me/reviews/1"},
+		{name: "自分のレビュー更新は認証必須", method: http.MethodPatch, path: "/api/me/reviews/1"},
+		{name: "自分のレビュー公開は認証必須", method: http.MethodPost, path: "/api/me/reviews/1/publish"},
+		{name: "自分のレビュー削除は認証必須", method: http.MethodDelete, path: "/api/me/reviews/1"},
+	}
+
+	r := SetupRouter(nil)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+			res := httptest.NewRecorder()
+
+			r.ServeHTTP(res, req)
+
+			if res.Code != http.StatusUnauthorized {
+				t.Fatalf("status = %d, want %d", res.Code, http.StatusUnauthorized)
+			}
+		})
+	}
+}

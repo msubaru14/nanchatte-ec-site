@@ -12,7 +12,7 @@
 - `GET /api/products/:id`
 - `GET /api/categories`
 - `GET /api/products/:productId/reviews`
-- `GET /api/products/:productId/review-summary`
+- `GET /api/products/:productId/reviews/summary`
 
 ### 特殊API
 
@@ -193,7 +193,7 @@ access tokenを再発行する。
 - stopped 商品はNot Found扱い
 - stock_status を返す
 - 税込価格を返す
-- レビュー概要も含めるかは要検討
+- レビュー概要は `GET /api/products/:productId/reviews/summary` で別取得する
 
 ---
 
@@ -430,12 +430,14 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 - published のみ
 - 新しい順
+- 投稿者名を返す
+- rating / title / comment / createdAt / updatedAt を返す
 - 将来的に rating filter 対応
 - hidden / draft は返さない
 
 ---
 
-## GET /api/products/:productId/review-summary
+## GET /api/products/:productId/reviews/summary
 
 商品レビュー概要を取得する。
 
@@ -443,6 +445,9 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 - reviewCount
 
 を返す。
+
+- 集計対象は published のみ
+- レビューがない場合は averageRating: 0, reviewCount: 0 を返す
 
 ---
 
@@ -452,10 +457,12 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 - 購入者限定
 - 1ユーザー1商品1レビュー
+- 対象商品が存在すること
+- order_status = ordered の注文に対象商品が含まれること
 - rating 必須
 - title / comment 任意
 - comment がある場合 title 必須
-- 初期statusは draft または published で要検討
+- 初期statusは draft
 
 ---
 
@@ -463,7 +470,8 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 ログインユーザー自身のレビュー一覧を取得する。
 
-- draft / published / hidden を含めるか要検討
+- draft / published / hidden を含める
+- productId / productName を返す
 - 自分のレビュー管理用
 
 ---
@@ -473,6 +481,8 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 自分のレビュー詳細を取得する。
 
 - 編集画面初期値として利用する
+- 自分のレビューのみ取得可能
+- 他ユーザーのレビューIDは Not Found とする
 
 ---
 
@@ -482,6 +492,8 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 - draft 状態のみ編集可能
 - rating / title / comment を更新する
+- published / hidden は編集不可
+- comment がある場合 title 必須
 
 ---
 
@@ -489,7 +501,9 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 draftレビューを公開する。
 
-- status を published にする
+- draft のみ published にする
+- published -> published はエラー
+- hidden -> published はユーザー操作では不可
 - published が平均評価対象になる
 
 ---
@@ -499,6 +513,7 @@ draftレビューを公開する。
 自分のレビューを削除する。
 
 - 物理削除
+- Phase1では自分のレビューなら status に関係なく削除可能
 - unique(user_id, product_id) が解放される
 
 ---

@@ -8,6 +8,7 @@ import (
 	"github.com/msubaru14/nanchatte-ec-backend/internal/middleware"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/order"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/product"
+	"github.com/msubaru14/nanchatte-ec-backend/internal/review"
 	"gorm.io/gorm"
 )
 
@@ -19,6 +20,7 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 	productService := product.NewService(database)
 	cartService := cart.NewService(database)
 	orderService := order.NewService(database)
+	reviewService := review.NewService(database)
 
 	healthHandler := health.NewHandler()
 	authHandler := auth.NewAuthHandler(authService)
@@ -26,12 +28,15 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 	productHandler := product.NewHandler(productService)
 	cartHandler := cart.NewHandler(cartService)
 	orderHandler := order.NewHandler(orderService)
+	reviewHandler := review.NewHandler(reviewService)
 
 	api := r.Group("/api")
 	{
 		api.GET("/health", healthHandler.Show)
 		api.GET("/products", productHandler.List)
 		api.GET("/products/:id", productHandler.Show)
+		api.GET("/products/:id/reviews", reviewHandler.List)
+		api.GET("/products/:id/reviews/summary", reviewHandler.Summary)
 
 		authRoutes := api.Group("/auth")
 		{
@@ -53,6 +58,19 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 			middleware.RequireRole(auth.CustomerRole),
 			meHandler.Show,
 		)
+
+		myReviewRoutes := api.Group(
+			"/me/reviews",
+			middleware.AuthMiddleware(tokenService),
+			middleware.RequireRole(auth.CustomerRole),
+		)
+		{
+			myReviewRoutes.GET("", reviewHandler.ListMine)
+			myReviewRoutes.GET("/:id", reviewHandler.ShowMine)
+			myReviewRoutes.PATCH("/:id", reviewHandler.UpdateMine)
+			myReviewRoutes.POST("/:id/publish", reviewHandler.PublishMine)
+			myReviewRoutes.DELETE("/:id", reviewHandler.DeleteMine)
+		}
 
 		cartRoutes := api.Group(
 			"/cart",
@@ -77,6 +95,13 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 			orderRoutes.GET("/:id", orderHandler.Show)
 			orderRoutes.POST("", orderHandler.Create)
 		}
+
+		api.POST(
+			"/products/:productId/reviews",
+			middleware.AuthMiddleware(tokenService),
+			middleware.RequireRole(auth.CustomerRole),
+			reviewHandler.Create,
+		)
 	}
 
 	return r
