@@ -283,15 +283,18 @@ hidden
 
 ---
 
-## 編集フロー
+## Phase1の編集フロー
 
 ```txt
-published
-  ↓ 投稿者が編集開始
 draft
-  ↓ 再公開
+  ↓ 投稿者が編集
+draft
+  ↓ 投稿者が公開
 published
 ```
+
+Phase1では published を投稿者操作で draft に戻す仕様は含めない。
+公開後の投稿者編集は不可とする。
 
 ---
 
@@ -333,6 +336,7 @@ published
 - reviews レコード物理削除
 - 平均評価対象外
 - unique(user_id, product_id) 解放
+- Phase1では投稿者本人のレビューなら status に関係なく削除可能
 
 ---
 

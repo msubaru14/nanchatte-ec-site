@@ -476,7 +476,7 @@ GET /api/products
 GET /api/products/:id
 GET /api/categories
 GET /api/products/:productId/reviews
-GET /api/products/:productId/review-summary
+GET /api/products/:productId/reviews/summary
 ```
 
 ---
@@ -496,6 +496,11 @@ GET /api/orders
 GET /api/orders/:id
 
 POST /api/products/:productId/reviews
+GET /api/me/reviews
+GET /api/me/reviews/:id
+PATCH /api/me/reviews/:id
+POST /api/me/reviews/:id/publish
+DELETE /api/me/reviews/:id
 ```
 
 ---
