@@ -1,6 +1,7 @@
 package review
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
@@ -16,6 +17,7 @@ type repository interface {
 	ReviewExists(userID int64, productID int64) (bool, error)
 	ListPublishedReviewsByProductID(productID int64) ([]PublishedReviewResult, error)
 	ListReviewsByUserID(userID int64) ([]MyReviewResult, error)
+	FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error)
 	GetPublishedReviewSummary(productID int64) (*SummaryResult, error)
 	PurchasedOrderedProduct(userID int64, productID int64) (bool, error)
 	Create(review *Review) error
@@ -103,6 +105,18 @@ func (s *Service) ListMyReviews(userID int64) (*MyReviewsResult, *apperror.APIEr
 	}
 
 	return &MyReviewsResult{Reviews: reviews}, nil
+}
+
+func (s *Service) GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError) {
+	review, err := s.repository.FindReviewByIDAndUserID(reviewID, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound("review not found")
+		}
+		return nil, apperror.NewInternalServerError()
+	}
+
+	return review, nil
 }
 
 func (s *Service) GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError) {

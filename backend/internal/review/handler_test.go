@@ -387,17 +387,120 @@ func TestHandlerListMine(t *testing.T) {
 	}
 }
 
+func TestHandlerShowMine(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name            string
+		path            string
+		setUserID       bool
+		myReviewDetail  *MyReviewDetailResult
+		wantStatus      int
+		wantUserID      int64
+		wantReviewID    int64
+		wantProductName string
+	}{
+		{
+			name:       "自分のレビュー詳細を取得できる",
+			path:       "/api/me/reviews/1",
+			setUserID:  true,
+			wantStatus: http.StatusOK,
+			wantUserID: 10,
+			myReviewDetail: &MyReviewDetailResult{
+				ReviewID:    1,
+				ProductID:   20,
+				ProductName: "HHKB",
+				Rating:      5,
+				Status:      StatusDraft,
+				CreatedAt:   createdAt,
+				UpdatedAt:   createdAt,
+			},
+			wantReviewID:    1,
+			wantProductName: "HHKB",
+		},
+		{
+			name:       "userIDがなければUnauthorized",
+			path:       "/api/me/reviews/1",
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "reviewIdが不正ならBad Request",
+			path:       "/api/me/reviews/invalid",
+			setUserID:  true,
+			wantUserID: 10,
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &fakeReviewService{myReviewDetail: tt.myReviewDetail}
+			handler := NewHandler(service)
+			router := gin.New()
+			router.GET("/api/me/reviews/:id", func(c *gin.Context) {
+				if tt.setUserID {
+					c.Set("auth.userID", tt.wantUserID)
+				}
+				handler.ShowMine(c)
+			})
+
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			res := httptest.NewRecorder()
+
+			router.ServeHTTP(res, req)
+
+			if res.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d", res.Code, tt.wantStatus)
+			}
+			if tt.wantStatus != http.StatusOK {
+				return
+			}
+			if service.userID != tt.wantUserID {
+				t.Fatalf("userID = %d, want %d", service.userID, tt.wantUserID)
+			}
+			if service.reviewID != tt.wantReviewID {
+				t.Fatalf("reviewID = %d, want %d", service.reviewID, tt.wantReviewID)
+			}
+
+			var body struct {
+				Data struct {
+					ReviewID    int64  `json:"reviewId"`
+					ProductName string `json:"productName"`
+					Status      Status `json:"status"`
+				} `json:"data"`
+				Error any `json:"error"`
+			}
+			if err := json.Unmarshal(res.Body.Bytes(), &body); err != nil {
+				t.Fatalf("json.Unmarshal returned error: %v", err)
+			}
+			if body.Data.ReviewID != tt.wantReviewID {
+				t.Fatalf("reviewId = %d, want %d", body.Data.ReviewID, tt.wantReviewID)
+			}
+			if body.Data.ProductName != tt.wantProductName {
+				t.Fatalf("productName = %s, want %s", body.Data.ProductName, tt.wantProductName)
+			}
+			if body.Error != nil {
+				t.Fatalf("error = %#v, want nil", body.Error)
+			}
+		})
+	}
+}
+
 type fakeReviewService struct {
 	userID            int64
 	productID         int64
+	reviewID          int64
 	input             CreateInput
 	result            *CreateResult
 	listResult        *ListResult
 	myReviewsResult   *MyReviewsResult
+	myReviewDetail    *MyReviewDetailResult
 	summaryResult     *SummaryResult
 	apiErr            *apperror.APIError
 	listAPIError      *apperror.APIError
 	myReviewsAPIError *apperror.APIError
+	myReviewAPIError  *apperror.APIError
 	summaryAPIError   *apperror.APIError
 }
 
@@ -416,6 +519,12 @@ func (s *fakeReviewService) ListPublishedReviews(productID int64) (*ListResult, 
 func (s *fakeReviewService) ListMyReviews(userID int64) (*MyReviewsResult, *apperror.APIError) {
 	s.userID = userID
 	return s.myReviewsResult, s.myReviewsAPIError
+}
+
+func (s *fakeReviewService) GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError) {
+	s.userID = userID
+	s.reviewID = reviewID
+	return s.myReviewDetail, s.myReviewAPIError
 }
 
 func (s *fakeReviewService) GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError) {

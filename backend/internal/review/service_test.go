@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
+	"gorm.io/gorm"
 )
 
 func TestServiceCreateReview(t *testing.T) {
@@ -424,18 +425,86 @@ func TestServiceListMyReviewsRepositoryError(t *testing.T) {
 	}
 }
 
+func TestServiceGetMyReviewDetail(t *testing.T) {
+	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name        string
+		review      *MyReviewDetailResult
+		reviewErr   error
+		wantErrCode string
+	}{
+		{
+			name: "自分のレビュー詳細を取得できる",
+			review: &MyReviewDetailResult{
+				ReviewID:    1,
+				ProductID:   20,
+				ProductName: "HHKB",
+				Rating:      5,
+				Status:      StatusDraft,
+				CreatedAt:   createdAt,
+				UpdatedAt:   createdAt,
+			},
+		},
+		{
+			name:        "レビューが存在しないならNot Found",
+			reviewErr:   gorm.ErrRecordNotFound,
+			wantErrCode: apperror.CodeNotFound,
+		},
+		{
+			name:        "RepositoryエラーならInternal Server Error",
+			reviewErr:   errors.New("db error"),
+			wantErrCode: apperror.CodeInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{
+				myReviewDetail: tt.review,
+				myReviewErr:    tt.reviewErr,
+			}
+			service := &Service{repository: repository}
+
+			result, apiErr := service.GetMyReviewDetail(10, 1)
+
+			if tt.wantErrCode != "" {
+				if apiErr == nil {
+					t.Fatalf("apiErr = nil, want %s", tt.wantErrCode)
+				}
+				if apiErr.Code != tt.wantErrCode {
+					t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, tt.wantErrCode)
+				}
+				return
+			}
+
+			if apiErr != nil {
+				t.Fatalf("apiErr = %#v, want nil", apiErr)
+			}
+			if result.ReviewID != tt.review.ReviewID {
+				t.Fatalf("ReviewID = %d, want %d", result.ReviewID, tt.review.ReviewID)
+			}
+			if result.ProductName != tt.review.ProductName {
+				t.Fatalf("ProductName = %s, want %s", result.ProductName, tt.review.ProductName)
+			}
+		})
+	}
+}
+
 type fakeRepository struct {
 	productExists    bool
 	reviewExists     bool
 	purchased        bool
 	publishedReviews []PublishedReviewResult
 	myReviews        []MyReviewResult
+	myReviewDetail   *MyReviewDetailResult
 	summary          *SummaryResult
 	now              time.Time
 	productErr       error
 	reviewErr        error
 	listReviewsErr   error
 	myReviewsErr     error
+	myReviewErr      error
 	summaryErr       error
 	purchaseErr      error
 	createErr        error
@@ -456,6 +525,10 @@ func (r *fakeRepository) ListPublishedReviewsByProductID(productID int64) ([]Pub
 
 func (r *fakeRepository) ListReviewsByUserID(userID int64) ([]MyReviewResult, error) {
 	return r.myReviews, r.myReviewsErr
+}
+
+func (r *fakeRepository) FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error) {
+	return r.myReviewDetail, r.myReviewErr
 }
 
 func (r *fakeRepository) GetPublishedReviewSummary(productID int64) (*SummaryResult, error) {

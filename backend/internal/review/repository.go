@@ -90,6 +90,30 @@ func (r *Repository) ListReviewsByUserID(userID int64) ([]MyReviewResult, error)
 	return reviews, nil
 }
 
+func (r *Repository) FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error) {
+	var review MyReviewDetailResult
+	err := r.db.Table("reviews").
+		Select(`
+			reviews.id AS review_id,
+			reviews.product_id,
+			products.name AS product_name,
+			reviews.rating,
+			reviews.title,
+			reviews.comment,
+			reviews.status,
+			reviews.created_at,
+			reviews.updated_at
+		`).
+		Joins("JOIN products ON products.id = reviews.product_id").
+		Where("reviews.id = ? AND reviews.user_id = ?", reviewID, userID).
+		First(&review).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &review, nil
+}
+
 func (r *Repository) GetPublishedReviewSummary(productID int64) (*SummaryResult, error) {
 	var result SummaryResult
 	err := r.db.Model(&Review{}).

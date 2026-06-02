@@ -59,12 +59,15 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 			meHandler.Show,
 		)
 
-		api.GET(
+		myReviewRoutes := api.Group(
 			"/me/reviews",
 			middleware.AuthMiddleware(tokenService),
 			middleware.RequireRole(auth.CustomerRole),
-			reviewHandler.ListMine,
 		)
+		{
+			myReviewRoutes.GET("", reviewHandler.ListMine)
+			myReviewRoutes.GET("/:id", reviewHandler.ShowMine)
+		}
 
 		cartRoutes := api.Group(
 			"/cart",

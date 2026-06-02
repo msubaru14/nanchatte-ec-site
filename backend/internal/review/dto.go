@@ -27,6 +27,18 @@ type MyReviewsResult struct {
 	Reviews []MyReviewResult
 }
 
+type MyReviewDetailResult struct {
+	ReviewID    int64
+	ProductID   int64
+	ProductName string
+	Rating      int
+	Title       *string
+	Comment     *string
+	Status      Status
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 type SummaryResult struct {
 	AverageRating float64
 	ReviewCount   int64
@@ -66,6 +78,18 @@ type listReviewsResponse struct {
 
 type listMyReviewsResponse struct {
 	Reviews []myReviewResponse `json:"reviews"`
+}
+
+type myReviewDetailResponse struct {
+	ReviewID    int64     `json:"reviewId"`
+	ProductID   int64     `json:"productId"`
+	ProductName string    `json:"productName"`
+	Rating      int       `json:"rating"`
+	Title       *string   `json:"title"`
+	Comment     *string   `json:"comment"`
+	Status      Status    `json:"status"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type reviewSummaryResponse struct {
@@ -153,6 +177,20 @@ func newListMyReviewsResponse(result *MyReviewsResult) listMyReviewsResponse {
 	}
 
 	return listMyReviewsResponse{Reviews: reviews}
+}
+
+func newMyReviewDetailResponse(result *MyReviewDetailResult) myReviewDetailResponse {
+	return myReviewDetailResponse{
+		ReviewID:    result.ReviewID,
+		ProductID:   result.ProductID,
+		ProductName: result.ProductName,
+		Rating:      result.Rating,
+		Title:       result.Title,
+		Comment:     result.Comment,
+		Status:      result.Status,
+		CreatedAt:   result.CreatedAt,
+		UpdatedAt:   result.UpdatedAt,
+	}
 }
 
 func newReviewSummaryResponse(result *SummaryResult) reviewSummaryResponse {

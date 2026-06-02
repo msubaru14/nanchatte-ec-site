@@ -17,6 +17,7 @@ type reviewService interface {
 	CreateReview(userID int64, productID int64, input CreateInput) (*CreateResult, *apperror.APIError)
 	ListPublishedReviews(productID int64) (*ListResult, *apperror.APIError)
 	ListMyReviews(userID int64) (*MyReviewsResult, *apperror.APIError)
+	GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError)
 	GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError)
 }
 
@@ -52,6 +53,25 @@ func (h *Handler) ListMine(c *gin.Context) {
 	}
 
 	response.Success(c, newListMyReviewsResponse(result))
+}
+
+func (h *Handler) ShowMine(c *gin.Context) {
+	userID, ok := userIDFromContext(c)
+	if !ok {
+		return
+	}
+	reviewID, ok := reviewIDFromParam(c)
+	if !ok {
+		return
+	}
+
+	result, apiErr := h.service.GetMyReviewDetail(userID, reviewID)
+	if apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, newMyReviewDetailResponse(result))
 }
 
 func (h *Handler) Summary(c *gin.Context) {
@@ -129,6 +149,16 @@ func productIDFromParam(c *gin.Context) (int64, bool) {
 	}
 
 	return productID, true
+}
+
+func reviewIDFromParam(c *gin.Context) (int64, bool) {
+	reviewID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || reviewID <= 0 {
+		writeAPIError(c, apperror.NewInvalidRequest("invalid review id"))
+		return 0, false
+	}
+
+	return reviewID, true
 }
 
 func writeAPIError(c *gin.Context, apiErr *apperror.APIError) {

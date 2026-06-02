@@ -299,6 +299,60 @@ paths:
           $ref: "#/components/responses/ForbiddenError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/me/reviews/{id}:
+    get:
+      tags:
+        - Reviews
+      summary: Get my review detail
+      description: |
+        ログインユーザー自身のレビュー詳細を取得する。
+
+        access token による認証と customer role が必要。
+        自分のレビューのみ取得可能。
+        指定IDのレビューが存在しない場合と、他ユーザーのレビューIDを指定した場合はいずれも NOT_FOUND を返す。
+      operationId: getMyReviewDetail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: My review detail response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyReviewDetailSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      productId: 1
+                      productName: HHKB Professional HYBRID Type-S
+                      rating: 5
+                      title: 良い商品
+                      comment: 使いやすい
+                      status: draft
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidReviewIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/products:
     get:
       tags:
@@ -1022,6 +1076,19 @@ components:
                 error:
                   code: INVALID_REQUEST
                   message: invalid order id
+    InvalidReviewIDError:
+      description: Invalid review ID
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidReviewId:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid review id
     CartAddItemRequestError:
       description: Invalid add item request or cart validation error
       content:
@@ -1245,6 +1312,19 @@ components:
                 error:
                   code: CONFLICT
                   message: review already exists
+    ReviewNotFoundError:
+      description: Review not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            reviewNotFound:
+              value:
+                data: null
+                error:
+                  code: NOT_FOUND
+                  message: review not found
     UnauthorizedError:
       description: Unauthorized
       content:
@@ -1644,6 +1724,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MyReview"
+    MyReviewDetailSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/MyReview"
+        error:
+          nullable: true
+          example: null
     MyReview:
       type: object
       required:
