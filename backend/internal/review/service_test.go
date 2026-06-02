@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
 	"gorm.io/gorm"
 )
@@ -150,6 +151,19 @@ func TestServiceCreateReviewRepositoryError(t *testing.T) {
 				r.createErr = errors.New("db error")
 			},
 			wantErr:    apperror.CodeInternalServerError,
+			wantCreate: true,
+		},
+		{
+			name: "作成でreviewsのunique violationならConflict",
+			configure: func(r *fakeRepository) {
+				r.productExists = true
+				r.purchased = true
+				r.createErr = &pgconn.PgError{
+					Code:           postgresUniqueViolationCode,
+					ConstraintName: reviewsUserProductConstraint,
+				}
+			},
+			wantErr:    apperror.CodeConflict,
 			wantCreate: true,
 		},
 	}

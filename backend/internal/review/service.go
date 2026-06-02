@@ -4,8 +4,14 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/apperror"
 	"gorm.io/gorm"
+)
+
+const (
+	postgresUniqueViolationCode  = "23505"
+	reviewsUserProductConstraint = "uq_reviews_user_product"
 )
 
 type Service struct {
@@ -70,6 +76,9 @@ func (s *Service) CreateReview(userID int64, productID int64, input CreateInput)
 		Status:    StatusDraft,
 	}
 	if err := s.repository.Create(&newReview); err != nil {
+		if isUniqueViolation(err, reviewsUserProductConstraint) {
+			return nil, apperror.NewConflict("review already exists")
+		}
 		return nil, apperror.NewInternalServerError()
 	}
 
@@ -267,4 +276,13 @@ func notPurchasedValidationError() *apperror.APIError {
 	return apperror.NewValidationError("validation error", []apperror.ErrorDetail{
 		{Field: "productId", Code: apperror.DetailInvalidFormat, Message: "product has not been purchased"},
 	})
+}
+
+func isUniqueViolation(err error, constraintName string) bool {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return false
+	}
+
+	return pgErr.Code == postgresUniqueViolationCode && pgErr.ConstraintName == constraintName
 }
