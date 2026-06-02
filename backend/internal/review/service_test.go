@@ -271,15 +271,112 @@ func TestServiceListPublishedReviewsRepositoryError(t *testing.T) {
 	}
 }
 
+func TestServiceGetReviewSummary(t *testing.T) {
+	tests := []struct {
+		name          string
+		productExists bool
+		summary       *SummaryResult
+		wantErrCode   string
+	}{
+		{
+			name:          "商品のpublishedレビュー概要を取得できる",
+			productExists: true,
+			summary:       &SummaryResult{AverageRating: 4.5, ReviewCount: 2},
+		},
+		{
+			name:          "レビューがない場合は0を返す",
+			productExists: true,
+			summary:       &SummaryResult{AverageRating: 0, ReviewCount: 0},
+		},
+		{
+			name:          "商品が存在しないならNot Found",
+			productExists: false,
+			wantErrCode:   apperror.CodeNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{
+				productExists: tt.productExists,
+				summary:       tt.summary,
+			}
+			service := &Service{repository: repository}
+
+			result, apiErr := service.GetReviewSummary(20)
+
+			if tt.wantErrCode != "" {
+				if apiErr == nil {
+					t.Fatalf("apiErr = nil, want %s", tt.wantErrCode)
+				}
+				if apiErr.Code != tt.wantErrCode {
+					t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, tt.wantErrCode)
+				}
+				return
+			}
+
+			if apiErr != nil {
+				t.Fatalf("apiErr = %#v, want nil", apiErr)
+			}
+			if result.AverageRating != tt.summary.AverageRating {
+				t.Fatalf("AverageRating = %v, want %v", result.AverageRating, tt.summary.AverageRating)
+			}
+			if result.ReviewCount != tt.summary.ReviewCount {
+				t.Fatalf("ReviewCount = %d, want %d", result.ReviewCount, tt.summary.ReviewCount)
+			}
+		})
+	}
+}
+
+func TestServiceGetReviewSummaryRepositoryError(t *testing.T) {
+	tests := []struct {
+		name      string
+		configure func(*fakeRepository)
+	}{
+		{
+			name: "商品確認でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.productErr = errors.New("db error")
+			},
+		},
+		{
+			name: "概要取得でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.productExists = true
+				r.summaryErr = errors.New("db error")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{}
+			tt.configure(repository)
+			service := &Service{repository: repository}
+
+			_, apiErr := service.GetReviewSummary(20)
+
+			if apiErr == nil {
+				t.Fatal("apiErr = nil, want error")
+			}
+			if apiErr.Code != apperror.CodeInternalServerError {
+				t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, apperror.CodeInternalServerError)
+			}
+		})
+	}
+}
+
 type fakeRepository struct {
 	productExists    bool
 	reviewExists     bool
 	purchased        bool
 	publishedReviews []PublishedReviewResult
+	summary          *SummaryResult
 	now              time.Time
 	productErr       error
 	reviewErr        error
 	listReviewsErr   error
+	summaryErr       error
 	purchaseErr      error
 	createErr        error
 	createdReview    *Review
@@ -295,6 +392,10 @@ func (r *fakeRepository) ReviewExists(userID int64, productID int64) (bool, erro
 
 func (r *fakeRepository) ListPublishedReviewsByProductID(productID int64) ([]PublishedReviewResult, error) {
 	return r.publishedReviews, r.listReviewsErr
+}
+
+func (r *fakeRepository) GetPublishedReviewSummary(productID int64) (*SummaryResult, error) {
+	return r.summary, r.summaryErr
 }
 
 func (r *fakeRepository) PurchasedOrderedProduct(userID int64, productID int64) (bool, error) {

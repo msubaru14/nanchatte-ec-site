@@ -65,6 +65,20 @@ func (r *Repository) ListPublishedReviewsByProductID(productID int64) ([]Publish
 	return reviews, nil
 }
 
+func (r *Repository) GetPublishedReviewSummary(productID int64) (*SummaryResult, error) {
+	var result SummaryResult
+	err := r.db.Model(&Review{}).
+		Select("COALESCE(AVG(rating), 0) AS average_rating, COUNT(*) AS review_count").
+		Where("product_id = ?", productID).
+		Where("status = ?", StatusPublished).
+		Scan(&result).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 func (r *Repository) PurchasedOrderedProduct(userID int64, productID int64) (bool, error) {
 	var count int64
 	err := r.db.Model(&order.Order{}).

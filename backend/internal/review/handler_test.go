@@ -207,14 +207,76 @@ func TestHandlerListInvalidProductID(t *testing.T) {
 	}
 }
 
+func TestHandlerSummary(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	service := &fakeReviewService{
+		summaryResult: &SummaryResult{AverageRating: 4.5, ReviewCount: 2},
+	}
+	handler := NewHandler(service)
+	router := gin.New()
+	router.GET("/api/products/:id/reviews/summary", handler.Summary)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/products/20/reviews/summary", nil)
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+
+	if res.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+	}
+	if service.productID != 20 {
+		t.Fatalf("productID = %d, want 20", service.productID)
+	}
+
+	var body struct {
+		Data struct {
+			AverageRating float64 `json:"averageRating"`
+			ReviewCount   int64   `json:"reviewCount"`
+		} `json:"data"`
+		Error any `json:"error"`
+	}
+	if err := json.Unmarshal(res.Body.Bytes(), &body); err != nil {
+		t.Fatalf("json.Unmarshal returned error: %v", err)
+	}
+	if body.Data.AverageRating != 4.5 {
+		t.Fatalf("averageRating = %v, want 4.5", body.Data.AverageRating)
+	}
+	if body.Data.ReviewCount != 2 {
+		t.Fatalf("reviewCount = %d, want 2", body.Data.ReviewCount)
+	}
+	if body.Error != nil {
+		t.Fatalf("error = %#v, want nil", body.Error)
+	}
+}
+
+func TestHandlerSummaryInvalidProductID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	handler := NewHandler(&fakeReviewService{})
+	router := gin.New()
+	router.GET("/api/products/:id/reviews/summary", handler.Summary)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/products/invalid/reviews/summary", nil)
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+
+	if res.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusBadRequest)
+	}
+}
+
 type fakeReviewService struct {
-	userID       int64
-	productID    int64
-	input        CreateInput
-	result       *CreateResult
-	listResult   *ListResult
-	apiErr       *apperror.APIError
-	listAPIError *apperror.APIError
+	userID          int64
+	productID       int64
+	input           CreateInput
+	result          *CreateResult
+	listResult      *ListResult
+	summaryResult   *SummaryResult
+	apiErr          *apperror.APIError
+	listAPIError    *apperror.APIError
+	summaryAPIError *apperror.APIError
 }
 
 func (s *fakeReviewService) CreateReview(userID int64, productID int64, input CreateInput) (*CreateResult, *apperror.APIError) {
@@ -227,4 +289,9 @@ func (s *fakeReviewService) CreateReview(userID int64, productID int64, input Cr
 func (s *fakeReviewService) ListPublishedReviews(productID int64) (*ListResult, *apperror.APIError) {
 	s.productID = productID
 	return s.listResult, s.listAPIError
+}
+
+func (s *fakeReviewService) GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError) {
+	s.productID = productID
+	return s.summaryResult, s.summaryAPIError
 }

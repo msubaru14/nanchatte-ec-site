@@ -16,6 +16,7 @@ type Handler struct {
 type reviewService interface {
 	CreateReview(userID int64, productID int64, input CreateInput) (*CreateResult, *apperror.APIError)
 	ListPublishedReviews(productID int64) (*ListResult, *apperror.APIError)
+	GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError)
 }
 
 func NewHandler(service reviewService) *Handler {
@@ -35,6 +36,21 @@ func (h *Handler) List(c *gin.Context) {
 	}
 
 	response.Success(c, newListReviewsResponse(result))
+}
+
+func (h *Handler) Summary(c *gin.Context) {
+	productID, ok := productIDFromParam(c)
+	if !ok {
+		return
+	}
+
+	result, apiErr := h.service.GetReviewSummary(productID)
+	if apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, newReviewSummaryResponse(result))
 }
 
 func (h *Handler) Create(c *gin.Context) {

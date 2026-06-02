@@ -12,7 +12,7 @@
 - `GET /api/products/:id`
 - `GET /api/categories`
 - `GET /api/products/:productId/reviews`
-- `GET /api/products/:productId/review-summary`
+- `GET /api/products/:productId/reviews/summary`
 
 ### 特殊API
 
@@ -435,7 +435,7 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 ---
 
-## GET /api/products/:productId/review-summary
+## GET /api/products/:productId/reviews/summary
 
 商品レビュー概要を取得する。
 

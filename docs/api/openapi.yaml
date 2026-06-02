@@ -481,6 +481,53 @@ paths:
           $ref: "#/components/responses/ReviewAlreadyExistsError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/products/{productId}/reviews/summary:
+    get:
+      tags:
+        - Reviews
+      summary: Get product review summary
+      description: |
+        商品に紐づく公開レビューの平均評価と件数を取得する。
+
+        認証なしで利用できる。
+        集計対象は status = published のレビューのみ。
+        draft / hidden は集計しない。
+      operationId: getProductReviewSummary
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Product review summary response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewSummarySuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      averageRating: 4.5
+                      reviewCount: 2
+                    error: null
+                empty:
+                  value:
+                    data:
+                      averageRating: 0
+                      reviewCount: 0
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidProductIDError"
+        "404":
+          $ref: "#/components/responses/ReviewResourceNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/cart:
     get:
       tags:
@@ -1502,6 +1549,34 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PublishedReview"
+    ReviewSummarySuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/ReviewSummary"
+        error:
+          nullable: true
+          example: null
+    ReviewSummary:
+      type: object
+      required:
+        - averageRating
+        - reviewCount
+      properties:
+        averageRating:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 5
+          example: 4.5
+        reviewCount:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 2
     PublishedReview:
       type: object
       required:

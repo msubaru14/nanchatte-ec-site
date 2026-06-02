@@ -23,6 +23,11 @@ type ListResult struct {
 	Reviews []PublishedReviewResult
 }
 
+type SummaryResult struct {
+	AverageRating float64
+	ReviewCount   int64
+}
+
 type PublishedReviewResult struct {
 	ReviewID     int64
 	ReviewerName string
@@ -41,6 +46,11 @@ type createReviewRequest struct {
 
 type listReviewsResponse struct {
 	Reviews []publishedReviewResponse `json:"reviews"`
+}
+
+type reviewSummaryResponse struct {
+	AverageRating float64 `json:"averageRating"`
+	ReviewCount   int64   `json:"reviewCount"`
 }
 
 type publishedReviewResponse struct {
@@ -92,4 +102,11 @@ func newListReviewsResponse(result *ListResult) listReviewsResponse {
 	}
 
 	return listReviewsResponse{Reviews: reviews}
+}
+
+func newReviewSummaryResponse(result *SummaryResult) reviewSummaryResponse {
+	return reviewSummaryResponse{
+		AverageRating: result.AverageRating,
+		ReviewCount:   result.ReviewCount,
+	}
 }
