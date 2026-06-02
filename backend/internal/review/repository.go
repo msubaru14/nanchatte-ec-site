@@ -154,6 +154,14 @@ func (r *Repository) UpdateReviewStatus(reviewID int64, userID int64, status Sta
 	return r.FindReviewModelByIDAndUserID(reviewID, userID)
 }
 
+func (r *Repository) DeleteReview(reviewID int64, userID int64) (int64, error) {
+	result := r.db.
+		Where("id = ? AND user_id = ?", reviewID, userID).
+		Delete(&Review{})
+
+	return result.RowsAffected, result.Error
+}
+
 func (r *Repository) GetPublishedReviewSummary(productID int64) (*SummaryResult, error) {
 	var result SummaryResult
 	err := r.db.Model(&Review{}).

@@ -707,6 +707,88 @@ func TestHandlerPublishMine(t *testing.T) {
 	}
 }
 
+func TestHandlerDeleteMine(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	tests := []struct {
+		name         string
+		path         string
+		setUserID    bool
+		wantStatus   int
+		wantUserID   int64
+		wantReviewID int64
+	}{
+		{
+			name:         "自分のレビューを削除できる",
+			path:         "/api/me/reviews/1",
+			setUserID:    true,
+			wantStatus:   http.StatusOK,
+			wantUserID:   10,
+			wantReviewID: 1,
+		},
+		{
+			name:       "userIDがなければUnauthorized",
+			path:       "/api/me/reviews/1",
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "reviewIdが不正ならBad Request",
+			path:       "/api/me/reviews/invalid",
+			setUserID:  true,
+			wantUserID: 10,
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &fakeReviewService{}
+			handler := NewHandler(service)
+			router := gin.New()
+			router.DELETE("/api/me/reviews/:id", func(c *gin.Context) {
+				if tt.setUserID {
+					c.Set("auth.userID", tt.wantUserID)
+				}
+				handler.DeleteMine(c)
+			})
+
+			req := httptest.NewRequest(http.MethodDelete, tt.path, nil)
+			res := httptest.NewRecorder()
+
+			router.ServeHTTP(res, req)
+
+			if res.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d", res.Code, tt.wantStatus)
+			}
+			if tt.wantStatus != http.StatusOK {
+				return
+			}
+			if service.userID != tt.wantUserID {
+				t.Fatalf("userID = %d, want %d", service.userID, tt.wantUserID)
+			}
+			if service.reviewID != tt.wantReviewID {
+				t.Fatalf("reviewID = %d, want %d", service.reviewID, tt.wantReviewID)
+			}
+
+			var body struct {
+				Data struct {
+					Message string `json:"message"`
+				} `json:"data"`
+				Error any `json:"error"`
+			}
+			if err := json.Unmarshal(res.Body.Bytes(), &body); err != nil {
+				t.Fatalf("json.Unmarshal returned error: %v", err)
+			}
+			if body.Data.Message != "review deleted" {
+				t.Fatalf("message = %s, want review deleted", body.Data.Message)
+			}
+			if body.Error != nil {
+				t.Fatalf("error = %#v, want nil", body.Error)
+			}
+		})
+	}
+}
+
 type fakeReviewService struct {
 	userID            int64
 	productID         int64
@@ -726,6 +808,7 @@ type fakeReviewService struct {
 	myReviewAPIError  *apperror.APIError
 	updateAPIError    *apperror.APIError
 	publishAPIError   *apperror.APIError
+	deleteAPIError    *apperror.APIError
 	summaryAPIError   *apperror.APIError
 }
 
@@ -763,6 +846,12 @@ func (s *fakeReviewService) PublishMyReview(userID int64, reviewID int64) (*MyRe
 	s.userID = userID
 	s.reviewID = reviewID
 	return s.publishedReview, s.publishAPIError
+}
+
+func (s *fakeReviewService) DeleteMyReview(userID int64, reviewID int64) *apperror.APIError {
+	s.userID = userID
+	s.reviewID = reviewID
+	return s.deleteAPIError
 }
 
 func (s *fakeReviewService) GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError) {

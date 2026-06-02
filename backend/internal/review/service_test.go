@@ -793,32 +793,91 @@ func TestServicePublishMyReviewRepositoryError(t *testing.T) {
 	}
 }
 
+func TestServiceDeleteMyReview(t *testing.T) {
+	tests := []struct {
+		name         string
+		rowsAffected int64
+		deleteErr    error
+		wantErrCode  string
+	}{
+		{
+			name:         "自分のレビューを削除できる",
+			rowsAffected: 1,
+		},
+		{
+			name:        "レビューが存在しないならNot Found",
+			wantErrCode: apperror.CodeNotFound,
+		},
+		{
+			name:        "RepositoryエラーならInternal Server Error",
+			deleteErr:   errors.New("db error"),
+			wantErrCode: apperror.CodeInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{
+				deleteRowsAffected: tt.rowsAffected,
+				deleteErr:          tt.deleteErr,
+			}
+			service := &Service{repository: repository}
+
+			apiErr := service.DeleteMyReview(10, 1)
+
+			if tt.wantErrCode != "" {
+				if apiErr == nil {
+					t.Fatalf("apiErr = nil, want %s", tt.wantErrCode)
+				}
+				if apiErr.Code != tt.wantErrCode {
+					t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, tt.wantErrCode)
+				}
+				return
+			}
+
+			if apiErr != nil {
+				t.Fatalf("apiErr = %#v, want nil", apiErr)
+			}
+			if repository.deletedReviewID != 1 {
+				t.Fatalf("deletedReviewID = %d, want 1", repository.deletedReviewID)
+			}
+			if repository.deletedUserID != 10 {
+				t.Fatalf("deletedUserID = %d, want 10", repository.deletedUserID)
+			}
+		})
+	}
+}
+
 type fakeRepository struct {
-	productExists    bool
-	reviewExists     bool
-	purchased        bool
-	publishedReviews []PublishedReviewResult
-	myReviews        []MyReviewResult
-	myReviewDetail   *MyReviewDetailResult
-	reviewModel      *Review
-	summary          *SummaryResult
-	now              time.Time
-	productErr       error
-	reviewErr        error
-	listReviewsErr   error
-	myReviewsErr     error
-	myReviewErr      error
-	reviewModelErr   error
-	updateErr        error
-	statusUpdateErr  error
-	summaryErr       error
-	purchaseErr      error
-	createErr        error
-	createdReview    *Review
-	updatedRating    int
-	updatedTitle     *string
-	updatedComment   *string
-	updatedStatus    Status
+	productExists      bool
+	reviewExists       bool
+	purchased          bool
+	publishedReviews   []PublishedReviewResult
+	myReviews          []MyReviewResult
+	myReviewDetail     *MyReviewDetailResult
+	reviewModel        *Review
+	summary            *SummaryResult
+	now                time.Time
+	productErr         error
+	reviewErr          error
+	listReviewsErr     error
+	myReviewsErr       error
+	myReviewErr        error
+	reviewModelErr     error
+	updateErr          error
+	statusUpdateErr    error
+	deleteErr          error
+	summaryErr         error
+	purchaseErr        error
+	createErr          error
+	createdReview      *Review
+	updatedRating      int
+	updatedTitle       *string
+	updatedComment     *string
+	updatedStatus      Status
+	deleteRowsAffected int64
+	deletedReviewID    int64
+	deletedUserID      int64
 }
 
 func (r *fakeRepository) ProductExists(productID int64) (bool, error) {
@@ -875,6 +934,12 @@ func (r *fakeRepository) UpdateReviewStatus(reviewID int64, userID int64, status
 
 	r.reviewModel.Status = status
 	return r.reviewModel, nil
+}
+
+func (r *fakeRepository) DeleteReview(reviewID int64, userID int64) (int64, error) {
+	r.deletedReviewID = reviewID
+	r.deletedUserID = userID
+	return r.deleteRowsAffected, r.deleteErr
 }
 
 func (r *fakeRepository) GetPublishedReviewSummary(productID int64) (*SummaryResult, error) {

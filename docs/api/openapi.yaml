@@ -419,6 +419,51 @@ paths:
           $ref: "#/components/responses/ReviewNotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Reviews
+      summary: Delete my review
+      description: |
+        ログインユーザー自身のレビューを物理削除する。
+
+        access token による認証と customer role が必要。
+        自分のレビューのみ削除可能。
+        Phase1では status に関係なく、自分のレビューなら削除可能とする。
+      operationId: deleteMyReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: My review deleted response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewMessageSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      message: review deleted
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidReviewIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/me/reviews/{id}/publish:
     post:
       tags:
@@ -1866,6 +1911,25 @@ components:
         error:
           nullable: true
           example: null
+    ReviewMessageSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/ReviewMessageData"
+        error:
+          nullable: true
+          example: null
+    ReviewMessageData:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: review deleted
     ReviewListSuccessResponse:
       type: object
       required:

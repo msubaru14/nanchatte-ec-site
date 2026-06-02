@@ -21,6 +21,7 @@ type repository interface {
 	FindReviewModelByIDAndUserID(reviewID int64, userID int64) (*Review, error)
 	UpdateReviewContent(reviewID int64, userID int64, rating int, title *string, comment *string) (*Review, error)
 	UpdateReviewStatus(reviewID int64, userID int64, status Status) (*Review, error)
+	DeleteReview(reviewID int64, userID int64) (int64, error)
 	GetPublishedReviewSummary(productID int64) (*SummaryResult, error)
 	PurchasedOrderedProduct(userID int64, productID int64) (bool, error)
 	Create(review *Review) error
@@ -185,6 +186,18 @@ func (s *Service) PublishMyReview(userID int64, reviewID int64) (*MyReviewDetail
 	}
 
 	return detail, nil
+}
+
+func (s *Service) DeleteMyReview(userID int64, reviewID int64) *apperror.APIError {
+	rowsAffected, err := s.repository.DeleteReview(reviewID, userID)
+	if err != nil {
+		return apperror.NewInternalServerError()
+	}
+	if rowsAffected == 0 {
+		return apperror.NewNotFound("review not found")
+	}
+
+	return nil
 }
 
 func (s *Service) GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError) {

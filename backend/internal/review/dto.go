@@ -109,6 +109,10 @@ type reviewSummaryResponse struct {
 	ReviewCount   int64   `json:"reviewCount"`
 }
 
+type reviewMessageResponse struct {
+	Message string `json:"message"`
+}
+
 type publishedReviewResponse struct {
 	ReviewID     int64     `json:"reviewId"`
 	ReviewerName string    `json:"reviewerName"`

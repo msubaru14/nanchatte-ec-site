@@ -20,6 +20,7 @@ type reviewService interface {
 	GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError)
 	UpdateMyReview(userID int64, reviewID int64, input UpdateInput) (*MyReviewDetailResult, *apperror.APIError)
 	PublishMyReview(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError)
+	DeleteMyReview(userID int64, reviewID int64) *apperror.APIError
 	GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError)
 }
 
@@ -121,6 +122,24 @@ func (h *Handler) PublishMine(c *gin.Context) {
 	}
 
 	response.Success(c, newMyReviewDetailResponse(result))
+}
+
+func (h *Handler) DeleteMine(c *gin.Context) {
+	userID, ok := userIDFromContext(c)
+	if !ok {
+		return
+	}
+	reviewID, ok := reviewIDFromParam(c)
+	if !ok {
+		return
+	}
+
+	if apiErr := h.service.DeleteMyReview(userID, reviewID); apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, reviewMessageResponse{Message: "review deleted"})
 }
 
 func (h *Handler) Summary(c *gin.Context) {

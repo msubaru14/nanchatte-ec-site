@@ -73,6 +73,7 @@ func TestReviewRoutesRequireAuthentication(t *testing.T) {
 		{name: "自分のレビュー詳細は認証必須", method: http.MethodGet, path: "/api/me/reviews/1"},
 		{name: "自分のレビュー更新は認証必須", method: http.MethodPatch, path: "/api/me/reviews/1"},
 		{name: "自分のレビュー公開は認証必須", method: http.MethodPost, path: "/api/me/reviews/1/publish"},
+		{name: "自分のレビュー削除は認証必須", method: http.MethodDelete, path: "/api/me/reviews/1"},
 	}
 
 	r := SetupRouter(nil)
