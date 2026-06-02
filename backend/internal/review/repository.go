@@ -114,6 +114,35 @@ func (r *Repository) FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyR
 	return &review, nil
 }
 
+func (r *Repository) FindReviewModelByIDAndUserID(reviewID int64, userID int64) (*Review, error) {
+	var review Review
+	err := r.db.
+		Where("id = ? AND user_id = ?", reviewID, userID).
+		First(&review).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &review, nil
+}
+
+func (r *Repository) UpdateReviewContent(reviewID int64, userID int64, rating int, title *string, comment *string) (*Review, error) {
+	values := map[string]any{
+		"rating":  rating,
+		"title":   title,
+		"comment": comment,
+	}
+
+	if err := r.db.Model(&Review{}).
+		Where("id = ? AND user_id = ?", reviewID, userID).
+		Updates(values).
+		Error; err != nil {
+		return nil, err
+	}
+
+	return r.FindReviewModelByIDAndUserID(reviewID, userID)
+}
+
 func (r *Repository) GetPublishedReviewSummary(productID int64) (*SummaryResult, error) {
 	var result SummaryResult
 	err := r.db.Model(&Review{}).

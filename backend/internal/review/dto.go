@@ -8,6 +8,12 @@ type CreateInput struct {
 	Comment *string
 }
 
+type UpdateInput struct {
+	Rating  int
+	Title   *string
+	Comment *string
+}
+
 type CreateResult struct {
 	ReviewID  int64
 	ProductID int64
@@ -67,6 +73,12 @@ type MyReviewResult struct {
 }
 
 type createReviewRequest struct {
+	Rating  int     `json:"rating"`
+	Title   *string `json:"title"`
+	Comment *string `json:"comment"`
+}
+
+type updateReviewRequest struct {
 	Rating  int     `json:"rating"`
 	Title   *string `json:"title"`
 	Comment *string `json:"comment"`

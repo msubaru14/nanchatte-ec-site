@@ -491,6 +491,163 @@ func TestServiceGetMyReviewDetail(t *testing.T) {
 	}
 }
 
+func TestServiceUpdateMyReview(t *testing.T) {
+	title := "  更新タイトル  "
+	comment := "  更新コメント  "
+	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+	updatedAt := time.Date(2026, 6, 2, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name        string
+		input       UpdateInput
+		review      *Review
+		detail      *MyReviewDetailResult
+		wantErrCode string
+		wantRating  int
+		wantTitle   string
+	}{
+		{
+			name:  "draftレビューを更新できる",
+			input: UpdateInput{Rating: 4, Title: &title, Comment: &comment},
+			review: &Review{
+				ID:        1,
+				UserID:    10,
+				ProductID: 20,
+				Rating:    5,
+				Status:    StatusDraft,
+				CreatedAt: createdAt,
+				UpdatedAt: createdAt,
+			},
+			detail: &MyReviewDetailResult{
+				ReviewID:    1,
+				ProductID:   20,
+				ProductName: "HHKB",
+				Rating:      4,
+				Title:       stringPtr("更新タイトル"),
+				Comment:     stringPtr("更新コメント"),
+				Status:      StatusDraft,
+				CreatedAt:   createdAt,
+				UpdatedAt:   updatedAt,
+			},
+			wantRating: 4,
+			wantTitle:  "更新タイトル",
+		},
+		{
+			name:        "ratingが0ならエラー",
+			input:       UpdateInput{Rating: 0},
+			wantErrCode: apperror.CodeValidationError,
+		},
+		{
+			name:        "commentありtitleなしならエラー",
+			input:       UpdateInput{Rating: 4, Comment: stringPtr("本文")},
+			wantErrCode: apperror.CodeValidationError,
+		},
+		{
+			name:        "レビューが存在しないならNot Found",
+			input:       UpdateInput{Rating: 4},
+			wantErrCode: apperror.CodeNotFound,
+		},
+		{
+			name:  "publishedレビューは編集不可",
+			input: UpdateInput{Rating: 4},
+			review: &Review{
+				ID:        1,
+				UserID:    10,
+				ProductID: 20,
+				Rating:    5,
+				Status:    StatusPublished,
+			},
+			wantErrCode: apperror.CodeValidationError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{
+				reviewModel:    tt.review,
+				myReviewDetail: tt.detail,
+			}
+			if tt.review == nil && tt.wantErrCode == apperror.CodeNotFound {
+				repository.reviewModelErr = gorm.ErrRecordNotFound
+			}
+			service := &Service{repository: repository}
+
+			result, apiErr := service.UpdateMyReview(10, 1, tt.input)
+
+			if tt.wantErrCode != "" {
+				if apiErr == nil {
+					t.Fatalf("apiErr = nil, want %s", tt.wantErrCode)
+				}
+				if apiErr.Code != tt.wantErrCode {
+					t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, tt.wantErrCode)
+				}
+				if repository.updatedRating != 0 {
+					t.Fatalf("updatedRating = %d, want 0", repository.updatedRating)
+				}
+				return
+			}
+
+			if apiErr != nil {
+				t.Fatalf("apiErr = %#v, want nil", apiErr)
+			}
+			if repository.updatedRating != tt.wantRating {
+				t.Fatalf("updatedRating = %d, want %d", repository.updatedRating, tt.wantRating)
+			}
+			if stringValue(repository.updatedTitle) != tt.wantTitle {
+				t.Fatalf("updatedTitle = %q, want %q", stringValue(repository.updatedTitle), tt.wantTitle)
+			}
+			if result.Rating != tt.wantRating {
+				t.Fatalf("result.Rating = %d, want %d", result.Rating, tt.wantRating)
+			}
+		})
+	}
+}
+
+func TestServiceUpdateMyReviewRepositoryError(t *testing.T) {
+	tests := []struct {
+		name      string
+		configure func(*fakeRepository)
+	}{
+		{
+			name: "レビュー取得でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.reviewModelErr = errors.New("db error")
+			},
+		},
+		{
+			name: "更新でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.reviewModel = &Review{ID: 1, UserID: 10, ProductID: 20, Rating: 5, Status: StatusDraft}
+				r.updateErr = errors.New("db error")
+			},
+		},
+		{
+			name: "詳細再取得でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.reviewModel = &Review{ID: 1, UserID: 10, ProductID: 20, Rating: 5, Status: StatusDraft}
+				r.myReviewErr = errors.New("db error")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{}
+			tt.configure(repository)
+			service := &Service{repository: repository}
+
+			_, apiErr := service.UpdateMyReview(10, 1, UpdateInput{Rating: 4})
+
+			if apiErr == nil {
+				t.Fatal("apiErr = nil, want error")
+			}
+			if apiErr.Code != apperror.CodeInternalServerError {
+				t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, apperror.CodeInternalServerError)
+			}
+		})
+	}
+}
+
 type fakeRepository struct {
 	productExists    bool
 	reviewExists     bool
@@ -498,6 +655,7 @@ type fakeRepository struct {
 	publishedReviews []PublishedReviewResult
 	myReviews        []MyReviewResult
 	myReviewDetail   *MyReviewDetailResult
+	reviewModel      *Review
 	summary          *SummaryResult
 	now              time.Time
 	productErr       error
@@ -505,10 +663,15 @@ type fakeRepository struct {
 	listReviewsErr   error
 	myReviewsErr     error
 	myReviewErr      error
+	reviewModelErr   error
+	updateErr        error
 	summaryErr       error
 	purchaseErr      error
 	createErr        error
 	createdReview    *Review
+	updatedRating    int
+	updatedTitle     *string
+	updatedComment   *string
 }
 
 func (r *fakeRepository) ProductExists(productID int64) (bool, error) {
@@ -529,6 +692,28 @@ func (r *fakeRepository) ListReviewsByUserID(userID int64) ([]MyReviewResult, er
 
 func (r *fakeRepository) FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error) {
 	return r.myReviewDetail, r.myReviewErr
+}
+
+func (r *fakeRepository) FindReviewModelByIDAndUserID(reviewID int64, userID int64) (*Review, error) {
+	return r.reviewModel, r.reviewModelErr
+}
+
+func (r *fakeRepository) UpdateReviewContent(reviewID int64, userID int64, rating int, title *string, comment *string) (*Review, error) {
+	r.updatedRating = rating
+	r.updatedTitle = title
+	r.updatedComment = comment
+	if r.updateErr != nil {
+		return nil, r.updateErr
+	}
+
+	if r.reviewModel == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	r.reviewModel.Rating = rating
+	r.reviewModel.Title = title
+	r.reviewModel.Comment = comment
+	return r.reviewModel, nil
 }
 
 func (r *fakeRepository) GetPublishedReviewSummary(productID int64) (*SummaryResult, error) {

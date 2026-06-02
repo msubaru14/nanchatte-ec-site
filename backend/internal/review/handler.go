@@ -18,6 +18,7 @@ type reviewService interface {
 	ListPublishedReviews(productID int64) (*ListResult, *apperror.APIError)
 	ListMyReviews(userID int64) (*MyReviewsResult, *apperror.APIError)
 	GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError)
+	UpdateMyReview(userID int64, reviewID int64, input UpdateInput) (*MyReviewDetailResult, *apperror.APIError)
 	GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError)
 }
 
@@ -66,6 +67,34 @@ func (h *Handler) ShowMine(c *gin.Context) {
 	}
 
 	result, apiErr := h.service.GetMyReviewDetail(userID, reviewID)
+	if apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, newMyReviewDetailResponse(result))
+}
+
+func (h *Handler) UpdateMine(c *gin.Context) {
+	userID, ok := userIDFromContext(c)
+	if !ok {
+		return
+	}
+	reviewID, ok := reviewIDFromParam(c)
+	if !ok {
+		return
+	}
+
+	var req updateReviewRequest
+	if !bindJSON(c, &req) {
+		return
+	}
+
+	result, apiErr := h.service.UpdateMyReview(userID, reviewID, UpdateInput{
+		Rating:  req.Rating,
+		Title:   req.Title,
+		Comment: req.Comment,
+	})
 	if apiErr != nil {
 		writeAPIError(c, apiErr)
 		return

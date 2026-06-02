@@ -18,6 +18,8 @@ type repository interface {
 	ListPublishedReviewsByProductID(productID int64) ([]PublishedReviewResult, error)
 	ListReviewsByUserID(userID int64) ([]MyReviewResult, error)
 	FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error)
+	FindReviewModelByIDAndUserID(reviewID int64, userID int64) (*Review, error)
+	UpdateReviewContent(reviewID int64, userID int64, rating int, title *string, comment *string) (*Review, error)
 	GetPublishedReviewSummary(productID int64) (*SummaryResult, error)
 	PurchasedOrderedProduct(userID int64, productID int64) (bool, error)
 	Create(review *Review) error
@@ -119,6 +121,44 @@ func (s *Service) GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDeta
 	return review, nil
 }
 
+func (s *Service) UpdateMyReview(userID int64, reviewID int64, input UpdateInput) (*MyReviewDetailResult, *apperror.APIError) {
+	normalizedInput, details := validateReviewContent(input.Rating, input.Title, input.Comment)
+	if len(details) > 0 {
+		return nil, apperror.NewValidationError("validation error", details)
+	}
+
+	review, err := s.repository.FindReviewModelByIDAndUserID(reviewID, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound("review not found")
+		}
+		return nil, apperror.NewInternalServerError()
+	}
+	if review.Status != StatusDraft {
+		return nil, apperror.NewValidationError("validation error", []apperror.ErrorDetail{
+			{Field: "status", Code: apperror.DetailInvalidFormat, Message: "only draft review can be edited"},
+		})
+	}
+
+	updatedReview, err := s.repository.UpdateReviewContent(
+		reviewID,
+		userID,
+		normalizedInput.Rating,
+		normalizedInput.Title,
+		normalizedInput.Comment,
+	)
+	if err != nil {
+		return nil, apperror.NewInternalServerError()
+	}
+
+	detail, err := s.repository.FindReviewByIDAndUserID(updatedReview.ID, userID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError()
+	}
+
+	return detail, nil
+}
+
 func (s *Service) GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError) {
 	exists, err := s.repository.ProductExists(productID)
 	if err != nil {
@@ -137,23 +177,33 @@ func (s *Service) GetReviewSummary(productID int64) (*SummaryResult, *apperror.A
 }
 
 func validateCreateInput(input CreateInput) (CreateInput, []apperror.ErrorDetail) {
+	normalized, details := validateReviewContent(input.Rating, input.Title, input.Comment)
+
+	return CreateInput{
+		Rating:  normalized.Rating,
+		Title:   normalized.Title,
+		Comment: normalized.Comment,
+	}, details
+}
+
+func validateReviewContent(rating int, titleValue *string, commentValue *string) (UpdateInput, []apperror.ErrorDetail) {
 	details := make([]apperror.ErrorDetail, 0)
-	if input.Rating < 1 || input.Rating > 5 {
+	if rating < 1 || rating > 5 {
 		details = append(details, apperror.ErrorDetail{
 			Field: "rating", Code: apperror.DetailOutOfRange, Message: "rating must be between 1 and 5",
 		})
 	}
 
-	title := normalizeOptionalText(input.Title)
-	comment := normalizeOptionalText(input.Comment)
+	title := normalizeOptionalText(titleValue)
+	comment := normalizeOptionalText(commentValue)
 	if comment != nil && title == nil {
 		details = append(details, apperror.ErrorDetail{
 			Field: "title", Code: apperror.DetailRequired, Message: "title is required when comment is provided",
 		})
 	}
 
-	return CreateInput{
-		Rating:  input.Rating,
+	return UpdateInput{
+		Rating:  rating,
 		Title:   title,
 		Comment: comment,
 	}, details

@@ -67,6 +67,7 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 		{
 			myReviewRoutes.GET("", reviewHandler.ListMine)
 			myReviewRoutes.GET("/:id", reviewHandler.ShowMine)
+			myReviewRoutes.PATCH("/:id", reviewHandler.UpdateMine)
 		}
 
 		cartRoutes := api.Group(

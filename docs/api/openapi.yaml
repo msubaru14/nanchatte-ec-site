@@ -353,6 +353,72 @@ paths:
           $ref: "#/components/responses/ReviewNotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Reviews
+      summary: Update my review
+      description: |
+        ログインユーザー自身のレビューを更新する。
+
+        access token による認証と customer role が必要。
+        自分の draft レビューのみ更新可能。
+        更新可能項目は rating / title / comment。
+        published / hidden は編集不可。
+      operationId: updateMyReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewUpdateRequest"
+            examples:
+              default:
+                value:
+                  rating: 4
+                  title: 更新タイトル
+                  comment: 更新コメント
+      responses:
+        "200":
+          description: My review updated response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyReviewDetailSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      productId: 1
+                      productName: HHKB Professional HYBRID Type-S
+                      rating: 4
+                      title: 更新タイトル
+                      comment: 更新コメント
+                      status: draft
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/ReviewUpdateRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/products:
     get:
       tags:
@@ -1286,6 +1352,55 @@ components:
                     - field: productId
                       code: INVALID_FORMAT
                       message: product has not been purchased
+    ReviewUpdateRequestError:
+      description: Invalid review update request or validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidRequestBody:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid request body
+            invalidReviewId:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid review id
+            invalidRating:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: rating
+                      code: OUT_OF_RANGE
+                      message: rating must be between 1 and 5
+            titleRequired:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: title
+                      code: REQUIRED
+                      message: title is required when comment is provided
+            notDraft:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: status
+                      code: INVALID_FORMAT
+                      message: only draft review can be edited
     ReviewResourceNotFoundError:
       description: Review target resource not found
       content:
@@ -1645,6 +1760,24 @@ components:
           type: string
           nullable: true
           example: 使いやすい
+    ReviewUpdateRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 4
+        title:
+          type: string
+          nullable: true
+          example: 更新タイトル
+        comment:
+          type: string
+          nullable: true
+          example: 更新コメント
     ReviewCreateSuccessResponse:
       type: object
       required:
