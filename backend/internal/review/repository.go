@@ -143,6 +143,17 @@ func (r *Repository) UpdateReviewContent(reviewID int64, userID int64, rating in
 	return r.FindReviewModelByIDAndUserID(reviewID, userID)
 }
 
+func (r *Repository) UpdateReviewStatus(reviewID int64, userID int64, status Status) (*Review, error) {
+	if err := r.db.Model(&Review{}).
+		Where("id = ? AND user_id = ?", reviewID, userID).
+		Update("status", status).
+		Error; err != nil {
+		return nil, err
+	}
+
+	return r.FindReviewModelByIDAndUserID(reviewID, userID)
+}
+
 func (r *Repository) GetPublishedReviewSummary(productID int64) (*SummaryResult, error) {
 	var result SummaryResult
 	err := r.db.Model(&Review{}).

@@ -20,6 +20,7 @@ type repository interface {
 	FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error)
 	FindReviewModelByIDAndUserID(reviewID int64, userID int64) (*Review, error)
 	UpdateReviewContent(reviewID int64, userID int64, rating int, title *string, comment *string) (*Review, error)
+	UpdateReviewStatus(reviewID int64, userID int64, status Status) (*Review, error)
 	GetPublishedReviewSummary(productID int64) (*SummaryResult, error)
 	PurchasedOrderedProduct(userID int64, productID int64) (bool, error)
 	Create(review *Review) error
@@ -152,6 +153,33 @@ func (s *Service) UpdateMyReview(userID int64, reviewID int64, input UpdateInput
 	}
 
 	detail, err := s.repository.FindReviewByIDAndUserID(updatedReview.ID, userID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError()
+	}
+
+	return detail, nil
+}
+
+func (s *Service) PublishMyReview(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError) {
+	review, err := s.repository.FindReviewModelByIDAndUserID(reviewID, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound("review not found")
+		}
+		return nil, apperror.NewInternalServerError()
+	}
+	if review.Status != StatusDraft {
+		return nil, apperror.NewValidationError("validation error", []apperror.ErrorDetail{
+			{Field: "status", Code: apperror.DetailInvalidFormat, Message: "only draft review can be published"},
+		})
+	}
+
+	publishedReview, err := s.repository.UpdateReviewStatus(reviewID, userID, StatusPublished)
+	if err != nil {
+		return nil, apperror.NewInternalServerError()
+	}
+
+	detail, err := s.repository.FindReviewByIDAndUserID(publishedReview.ID, userID)
 	if err != nil {
 		return nil, apperror.NewInternalServerError()
 	}
