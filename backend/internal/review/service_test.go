@@ -366,16 +366,76 @@ func TestServiceGetReviewSummaryRepositoryError(t *testing.T) {
 	}
 }
 
+func TestServiceListMyReviews(t *testing.T) {
+	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name    string
+		reviews []MyReviewResult
+	}{
+		{
+			name: "自分のレビュー一覧を取得できる",
+			reviews: []MyReviewResult{
+				{
+					ReviewID:    1,
+					ProductID:   20,
+					ProductName: "HHKB",
+					Rating:      5,
+					Status:      StatusDraft,
+					CreatedAt:   createdAt,
+					UpdatedAt:   createdAt,
+				},
+			},
+		},
+		{
+			name:    "レビューがない場合は空配列を返す",
+			reviews: []MyReviewResult{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{myReviews: tt.reviews}
+			service := &Service{repository: repository}
+
+			result, apiErr := service.ListMyReviews(10)
+
+			if apiErr != nil {
+				t.Fatalf("apiErr = %#v, want nil", apiErr)
+			}
+			if len(result.Reviews) != len(tt.reviews) {
+				t.Fatalf("reviews length = %d, want %d", len(result.Reviews), len(tt.reviews))
+			}
+		})
+	}
+}
+
+func TestServiceListMyReviewsRepositoryError(t *testing.T) {
+	repository := &fakeRepository{myReviewsErr: errors.New("db error")}
+	service := &Service{repository: repository}
+
+	_, apiErr := service.ListMyReviews(10)
+
+	if apiErr == nil {
+		t.Fatal("apiErr = nil, want error")
+	}
+	if apiErr.Code != apperror.CodeInternalServerError {
+		t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, apperror.CodeInternalServerError)
+	}
+}
+
 type fakeRepository struct {
 	productExists    bool
 	reviewExists     bool
 	purchased        bool
 	publishedReviews []PublishedReviewResult
+	myReviews        []MyReviewResult
 	summary          *SummaryResult
 	now              time.Time
 	productErr       error
 	reviewErr        error
 	listReviewsErr   error
+	myReviewsErr     error
 	summaryErr       error
 	purchaseErr      error
 	createErr        error
@@ -392,6 +452,10 @@ func (r *fakeRepository) ReviewExists(userID int64, productID int64) (bool, erro
 
 func (r *fakeRepository) ListPublishedReviewsByProductID(productID int64) ([]PublishedReviewResult, error) {
 	return r.publishedReviews, r.listReviewsErr
+}
+
+func (r *fakeRepository) ListReviewsByUserID(userID int64) ([]MyReviewResult, error) {
+	return r.myReviews, r.myReviewsErr
 }
 
 func (r *fakeRepository) GetPublishedReviewSummary(productID int64) (*SummaryResult, error) {

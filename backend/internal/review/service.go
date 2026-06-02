@@ -15,6 +15,7 @@ type repository interface {
 	ProductExists(productID int64) (bool, error)
 	ReviewExists(userID int64, productID int64) (bool, error)
 	ListPublishedReviewsByProductID(productID int64) ([]PublishedReviewResult, error)
+	ListReviewsByUserID(userID int64) ([]MyReviewResult, error)
 	GetPublishedReviewSummary(productID int64) (*SummaryResult, error)
 	PurchasedOrderedProduct(userID int64, productID int64) (bool, error)
 	Create(review *Review) error
@@ -93,6 +94,15 @@ func (s *Service) ListPublishedReviews(productID int64) (*ListResult, *apperror.
 	}
 
 	return &ListResult{Reviews: reviews}, nil
+}
+
+func (s *Service) ListMyReviews(userID int64) (*MyReviewsResult, *apperror.APIError) {
+	reviews, err := s.repository.ListReviewsByUserID(userID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError()
+	}
+
+	return &MyReviewsResult{Reviews: reviews}, nil
 }
 
 func (s *Service) GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError) {

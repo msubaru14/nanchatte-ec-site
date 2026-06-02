@@ -16,6 +16,7 @@ type Handler struct {
 type reviewService interface {
 	CreateReview(userID int64, productID int64, input CreateInput) (*CreateResult, *apperror.APIError)
 	ListPublishedReviews(productID int64) (*ListResult, *apperror.APIError)
+	ListMyReviews(userID int64) (*MyReviewsResult, *apperror.APIError)
 	GetReviewSummary(productID int64) (*SummaryResult, *apperror.APIError)
 }
 
@@ -36,6 +37,21 @@ func (h *Handler) List(c *gin.Context) {
 	}
 
 	response.Success(c, newListReviewsResponse(result))
+}
+
+func (h *Handler) ListMine(c *gin.Context) {
+	userID, ok := userIDFromContext(c)
+	if !ok {
+		return
+	}
+
+	result, apiErr := h.service.ListMyReviews(userID)
+	if apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, newListMyReviewsResponse(result))
 }
 
 func (h *Handler) Summary(c *gin.Context) {

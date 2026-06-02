@@ -252,6 +252,53 @@ paths:
           $ref: "#/components/responses/ForbiddenError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/me/reviews:
+    get:
+      tags:
+        - Reviews
+      summary: List my reviews
+      description: |
+        ログインユーザー自身のレビュー一覧を取得する。
+
+        access token による認証と customer role が必要。
+        draft / published / hidden を含めて返す。
+        自分以外のレビューは返さない。
+      operationId: listMyReviews
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: My review list response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyReviewListSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviews:
+                        - reviewId: 1
+                          productId: 1
+                          productName: HHKB Professional HYBRID Type-S
+                          rating: 5
+                          title: 良い商品
+                          comment: 使いやすい
+                          status: draft
+                          createdAt: "2026-06-01T12:00:00Z"
+                          updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+                empty:
+                  value:
+                    data:
+                      reviews: []
+                    error: null
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/products:
     get:
       tags:
@@ -1577,6 +1624,76 @@ components:
           format: int64
           minimum: 0
           example: 2
+    MyReviewListSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/MyReviewListData"
+        error:
+          nullable: true
+          example: null
+    MyReviewListData:
+      type: object
+      required:
+        - reviews
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/MyReview"
+    MyReview:
+      type: object
+      required:
+        - reviewId
+        - productId
+        - productName
+        - rating
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        reviewId:
+          type: integer
+          format: int64
+          example: 1
+        productId:
+          type: integer
+          format: int64
+          example: 1
+        productName:
+          type: string
+          example: HHKB Professional HYBRID Type-S
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: 良い商品
+        comment:
+          type: string
+          nullable: true
+          example: 使いやすい
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+            - hidden
+          example: draft
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
     PublishedReview:
       type: object
       required:

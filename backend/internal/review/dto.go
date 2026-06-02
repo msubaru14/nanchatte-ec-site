@@ -23,6 +23,10 @@ type ListResult struct {
 	Reviews []PublishedReviewResult
 }
 
+type MyReviewsResult struct {
+	Reviews []MyReviewResult
+}
+
 type SummaryResult struct {
 	AverageRating float64
 	ReviewCount   int64
@@ -38,6 +42,18 @@ type PublishedReviewResult struct {
 	UpdatedAt    time.Time
 }
 
+type MyReviewResult struct {
+	ReviewID    int64
+	ProductID   int64
+	ProductName string
+	Rating      int
+	Title       *string
+	Comment     *string
+	Status      Status
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 type createReviewRequest struct {
 	Rating  int     `json:"rating"`
 	Title   *string `json:"title"`
@@ -46,6 +62,10 @@ type createReviewRequest struct {
 
 type listReviewsResponse struct {
 	Reviews []publishedReviewResponse `json:"reviews"`
+}
+
+type listMyReviewsResponse struct {
+	Reviews []myReviewResponse `json:"reviews"`
 }
 
 type reviewSummaryResponse struct {
@@ -61,6 +81,18 @@ type publishedReviewResponse struct {
 	Comment      *string   `json:"comment"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+type myReviewResponse struct {
+	ReviewID    int64     `json:"reviewId"`
+	ProductID   int64     `json:"productId"`
+	ProductName string    `json:"productName"`
+	Rating      int       `json:"rating"`
+	Title       *string   `json:"title"`
+	Comment     *string   `json:"comment"`
+	Status      Status    `json:"status"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type createReviewResponse struct {
@@ -102,6 +134,25 @@ func newListReviewsResponse(result *ListResult) listReviewsResponse {
 	}
 
 	return listReviewsResponse{Reviews: reviews}
+}
+
+func newListMyReviewsResponse(result *MyReviewsResult) listMyReviewsResponse {
+	reviews := make([]myReviewResponse, 0, len(result.Reviews))
+	for _, review := range result.Reviews {
+		reviews = append(reviews, myReviewResponse{
+			ReviewID:    review.ReviewID,
+			ProductID:   review.ProductID,
+			ProductName: review.ProductName,
+			Rating:      review.Rating,
+			Title:       review.Title,
+			Comment:     review.Comment,
+			Status:      review.Status,
+			CreatedAt:   review.CreatedAt,
+			UpdatedAt:   review.UpdatedAt,
+		})
+	}
+
+	return listMyReviewsResponse{Reviews: reviews}
 }
 
 func newReviewSummaryResponse(result *SummaryResult) reviewSummaryResponse {
