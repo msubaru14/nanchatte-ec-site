@@ -428,6 +428,8 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 商品レビュー一覧を取得する。
 
+- BFF 経由では `GET /api/products/:productId/reviews` として公開し、Browser から Go API を直接呼ばない
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 - published のみ
 - 新しい順
 - 投稿者名を返す
@@ -441,6 +443,8 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 商品レビュー概要を取得する。
 
+- BFF 経由では `GET /api/products/:productId/reviews/summary` として公開し、Browser から Go API を直接呼ばない
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 - averageRating
 - reviewCount
 

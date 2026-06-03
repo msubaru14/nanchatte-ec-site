@@ -296,6 +296,122 @@
   white-space: pre-wrap;
 }
 
+.reviewSection {
+  display: grid;
+  gap: 18px;
+  margin-top: 40px;
+  border-top: 1px solid var(--line);
+  padding-top: 28px;
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.reviewSummary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.reviewSummary span {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 8px 10px;
+}
+
+.reviewList {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reviewItem {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 18px;
+}
+
+.reviewItemHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.reviewTitle {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.reviewerName,
+.reviewDate,
+.reviewNoComment {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.reviewRating {
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: #eef6ff;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 7px 10px;
+}
+
+.reviewComment {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.reviewEmpty,
+.reviewError {
+  margin: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.7;
+  padding: 16px;
+}
+
+.reviewEmpty {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.reviewError {
+  border: 1px solid #fecaca;
+  background: #fff7f7;
+  color: #991b1b;
+}
+
 .skeletonImage {
   aspect-ratio: 4 / 3;
   border: 1px solid var(--line);
@@ -436,6 +552,18 @@
 
   .cartArea {
     width: 100%;
+  }
+
+  .reviewSection {
+    margin-top: 32px;
+  }
+
+  .reviewItemHeader {
+    display: grid;
+  }
+
+  .reviewRating {
+    width: fit-content;
   }
 }
 

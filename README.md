@@ -34,7 +34,8 @@
     │   ├── api
     │   │   ├── auth
     │   │   ├── cart
-    │   │   └── orders
+    │   │   ├── orders
+    │   │   └── products
     │   ├── cart
     │   ├── login
     │   ├── orders
@@ -68,10 +69,16 @@
     │   │   │   ├── server
     │   │   │   └── types
     │   │   └── utils
-    │   └── products
-    │       ├── api
-    │       ├── components
-    │       └── types
+    │   ├── products
+    │   │   ├── api
+    │   │   ├── components
+    │   │   └── types
+    │   └── reviews
+    │       └── api
+    │           ├── client
+    │           ├── handler
+    │           ├── server
+    │           └── types
     ├── lib
     └── tests
         └── e2e
@@ -232,6 +239,8 @@ npm run test:e2e:ui
   - `POST /api/orders`
   - `GET /api/orders`
   - `GET /api/orders/:id`
+  - `GET /api/products/:productId/reviews`
+  - `GET /api/products/:productId/reviews/summary`
   - access token / refresh token を httpOnly cookie で管理
   - 認証対象 API では 401 時に refresh retry を行う
   - backend の response / error code を Browser 向けにも維持する
@@ -306,6 +315,8 @@ npm run test:e2e:ui
   - 数量ステッパーからの Cart追加
   - 在庫不足時の購入可能数量による再追加提案
   - 未ログイン時のログイン画面への復帰導線
+  - Review BFFを利用した平均評価・レビュー件数・公開レビュー一覧表示
+  - レビュー0件表示、title / comment 未設定レビュー表示、レビュー取得失敗時の部分エラー表示
 - Docker Compose による `db` / `backend` / `frontend` 起動
 - `internal/auth` による auth domain 構成
 - auth の repository 分離

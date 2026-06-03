@@ -5,6 +5,7 @@ import { fetchProductDetail } from "../../../features/products/api/productsApi";
 import type { Product, StockStatus } from "../../../features/products/types/product";
 import { ApiError } from "../../../lib/errors";
 import ProductCartAction from "./ProductCartAction";
+import ProductReviewsSection from "./ProductReviewsSection";
 import styles from "./ProductDetailPage.module.css";
 
 type ProductDetailPageProps = {
@@ -124,6 +125,8 @@ export default async function ProductDetailPage({
           </div>
         </div>
       </div>
+
+      <ProductReviewsSection productId={id} />
     </section>
   );
 }
