@@ -182,6 +182,156 @@ test.describe("/products/:id", () => {
     await expect(decreaseButton).toBeDisabled();
   });
 
+  test("商品詳細にレビュー概要と公開レビュー一覧を表示する", async ({ page }) => {
+    await page.route("**/api/products/1/reviews/summary", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          averageRating: 4.5,
+          reviewCount: 2,
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/products/1/reviews", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          reviews: [
+            {
+              reviewId: 2,
+              reviewerName: "Review User B",
+              rating: 4,
+              title: "使いやすい",
+              comment: "普段使いにちょうどよいです。",
+              createdAt: "2026-06-02T09:30:00Z",
+              updatedAt: "2026-06-02T09:30:00Z",
+            },
+            {
+              reviewId: 1,
+              reviewerName: "Review User A",
+              rating: 5,
+              title: "満足",
+              comment: "打鍵感が良いです。",
+              createdAt: "2026-06-01T12:00:00Z",
+              updatedAt: "2026-06-01T12:00:00Z",
+            },
+          ],
+        },
+        error: null,
+      });
+    });
+
+    await page.goto("/products/1");
+
+    const reviewRegion = page.getByRole("region", { name: "レビュー" });
+    await expect(reviewRegion.getByText("平均評価: 4.5 / 5")).toBeVisible();
+    await expect(reviewRegion.getByText("レビュー 2件")).toBeVisible();
+    await expect(reviewRegion.getByText("使いやすい")).toBeVisible();
+    await expect(reviewRegion.getByText("Review User B")).toBeVisible();
+    await expect(reviewRegion.getByText("評価 4 / 5")).toBeVisible();
+    await expect(
+      reviewRegion.getByText("普段使いにちょうどよいです。"),
+    ).toBeVisible();
+    await expect(reviewRegion.getByText("満足")).toBeVisible();
+    await expect(reviewRegion.getByText("Review User A")).toBeVisible();
+  });
+
+  test("レビュー0件とtitle/commentなしのレビューを表示できる", async ({ page }) => {
+    await page.route("**/api/products/1/reviews/summary", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          averageRating: 0,
+          reviewCount: 0,
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/products/1/reviews", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          reviews: [],
+        },
+        error: null,
+      });
+    });
+
+    await page.goto("/products/1");
+
+    const reviewRegion = page.getByRole("region", { name: "レビュー" });
+    await expect(reviewRegion.getByText("平均評価: 0.0 / 5")).toBeVisible();
+    await expect(reviewRegion.getByText("レビュー 0件")).toBeVisible();
+    await expect(reviewRegion.getByText("まだレビューはありません。")).toBeVisible();
+
+    await page.route("**/api/products/1/reviews/summary", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          averageRating: 5,
+          reviewCount: 1,
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/products/1/reviews", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          reviews: [
+            {
+              reviewId: 3,
+              reviewerName: "Rating Only User",
+              rating: 5,
+              title: null,
+              comment: null,
+              createdAt: "2026-06-03T10:00:00Z",
+              updatedAt: "2026-06-03T10:00:00Z",
+            },
+          ],
+        },
+        error: null,
+      });
+    });
+
+    await page.goto("/products/1");
+
+    await expect(reviewRegion.getByText("平均評価: 5.0 / 5")).toBeVisible();
+    await expect(reviewRegion.getByText("レビュー 1件")).toBeVisible();
+    await expect(reviewRegion.getByText("タイトルなし")).toBeVisible();
+    await expect(reviewRegion.getByText("コメントはありません。")).toBeVisible();
+  });
+
+  test("レビュー取得失敗時も商品詳細画面を表示し続ける", async ({ page }) => {
+    await page.route("**/api/products/1/reviews/summary", async (route) => {
+      await fulfillJson(route, 500, {
+        data: null,
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "review summary failed",
+        },
+      });
+    });
+    await page.route("**/api/products/1/reviews", async (route) => {
+      await fulfillJson(route, 500, {
+        data: null,
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "review list failed",
+        },
+      });
+    });
+
+    await page.goto("/products/1");
+
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "HHKB Professional HYBRID Type-S",
+      }),
+    ).toBeVisible();
+    const reviewRegion = page.getByRole("region", { name: "レビュー" });
+    await expect(
+      reviewRegion.getByText(/review .* failed \(INTERNAL_SERVER_ERROR\)/),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "カートに追加" })).toBeEnabled();
+  });
+
   test("選択した数量でカートに追加しCart導線を表示する", async ({ page }) => {
     const requests: Array<{ productId: number; quantity: number }> = [];
     let cartQuantity = 0;
