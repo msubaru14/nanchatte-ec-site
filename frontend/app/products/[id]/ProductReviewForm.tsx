@@ -57,6 +57,7 @@ export default function ProductReviewForm({
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingReviewId, setPendingReviewId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<ReviewFormFeedback | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -87,13 +88,21 @@ export default function ProductReviewForm({
     setFeedback(null);
 
     try {
-      const createdReview = await createProductReview(productId, {
-        rating: ratingValue,
-        title: trimmedTitle || null,
-        comment: trimmedComment || null,
-      });
+      let reviewId = pendingReviewId;
 
-      await publishMyReview(createdReview.reviewId);
+      if (reviewId === null) {
+        const createdReview = await createProductReview(productId, {
+          rating: ratingValue,
+          title: trimmedTitle || null,
+          comment: trimmedComment || null,
+        });
+
+        reviewId = createdReview.reviewId;
+        setPendingReviewId(reviewId);
+      }
+
+      await publishMyReview(reviewId);
+      setPendingReviewId(null);
       setRating("");
       setTitle("");
       setComment("");

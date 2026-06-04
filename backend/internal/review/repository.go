@@ -106,7 +106,7 @@ func (r *Repository) FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyR
 		`).
 		Joins("JOIN products ON products.id = reviews.product_id").
 		Where("reviews.id = ? AND reviews.user_id = ?", reviewID, userID).
-		First(&review).Error
+		Take(&review).Error
 	if err != nil {
 		return nil, err
 	}
