@@ -12,6 +12,9 @@ type ProductDetailPageProps = {
   params: Promise<{
     id: string;
   }>;
+  searchParams?: Promise<{
+    review?: string;
+  }>;
 };
 
 const priceFormatter = new Intl.NumberFormat("ja-JP", {
@@ -52,11 +55,14 @@ async function getProductDetail(productId: string): Promise<Product> {
 
 export default async function ProductDetailPage({
   params,
+  searchParams,
 }: ProductDetailPageProps) {
   const { id } = await params;
+  const query = searchParams ? await searchParams : {};
   const product = await getProductDetail(id);
 
   const isOutOfStock = product.stockStatus === "out_of_stock";
+  const showReviewForm = query.review === "1";
 
   return (
     <section className={styles.page} aria-labelledby="product-detail-title">
@@ -126,7 +132,7 @@ export default async function ProductDetailPage({
         </div>
       </div>
 
-      <ProductReviewsSection productId={id} />
+      <ProductReviewsSection productId={id} showReviewForm={showReviewForm} />
     </section>
   );
 }

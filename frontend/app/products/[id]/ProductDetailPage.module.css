@@ -544,6 +544,23 @@
   cursor: not-allowed;
 }
 
+.reviewFormSuccess,
+.reviewFormError {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.reviewFormSuccess {
+  color: #166534;
+}
+
+.reviewFormError {
+  color: #991b1b;
+}
+
 .skeletonImage {
   aspect-ratio: 4 / 3;
   border: 1px solid var(--line);
