@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
 import {
+  createProductReviewWithBackend,
   fetchProductReviewsWithBackend,
   fetchProductReviewSummaryWithBackend,
+  publishMyReviewWithBackend,
 } from "../server";
 
 export const handleGetProductReviews = async (
@@ -22,6 +24,29 @@ export const handleGetProductReviewSummary = async (
   const { productId } = await params;
   const { response, json } =
     await fetchProductReviewSummaryWithBackend(productId);
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handleCreateProductReview = async (
+  request: Request,
+  { params }: { params: Promise<{ productId: string }> },
+) => {
+  const { productId } = await params;
+  const { response, json } = await createProductReviewWithBackend(
+    productId,
+    await request.text(),
+  );
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handlePublishMyReview = async (
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  const { id } = await params;
+  const { response, json } = await publishMyReviewWithBackend(id);
 
   return NextResponse.json(json, { status: response.status });
 };
