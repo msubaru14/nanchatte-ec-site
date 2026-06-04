@@ -459,6 +459,9 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 レビューを作成する。
 
+- BFF 経由では `POST /api/products/:productId/reviews` として公開し、Browser から Go API を直接呼ばない
+- BFF は `access_token` cookie を利用して Go API を呼び出し、期限切れ時は refresh retry を適用する
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 - 購入者限定
 - 1ユーザー1商品1レビュー
 - 対象商品が存在すること
@@ -505,6 +508,9 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 draftレビューを公開する。
 
+- BFF 経由では `POST /api/me/reviews/:id/publish` として公開し、Browser から Go API を直接呼ばない
+- BFF は `access_token` cookie を利用して Go API を呼び出し、期限切れ時は refresh retry を適用する
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 - draft のみ published にする
 - published -> published はエラー
 - hidden -> published はユーザー操作では不可

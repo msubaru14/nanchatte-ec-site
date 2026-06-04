@@ -233,6 +233,225 @@ test.describe("/products/:id", () => {
     ).toBeVisible();
     await expect(reviewRegion.getByText("満足")).toBeVisible();
     await expect(reviewRegion.getByText("Review User A")).toBeVisible();
+    await expect(page.getByRole("form", { name: "レビュー投稿" })).toHaveCount(0);
+  });
+
+  test("商品詳細のレビュー投稿導線からdraft作成と公開を行える", async ({ page }) => {
+    let reviewFetchCount = 0;
+    const createRequests: unknown[] = [];
+    const publishRequests: string[] = [];
+
+    await page.route(/\/api\/auth\/me(?:\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          id: 1,
+          name: "Review Writer",
+          email: "review-writer@example.com",
+          roles: ["customer"],
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/cart", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          items: [],
+          totalAmount: 0,
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/products/1/reviews/summary", async (route) => {
+      await fulfillJson(route, 200, {
+        data:
+          reviewFetchCount === 0
+            ? {
+                averageRating: 0,
+                reviewCount: 0,
+              }
+            : {
+                averageRating: 5,
+                reviewCount: 1,
+              },
+        error: null,
+      });
+    });
+    await page.route("**/api/products/1/reviews", async (route) => {
+      if (route.request().method() === "POST") {
+        createRequests.push(route.request().postDataJSON());
+        await fulfillJson(route, 201, {
+          data: {
+            reviewId: 77,
+            productId: 1,
+            rating: 5,
+            title: "最高です",
+            comment: "打鍵感がとても良いです。",
+            status: "draft",
+            createdAt: "2026-06-04T12:00:00Z",
+            updatedAt: "2026-06-04T12:00:00Z",
+          },
+          error: null,
+        });
+        return;
+      }
+
+      reviewFetchCount += 1;
+      await fulfillJson(route, 200, {
+        data: {
+          reviews:
+            reviewFetchCount === 1
+              ? []
+              : [
+                  {
+                    reviewId: 77,
+                    reviewerName: "Review Writer",
+                    rating: 5,
+                    title: "最高です",
+                    comment: "打鍵感がとても良いです。",
+                    createdAt: "2026-06-04T12:00:00Z",
+                    updatedAt: "2026-06-04T12:00:00Z",
+                  },
+                ],
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/me/reviews/77/publish", async (route) => {
+      publishRequests.push(route.request().method());
+      await fulfillJson(route, 200, {
+        data: {
+          reviewId: 77,
+          productId: 1,
+          productName: "HHKB Professional HYBRID Type-S",
+          rating: 5,
+          title: "最高です",
+          comment: "打鍵感がとても良いです。",
+          status: "published",
+          createdAt: "2026-06-04T12:00:00Z",
+          updatedAt: "2026-06-04T12:00:00Z",
+        },
+        error: null,
+      });
+    });
+
+    await page.goto("/products/1?review=1");
+
+    const reviewForm = page.getByRole("form", { name: "レビュー投稿" });
+    await expect(reviewForm).toBeVisible();
+    await reviewForm.getByRole("radio", { name: "評価 5 / 5" }).click();
+    await reviewForm.getByLabel("タイトル").fill("最高です");
+    await reviewForm.getByLabel("コメント").fill("打鍵感がとても良いです。");
+    await reviewForm.getByRole("button", { name: "投稿する" }).click();
+
+    await expect.poll(() => createRequests).toEqual([
+      {
+        rating: 5,
+        title: "最高です",
+        comment: "打鍵感がとても良いです。",
+      },
+    ]);
+    await expect.poll(() => publishRequests).toEqual(["POST"]);
+    await expect(reviewForm.getByText("レビューを投稿しました。")).toBeVisible();
+    await expect(reviewForm.getByRole("textbox", { name: "タイトル" })).toHaveValue(
+      "",
+    );
+    await expect(reviewForm.getByRole("textbox", { name: "コメント" })).toHaveValue(
+      "",
+    );
+
+    const reviewRegion = page.getByRole("region", { name: "レビュー" });
+    await expect(reviewRegion.getByText("平均評価: 5.0 / 5")).toBeVisible();
+    await expect(reviewRegion.getByText("レビュー 1件")).toBeVisible();
+    await expect(reviewRegion.getByText("最高です")).toBeVisible();
+  });
+
+  test("レビュー投稿フォームで入力エラーとconflictを表示する", async ({ page }) => {
+    let createRequestCount = 0;
+
+    await page.route(/\/api\/auth\/me(?:\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          id: 1,
+          name: "Review Writer",
+          email: "review-writer@example.com",
+          roles: ["customer"],
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/cart", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          items: [],
+          totalAmount: 0,
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/products/1/reviews/summary", async (route) => {
+      await fulfillJson(route, 200, {
+        data: {
+          averageRating: 0,
+          reviewCount: 0,
+        },
+        error: null,
+      });
+    });
+    await page.route("**/api/products/1/reviews", async (route) => {
+      if (route.request().method() === "POST") {
+        createRequestCount += 1;
+        await fulfillJson(route, 409, {
+          data: null,
+          error: {
+            code: "CONFLICT",
+            message: "review already exists",
+          },
+        });
+        return;
+      }
+
+      await fulfillJson(route, 200, {
+        data: {
+          reviews: [],
+        },
+        error: null,
+      });
+    });
+
+    await page.goto("/products/1?review=1");
+
+    const reviewForm = page.getByRole("form", { name: "レビュー投稿" });
+    await expect(reviewForm).toBeVisible();
+    const submitReviewForm = async () => {
+      await reviewForm.evaluate((form) => {
+        (form as HTMLFormElement).requestSubmit();
+      });
+    };
+    await reviewForm
+      .getByRole("textbox", { name: "コメント" })
+      .fill("タイトルなしのコメントです。");
+    await submitReviewForm();
+
+    await expect(
+      reviewForm.getByText("評価を選択してください。"),
+    ).toBeVisible();
+    expect(createRequestCount).toBe(0);
+
+    await reviewForm.getByRole("radio", { name: "評価 4 / 5" }).click();
+    await submitReviewForm();
+
+    await expect(
+      reviewForm.getByText("コメントを入力する場合はタイトルも入力してください。"),
+    ).toBeVisible();
+    expect(createRequestCount).toBe(0);
+
+    await reviewForm.getByRole("textbox", { name: "タイトル" }).fill("重複レビュー");
+    await submitReviewForm();
+
+    await expect.poll(() => createRequestCount).toBe(1);
+    await expect(
+      reviewForm.getByText("この商品には既にレビューを投稿済みです。"),
+    ).toBeVisible();
   });
 
   test("レビュー0件とtitle/commentなしのレビューを表示できる", async ({ page }) => {

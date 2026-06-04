@@ -241,6 +241,8 @@ npm run test:e2e:ui
   - `GET /api/orders/:id`
   - `GET /api/products/:productId/reviews`
   - `GET /api/products/:productId/reviews/summary`
+  - `POST /api/products/:productId/reviews`
+  - `POST /api/me/reviews/:id/publish`
   - access token / refresh token を httpOnly cookie で管理
   - 認証対象 API では 401 時に refresh retry を行う
   - backend の response / error code を Browser 向けにも維持する
@@ -305,6 +307,7 @@ npm run test:e2e:ui
   - 注文0件表示
   - `UNAUTHORIZED` 時の returnTo 付きログイン遷移
   - `NOT_FOUND` / `INVALID_REQUEST` の案内表示
+  - 注文履歴詳細の商品ごとに、商品詳細画面のレビュー投稿フォームへ進む導線を表示
 - Next.js App Router によるトップページ
 - 商品一覧画面
   - `GET /api/products` を利用した商品カード表示
@@ -317,6 +320,9 @@ npm run test:e2e:ui
   - 未ログイン時のログイン画面への復帰導線
   - Review BFFを利用した平均評価・レビュー件数・公開レビュー一覧表示
   - レビュー0件表示、title / comment 未設定レビュー表示、レビュー取得失敗時の部分エラー表示
+  - 注文履歴詳細から `review=1` 付きで遷移した場合のみ、レビュー投稿フォームを表示
+  - レビュー投稿フォームでは5段階のスターレーティング、タイトル、コメントを入力可能
+  - 投稿時は draft レビュー作成後に公開APIを呼び出し、成功後にフォーム初期化とレビュー一覧再取得を行う
 - Docker Compose による `db` / `backend` / `frontend` 起動
 - `internal/auth` による auth domain 構成
 - auth の repository 分離
