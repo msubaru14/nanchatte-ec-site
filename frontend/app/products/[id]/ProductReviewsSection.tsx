@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   fetchProductReviews,
@@ -13,9 +13,11 @@ import type {
 } from "../../../features/reviews/api";
 import { ApiError } from "../../../lib/errors";
 import styles from "./ProductDetailPage.module.css";
+import ProductReviewForm from "./ProductReviewForm";
 
 type ProductReviewsSectionProps = {
   productId: string;
+  showReviewForm: boolean;
 };
 
 type ReviewDisplayState =
@@ -81,40 +83,47 @@ function ProductReviewItem({ review }: { review: ProductReview }) {
 
 export default function ProductReviewsSection({
   productId,
+  showReviewForm,
 }: ProductReviewsSectionProps) {
   const [state, setState] = useState<ReviewDisplayState>({ kind: "loading" });
+
+  const loadReviews = useCallback(async () => {
+    setState({ kind: "loading" });
+
+    try {
+      const [summary, reviews] = await Promise.all([
+        fetchProductReviewSummary(productId),
+        fetchProductReviews(productId),
+      ]);
+
+      setState({ kind: "success", reviews, summary });
+    } catch (error) {
+      setState({
+        kind: "error",
+        message: formatReviewErrorMessage(error),
+      });
+    }
+  }, [productId]);
 
   useEffect(() => {
     let isActive = true;
 
-    const loadReviews = async () => {
-      setState({ kind: "loading" });
-
-      try {
-        const [summary, reviews] = await Promise.all([
-          fetchProductReviewSummary(productId),
-          fetchProductReviews(productId),
-        ]);
-
-        if (isActive) {
-          setState({ kind: "success", reviews, summary });
-        }
-      } catch (error) {
-        if (isActive) {
-          setState({
-            kind: "error",
-            message: formatReviewErrorMessage(error),
-          });
-        }
+    const loadActiveReviews = async () => {
+      if (isActive) {
+        await loadReviews();
       }
     };
 
-    void loadReviews();
+    void loadActiveReviews();
 
     return () => {
       isActive = false;
     };
-  }, [productId]);
+  }, [loadReviews]);
+
+  const handleReviewPublished = async () => {
+    await loadReviews();
+  };
 
   return (
     <section className={styles.reviewSection} aria-labelledby="reviews-title">
@@ -150,6 +159,13 @@ export default function ProductReviewsSection({
             <ProductReviewItem key={review.reviewId} review={review} />
           ))}
         </ul>
+      ) : null}
+
+      {showReviewForm ? (
+        <ProductReviewForm
+          productId={productId}
+          onReviewPublished={handleReviewPublished}
+        />
       ) : null}
     </section>
   );

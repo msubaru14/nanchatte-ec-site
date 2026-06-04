@@ -206,16 +206,24 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
             <ul className={styles.itemList}>
               {order.items.map((item) => (
                 <li className={styles.item} key={`${order.orderId}-${item.productId}`}>
-                  <div className={styles.imageFrame}>
-                    {item.productImageUrl ? (
-                      <img
-                        className={styles.image}
-                        src={item.productImageUrl}
-                        alt={item.productName}
-                      />
-                    ) : (
-                      <span className={styles.placeholder}>No Image</span>
-                    )}
+                  <div className={styles.itemMedia}>
+                    <div className={styles.imageFrame}>
+                      {item.productImageUrl ? (
+                        <img
+                          className={styles.image}
+                          src={item.productImageUrl}
+                          alt={item.productName}
+                        />
+                      ) : (
+                        <span className={styles.placeholder}>No Image</span>
+                      )}
+                    </div>
+                    <Link
+                      className={styles.reviewLink}
+                      href={`/products/${item.productId}?review=1`}
+                    >
+                      レビューを書く
+                    </Link>
                   </div>
 
                   <div className={styles.itemBody}>

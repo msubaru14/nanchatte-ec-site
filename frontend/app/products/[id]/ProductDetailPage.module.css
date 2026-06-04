@@ -412,6 +412,155 @@
   color: #991b1b;
 }
 
+.reviewFormPanel,
+.reviewForm {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 18px;
+}
+
+.reviewFormHeader {
+  display: grid;
+  gap: 4px;
+}
+
+.reviewFormTitle {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.reviewFormText {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.reviewLoginLink {
+  width: fit-content;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: var(--primary-dark);
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 14px;
+  text-decoration: none;
+}
+
+.reviewLoginLink:hover {
+  background: #eef6ff;
+}
+
+.reviewField {
+  display: grid;
+  gap: 8px;
+}
+
+.reviewLabel {
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.reviewInput,
+.reviewTextarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 10px 12px;
+}
+
+.reviewTextarea {
+  resize: vertical;
+}
+
+.reviewInput:focus,
+.reviewTextarea:focus {
+  border-color: var(--primary);
+  outline: 3px solid rgba(37, 99, 235, 0.18);
+}
+
+.reviewRatingInput {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.reviewStarButton {
+  width: 40px;
+  height: 40px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #cbd5e1;
+  cursor: pointer;
+  font: inherit;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  padding: 0;
+}
+
+.reviewStarButton:hover,
+.reviewStarButton:focus-visible {
+  border-color: var(--primary);
+  outline: 3px solid rgba(37, 99, 235, 0.18);
+}
+
+.reviewStarButtonFilled {
+  color: #f59e0b;
+}
+
+.reviewSubmitButton {
+  width: fit-content;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 18px;
+}
+
+.reviewSubmitButton:disabled {
+  background: #cbd5e1;
+  color: #475569;
+  cursor: not-allowed;
+}
+
+.reviewFormSuccess,
+.reviewFormError {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.reviewFormSuccess {
+  color: #166534;
+}
+
+.reviewFormError {
+  color: #991b1b;
+}
+
 .skeletonImage {
   aspect-ratio: 4 / 3;
   border: 1px solid var(--line);

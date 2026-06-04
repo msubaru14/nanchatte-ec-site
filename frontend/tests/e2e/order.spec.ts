@@ -361,6 +361,9 @@ test.describe("注文履歴", () => {
     await expect(page.getByText("PD-KB800")).toBeVisible();
     await expect(page.getByText("4K Monitor")).toBeVisible();
     await expect(page.getByText(/[￥¥]79,200/)).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "レビューを書く" }).first(),
+    ).toHaveAttribute("href", "/products/1?review=1");
   });
 
   test("注文0件表示を表示できる", async ({ page }) => {

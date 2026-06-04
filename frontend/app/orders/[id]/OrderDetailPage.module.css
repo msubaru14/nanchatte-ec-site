@@ -136,6 +136,12 @@
   padding: 16px;
 }
 
+.itemMedia {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
 .imageFrame {
   display: grid;
   place-items: center;
@@ -168,6 +174,25 @@
   font-size: 19px;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+.reviewLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 8px 12px;
+  text-decoration: none;
+}
+
+.reviewLink:hover {
+  background: #eef6ff;
 }
 
 .itemMeta {
@@ -271,6 +296,10 @@
     grid-template-columns: 96px minmax(0, 1fr);
     gap: 12px;
     padding: 12px;
+  }
+
+  .reviewLink {
+    width: 100%;
   }
 }
 
