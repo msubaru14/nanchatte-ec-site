@@ -13,6 +13,7 @@ import type {
 } from "../../../features/reviews/api";
 import { ApiError } from "../../../lib/errors";
 import styles from "./ProductDetailPage.module.css";
+import ProductReviewForm from "./ProductReviewForm";
 
 type ProductReviewsSectionProps = {
   productId: string;
@@ -151,6 +152,8 @@ export default function ProductReviewsSection({
           ))}
         </ul>
       ) : null}
+
+      <ProductReviewForm productId={productId} />
     </section>
   );
 }
