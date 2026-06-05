@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ERROR_CODES } from "../../../constants/errorCodes";
 import { useAuth } from "../../../contexts/AuthContext";
-import { fetchMyReviews } from "../../../features/reviews/api";
+import { deleteMyReview, fetchMyReviews } from "../../../features/reviews/api";
 import type { MyReview, MyReviewList } from "../../../features/reviews/api";
 import { ApiError } from "../../../lib/errors";
 import styles from "./MyReviewsPage.module.css";
@@ -44,6 +44,12 @@ export default function MyReviewsPage() {
   const [reviewList, setReviewList] = useState<MyReviewList | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [deleteFeedback, setDeleteFeedback] = useState<{
+    kind: "error" | "success";
+    message: string;
+    reviewId?: number;
+  } | null>(null);
+  const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
 
   const redirectToLogin = useCallback(() => {
     setUser(null);
@@ -57,6 +63,7 @@ export default function MyReviewsPage() {
 
     setIsLoading(true);
     setErrorMessage(null);
+    setDeleteFeedback(null);
 
     try {
       const nextReviewList = await fetchMyReviews();
@@ -84,6 +91,54 @@ export default function MyReviewsPage() {
   useEffect(() => {
     void loadReviews();
   }, [loadReviews]);
+
+  const handleDeleteReview = async (review: MyReview) => {
+    if (deletingReviewId !== null) {
+      return;
+    }
+
+    const shouldDelete = window.confirm("このレビューを削除しますか？");
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setDeletingReviewId(review.reviewId);
+    setDeleteFeedback(null);
+
+    try {
+      await deleteMyReview(review.reviewId);
+      setReviewList((current) =>
+        current
+          ? {
+              reviews: current.reviews.filter(
+                (currentReview) => currentReview.reviewId !== review.reviewId,
+              ),
+            }
+          : current,
+      );
+      setDeleteFeedback({
+        kind: "success",
+        message: "レビューを削除しました。",
+      });
+    } catch (error) {
+      if (error instanceof ApiError && error.code === ERROR_CODES.UNAUTHORIZED) {
+        redirectToLogin();
+        return;
+      }
+
+      setDeleteFeedback({
+        kind: "error",
+        message:
+          error instanceof ApiError
+            ? error.message
+            : "レビューを削除できませんでした。",
+        reviewId: review.reviewId,
+      });
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
 
   return (
     <section className={styles.page} aria-labelledby="my-reviews-title">
@@ -115,71 +170,97 @@ export default function MyReviewsPage() {
           <p className={styles.emptyMessage}>
             投稿したレビューはまだありません。
           </p>
-          <Link className={styles.primaryLink} href="/products">
-            商品を探す
+          {deleteFeedback?.kind === "success" ? (
+            <p className={styles.successMessage} role="status">
+              {deleteFeedback.message}
+            </p>
+          ) : null}
+          <Link className={styles.primaryLink} href="/orders">
+            注文履歴を見る
           </Link>
         </div>
       ) : reviewList ? (
-        <ul className={styles.reviewList}>
-          {reviewList.reviews.map((review) => (
-            <li className={styles.reviewItem} key={review.reviewId}>
-              <div className={styles.reviewMain}>
-                <div className={styles.reviewHeading}>
-                  <div className={styles.productBlock}>
-                    <h2 className={styles.productName}>{review.productName}</h2>
-                    <p className={styles.rating}>★{review.rating}</p>
+        <>
+          {deleteFeedback?.kind === "success" ? (
+            <p className={styles.successMessage} role="status">
+              {deleteFeedback.message}
+            </p>
+          ) : null}
+          <ul className={styles.reviewList}>
+            {reviewList.reviews.map((review) => (
+              <li className={styles.reviewItem} key={review.reviewId}>
+                <div className={styles.reviewMain}>
+                  <div className={styles.reviewHeading}>
+                    <div className={styles.productBlock}>
+                      <h2 className={styles.productName}>{review.productName}</h2>
+                      <p className={styles.rating}>★{review.rating}</p>
+                    </div>
+                    <span
+                      className={`${styles.statusBadge} ${
+                        styles[`status-${review.status}`]
+                      }`}
+                    >
+                      {reviewStatusLabels[review.status]}
+                    </span>
                   </div>
-                  <span
-                    className={`${styles.statusBadge} ${
-                      styles[`status-${review.status}`]
-                    }`}
-                  >
-                    {reviewStatusLabels[review.status]}
-                  </span>
+
+                  <div className={styles.reviewBody}>
+                    <p className={styles.reviewTitle}>
+                      {getOptionalText(review.title)}
+                    </p>
+                    <p className={styles.reviewComment}>
+                      {getOptionalText(review.comment)}
+                    </p>
+                  </div>
+
+                  <dl className={styles.reviewMeta}>
+                    <div>
+                      <dt>作成日時</dt>
+                      <dd>{formatDateTime(review.createdAt)}</dd>
+                    </div>
+                    <div>
+                      <dt>更新日時</dt>
+                      <dd>{formatDateTime(review.updatedAt)}</dd>
+                    </div>
+                  </dl>
+                  {deleteFeedback?.kind === "error" &&
+                  deleteFeedback.reviewId === review.reviewId ? (
+                    <p className={styles.deleteError} role="alert">
+                      {deleteFeedback.message}
+                    </p>
+                  ) : null}
                 </div>
 
-                <div className={styles.reviewBody}>
-                  <p className={styles.reviewTitle}>
-                    {getOptionalText(review.title)}
-                  </p>
-                  <p className={styles.reviewComment}>
-                    {getOptionalText(review.comment)}
-                  </p>
-                </div>
-
-                <dl className={styles.reviewMeta}>
-                  <div>
-                    <dt>作成日時</dt>
-                    <dd>{formatDateTime(review.createdAt)}</dd>
-                  </div>
-                  <div>
-                    <dt>更新日時</dt>
-                    <dd>{formatDateTime(review.updatedAt)}</dd>
-                  </div>
-                </dl>
-              </div>
-
-              <div className={styles.reviewActions}>
-                <Link
-                  className={styles.detailLink}
-                  href={`/products/${review.productId}`}
-                >
-                  商品詳細を見る
-                </Link>
-                {review.status === "draft" ? (
+                <div className={styles.reviewActions}>
                   <Link
-                    className={styles.editLink}
-                    href={`/me/reviews/${review.reviewId}/edit`}
+                    className={styles.detailLink}
+                    href={`/products/${review.productId}`}
                   >
-                    編集する
+                    商品詳細を見る
                   </Link>
-                ) : (
-                  <span className={styles.editUnavailable}>編集不可</span>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+                  {review.status === "draft" ? (
+                    <Link
+                      className={styles.editLink}
+                      href={`/me/reviews/${review.reviewId}/edit`}
+                    >
+                      編集する
+                    </Link>
+                  ) : (
+                    <span className={styles.editUnavailable}>編集不可</span>
+                  )}
+                  <button
+                    className={styles.deleteButton}
+                    type="button"
+                    disabled={deletingReviewId !== null}
+                    onClick={() => void handleDeleteReview(review)}
+                  >
+                    {deletingReviewId === review.reviewId ? "削除中..." : "削除する"}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       ) : null}
     </section>
   );
