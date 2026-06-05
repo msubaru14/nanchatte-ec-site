@@ -16,6 +16,12 @@ import styles from "./MyReviewEditPage.module.css";
 
 const ratingOptions = [1, 2, 3, 4, 5];
 
+const reviewStatusLabels: Record<MyReview["status"], string> = {
+  draft: "下書き",
+  published: "公開中",
+  hidden: "非表示",
+};
+
 type Feedback = {
   kind: "error" | "success";
   message: string;
@@ -177,6 +183,16 @@ export default function MyReviewEditPage() {
               一覧へ戻る
             </Link>
           </div>
+        </div>
+      ) : review && review.status !== "draft" ? (
+        <div className={styles.errorPanel} role="alert">
+          <p className={styles.errorTitle}>このレビューは編集できません。</p>
+          <p className={styles.errorMessage}>
+            現在の状態は「{reviewStatusLabels[review.status]}」です。編集できるのは下書きレビューのみです。
+          </p>
+          <Link className={styles.secondaryLink} href="/me/reviews">
+            一覧へ戻る
+          </Link>
         </div>
       ) : review ? (
         <form
