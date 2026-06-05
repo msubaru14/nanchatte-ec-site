@@ -47,3 +47,7 @@ export type MyReview = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type MyReviewList = {
+  reviews: MyReview[];
+};

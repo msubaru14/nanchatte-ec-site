@@ -1,5 +1,6 @@
 export {
   createProductReviewWithBackend,
+  fetchMyReviewsWithBackend,
   fetchProductReviewsWithBackend,
   fetchProductReviewSummaryWithBackend,
   publishMyReviewWithBackend,

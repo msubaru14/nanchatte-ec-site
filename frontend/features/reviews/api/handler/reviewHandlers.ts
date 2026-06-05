@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   createProductReviewWithBackend,
+  fetchMyReviewsWithBackend,
   fetchProductReviewsWithBackend,
   fetchProductReviewSummaryWithBackend,
   publishMyReviewWithBackend,
@@ -37,6 +38,12 @@ export const handleCreateProductReview = async (
     productId,
     await request.text(),
   );
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handleGetMyReviews = async () => {
+  const { response, json } = await fetchMyReviewsWithBackend();
 
   return NextResponse.json(json, { status: response.status });
 };
