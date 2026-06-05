@@ -159,12 +159,24 @@ export default function MyReviewsPage() {
                 </dl>
               </div>
 
-              <Link
-                className={styles.detailLink}
-                href={`/products/${review.productId}`}
-              >
-                商品詳細を見る
-              </Link>
+              <div className={styles.reviewActions}>
+                <Link
+                  className={styles.detailLink}
+                  href={`/products/${review.productId}`}
+                >
+                  商品詳細を見る
+                </Link>
+                {review.status === "draft" ? (
+                  <Link
+                    className={styles.editLink}
+                    href={`/me/reviews/${review.reviewId}/edit`}
+                  >
+                    編集する
+                  </Link>
+                ) : (
+                  <span className={styles.editUnavailable}>編集不可</span>
+                )}
+              </div>
             </li>
           ))}
         </ul>

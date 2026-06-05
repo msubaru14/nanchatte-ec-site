@@ -46,7 +46,9 @@
 }
 
 .primaryLink,
-.detailLink {
+.detailLink,
+.editLink,
+.editUnavailable {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -192,6 +194,11 @@
   font-weight: 800;
 }
 
+.reviewActions {
+  display: grid;
+  gap: 10px;
+}
+
 .detailLink {
   border: 1px solid var(--primary);
   background: #ffffff;
@@ -200,6 +207,22 @@
 
 .detailLink:hover {
   background: #eef6ff;
+}
+
+.editLink {
+  border: 0;
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.editLink:hover {
+  background: var(--primary-dark);
+}
+
+.editUnavailable {
+  border: 1px solid var(--line);
+  background: #f8fafc;
+  color: var(--muted);
 }
 
 .errorPanel {
@@ -259,7 +282,10 @@
     grid-template-columns: 1fr;
   }
 
-  .detailLink {
+  .reviewActions,
+  .detailLink,
+  .editLink,
+  .editUnavailable {
     width: 100%;
   }
 }
