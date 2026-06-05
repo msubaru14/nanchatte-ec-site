@@ -8,6 +8,7 @@ import {
 } from "../../../auth/api/server";
 import type {
   MyReview,
+  MyReviewList,
   ProductReviewList,
   ProductReviewSummary,
   ReviewCreateResult,
@@ -52,6 +53,15 @@ export const createProductReviewWithBackend = async (
     },
   );
   const json = await parseBackendResponse<ReviewCreateResult>(response);
+
+  return { response, json };
+};
+
+export const fetchMyReviewsWithBackend = async () => {
+  const response = await backendFetchWithAuth("/api/me/reviews", {
+    method: "GET",
+  });
+  const json = await parseBackendResponse<MyReviewList>(response);
 
   return { response, json };
 };

@@ -477,6 +477,9 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 ログインユーザー自身のレビュー一覧を取得する。
 
+- BFF 経由では `GET /api/me/reviews` として公開し、Browser から Go API を直接呼ばない
+- BFF は `access_token` cookie を利用して Go API を呼び出し、期限切れ時は refresh retry を適用する
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 - draft / published / hidden を含める
 - productId / productName を返す
 - 自分のレビュー管理用

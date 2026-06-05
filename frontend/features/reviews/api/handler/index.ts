@@ -1,5 +1,6 @@
 export {
   handleCreateProductReview,
+  handleGetMyReviews,
   handleGetProductReviews,
   handleGetProductReviewSummary,
   handlePublishMyReview,

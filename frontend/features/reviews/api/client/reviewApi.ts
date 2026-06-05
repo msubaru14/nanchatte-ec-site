@@ -3,6 +3,7 @@ import { getJsonHeaders, requestJson } from "../../../../lib/api";
 import { ApiError } from "../../../../lib/errors";
 import type {
   MyReview,
+  MyReviewList,
   ProductReviewList,
   ProductReviewSummary,
   ReviewCreateInput,
@@ -64,6 +65,21 @@ export const createProductReview = async (
     throw new ApiError(
       ERROR_CODES.INTERNAL_SERVER_ERROR,
       "Product review response is empty",
+    );
+  }
+
+  return json.data;
+};
+
+export const fetchMyReviews = async () => {
+  const json = await requestJson<MyReviewList>("/api/me/reviews", {
+    cache: "no-store",
+  });
+
+  if (!json.data) {
+    throw new ApiError(
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+      "My review list response is empty",
     );
   }
 

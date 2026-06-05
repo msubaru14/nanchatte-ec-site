@@ -109,7 +109,6 @@ export function PublicHeader() {
             <span className={styles.authStatus}>認証状態を確認中...</span>
           ) : user ? (
             <>
-              <Link href="/orders">注文履歴</Link>
               <Link className={styles.cartLink} href="/cart">
                 カート
                 {isCartLoading ? (
@@ -128,7 +127,9 @@ export function PublicHeader() {
                   </span>
                 ) : null}
               </Link>
-              <span className={styles.userName}>{user.name}</span>
+              <Link className={styles.userName} href="/me">
+                {user.name}
+              </Link>
               <button
                 className={styles.logoutButton}
                 disabled={isLoggingOut}
