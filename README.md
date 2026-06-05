@@ -34,10 +34,12 @@
     │   ├── api
     │   │   ├── auth
     │   │   ├── cart
+    │   │   ├── me
     │   │   ├── orders
     │   │   └── products
     │   ├── cart
     │   ├── login
+    │   ├── me
     │   ├── orders
     │   ├── products
     │   └── register
@@ -118,6 +120,8 @@ docker compose up --build -d
 - ユーザー登録画面: http://localhost:3000/register
 - 商品一覧画面: http://localhost:3000/products
 - カート画面: http://localhost:3000/cart
+- マイページ: http://localhost:3000/me
+- 自分のレビュー一覧画面: http://localhost:3000/me/reviews
 - 注文確認画面: http://localhost:3000/orders/confirm
 - 注文完了画面: http://localhost:3000/orders/complete
 - 注文履歴一覧画面: http://localhost:3000/orders
@@ -242,6 +246,7 @@ npm run test:e2e:ui
   - `GET /api/products/:productId/reviews`
   - `GET /api/products/:productId/reviews/summary`
   - `POST /api/products/:productId/reviews`
+  - `GET /api/me/reviews`
   - `POST /api/me/reviews/:id/publish`
   - access token / refresh token を httpOnly cookie で管理
   - 認証対象 API では 401 時に refresh retry を行う
@@ -253,12 +258,17 @@ npm run test:e2e:ui
   - APIエラーおよび validation details の表示
 - 共通 Header の認証導線
   - 未ログイン時のログイン・ユーザー登録導線表示
-  - ログイン済み時のユーザー名・ログアウト導線表示
-  - ログイン済み時の注文履歴導線表示
+  - ログイン済み時のユーザー名リンク・ログアウト導線表示
+  - ユーザー名リンクからマイページへ進む導線
   - ログイン済み時のCart導線と、商品がある場合の数量合計バッジ表示
   - Cart追加・数量変更・削除後のCart件数再取得
   - logout 後の `AuthContext` 更新と `/products` 遷移
   - logout API の失敗時も cookie 削除後は未ログイン状態へ更新
+- マイページ
+  - Headerのユーザー名リンクから `/me` へ遷移
+  - 注文履歴一覧への導線
+  - 自分のレビュー一覧への導線
+  - 未ログイン時の returnTo 付きログイン遷移
 - product API
   - `GET /api/products`
   - `GET /api/products/:id`
@@ -303,11 +313,21 @@ npm run test:e2e:ui
 - 注文履歴画面
   - `GET /api/orders` BFFを利用した注文履歴一覧表示
   - `GET /api/orders/:id` BFFを利用した注文履歴詳細表示
+  - マイページから注文履歴一覧への導線
   - 一覧から詳細への導線
   - 注文0件表示
   - `UNAUTHORIZED` 時の returnTo 付きログイン遷移
   - `NOT_FOUND` / `INVALID_REQUEST` の案内表示
   - 注文履歴詳細の商品ごとに、商品詳細画面のレビュー投稿フォームへ進む導線を表示
+- 自分のレビュー一覧画面
+  - `GET /api/me/reviews` BFFを利用した自分のレビュー一覧表示
+  - draft / published / hidden を含むレビュー表示
+  - status のユーザー向け表示名変換
+  - title / comment 未入力レビュー表示
+  - レビュー0件表示
+  - 取得失敗時のエラー表示と再読み込み導線
+  - 未ログイン時の returnTo 付きログイン遷移
+  - 商品詳細画面への導線
 - Next.js App Router によるトップページ
 - 商品一覧画面
   - `GET /api/products` を利用した商品カード表示
