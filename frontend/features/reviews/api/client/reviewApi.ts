@@ -8,6 +8,8 @@ import type {
   ProductReviewSummary,
   ReviewCreateInput,
   ReviewCreateResult,
+  ReviewMessageResult,
+  ReviewUpdateInput,
 } from "../types";
 
 export const fetchProductReviews = async (productId: number | string) => {
@@ -80,6 +82,65 @@ export const fetchMyReviews = async () => {
     throw new ApiError(
       ERROR_CODES.INTERNAL_SERVER_ERROR,
       "My review list response is empty",
+    );
+  }
+
+  return json.data;
+};
+
+export const fetchMyReviewDetail = async (reviewId: number | string) => {
+  const json = await requestJson<MyReview>(
+    `/api/me/reviews/${encodeURIComponent(String(reviewId))}`,
+    {
+      cache: "no-store",
+    },
+  );
+
+  if (!json.data) {
+    throw new ApiError(
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+      "My review detail response is empty",
+    );
+  }
+
+  return json.data;
+};
+
+export const updateMyReview = async (
+  reviewId: number | string,
+  input: ReviewUpdateInput,
+) => {
+  const json = await requestJson<MyReview>(
+    `/api/me/reviews/${encodeURIComponent(String(reviewId))}`,
+    {
+      method: "PATCH",
+      headers: getJsonHeaders(),
+      body: JSON.stringify(input),
+    },
+  );
+
+  if (!json.data) {
+    throw new ApiError(
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+      "Updated review response is empty",
+    );
+  }
+
+  return json.data;
+};
+
+export const deleteMyReview = async (reviewId: number | string) => {
+  const json = await requestJson<ReviewMessageResult>(
+    `/api/me/reviews/${encodeURIComponent(String(reviewId))}`,
+    {
+      method: "DELETE",
+    },
+  );
+
+  if (!json.data) {
+    throw new ApiError(
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+      "Deleted review response is empty",
     );
   }
 

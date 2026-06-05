@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 
 import {
   createProductReviewWithBackend,
+  deleteMyReviewWithBackend,
+  fetchMyReviewDetailWithBackend,
   fetchMyReviewsWithBackend,
   fetchProductReviewsWithBackend,
   fetchProductReviewSummaryWithBackend,
   publishMyReviewWithBackend,
+  updateMyReviewWithBackend,
 } from "../server";
 
 export const handleGetProductReviews = async (
@@ -44,6 +47,39 @@ export const handleCreateProductReview = async (
 
 export const handleGetMyReviews = async () => {
   const { response, json } = await fetchMyReviewsWithBackend();
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handleGetMyReviewDetail = async (
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  const { id } = await params;
+  const { response, json } = await fetchMyReviewDetailWithBackend(id);
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handleUpdateMyReview = async (
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  const { id } = await params;
+  const { response, json } = await updateMyReviewWithBackend(
+    id,
+    await request.text(),
+  );
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handleDeleteMyReview = async (
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  const { id } = await params;
+  const { response, json } = await deleteMyReviewWithBackend(id);
 
   return NextResponse.json(json, { status: response.status });
 };

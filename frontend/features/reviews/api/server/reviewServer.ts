@@ -12,6 +12,7 @@ import type {
   ProductReviewList,
   ProductReviewSummary,
   ReviewCreateResult,
+  ReviewMessageResult,
 } from "../types";
 
 export const fetchProductReviewsWithBackend = async (productId: string) => {
@@ -62,6 +63,47 @@ export const fetchMyReviewsWithBackend = async () => {
     method: "GET",
   });
   const json = await parseBackendResponse<MyReviewList>(response);
+
+  return { response, json };
+};
+
+export const fetchMyReviewDetailWithBackend = async (reviewId: string) => {
+  const response = await backendFetchWithAuth(
+    `/api/me/reviews/${encodeURIComponent(reviewId)}`,
+    {
+      method: "GET",
+    },
+  );
+  const json = await parseBackendResponse<MyReview>(response);
+
+  return { response, json };
+};
+
+export const updateMyReviewWithBackend = async (
+  reviewId: string,
+  body: string,
+) => {
+  const response = await backendFetchWithAuth(
+    `/api/me/reviews/${encodeURIComponent(reviewId)}`,
+    {
+      method: "PATCH",
+      headers: getJsonHeaders(),
+      body,
+    },
+  );
+  const json = await parseBackendResponse<MyReview>(response);
+
+  return { response, json };
+};
+
+export const deleteMyReviewWithBackend = async (reviewId: string) => {
+  const response = await backendFetchWithAuth(
+    `/api/me/reviews/${encodeURIComponent(reviewId)}`,
+    {
+      method: "DELETE",
+    },
+  );
+  const json = await parseBackendResponse<ReviewMessageResult>(response);
 
   return { response, json };
 };
