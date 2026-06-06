@@ -25,6 +25,12 @@ export type ReviewCreateInput = {
   comment: string | null;
 };
 
+export type ReviewUpdateInput = {
+  rating: number;
+  title: string | null;
+  comment: string | null;
+};
+
 export type ReviewCreateResult = {
   reviewId: number;
   productId: number;
@@ -50,4 +56,8 @@ export type MyReview = {
 
 export type MyReviewList = {
   reviews: MyReview[];
+};
+
+export type ReviewMessageResult = {
+  message: string;
 };

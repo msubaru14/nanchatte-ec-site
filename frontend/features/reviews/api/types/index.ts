@@ -6,5 +6,7 @@ export type {
   ProductReviewSummary,
   ReviewCreateInput,
   ReviewCreateResult,
+  ReviewMessageResult,
   ReviewStatus,
+  ReviewUpdateInput,
 } from "./review";

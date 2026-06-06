@@ -1,9 +1,12 @@
 export {
   createProductReview,
+  deleteMyReview,
+  fetchMyReviewDetail,
   fetchMyReviews,
   fetchProductReviews,
   fetchProductReviewSummary,
   publishMyReview,
+  updateMyReview,
 } from "./client";
 export type {
   MyReview,
@@ -13,5 +16,7 @@ export type {
   ProductReviewSummary,
   ReviewCreateInput,
   ReviewCreateResult,
+  ReviewMessageResult,
   ReviewStatus,
+  ReviewUpdateInput,
 } from "./types";

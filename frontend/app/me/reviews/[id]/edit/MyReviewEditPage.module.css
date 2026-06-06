@@ -1,0 +1,231 @@
+.page {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 40px 24px 56px;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.title {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.status,
+.form,
+.errorPanel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.status {
+  padding: 32px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.productPanel {
+  display: grid;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
+}
+
+.productLabel,
+.label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.productName {
+  margin: 0;
+  color: var(--text);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.ratingInput {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.starButton {
+  width: 40px;
+  height: 40px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.starButton:hover,
+.starButton:focus-visible {
+  border-color: var(--primary);
+  outline: 3px solid rgba(37, 99, 235, 0.18);
+}
+
+.starButton:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.starButtonFilled {
+  color: #f59e0b;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  padding: 10px 12px;
+}
+
+.textarea {
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.input:disabled,
+.textarea:disabled {
+  background: #f8fafc;
+  color: var(--muted);
+  cursor: wait;
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.primaryButton,
+.secondaryLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 10px 16px;
+  text-decoration: none;
+}
+
+.primaryButton {
+  border: 0;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.primaryButton:disabled {
+  background: #cbd5e1;
+  color: #475569;
+  cursor: wait;
+}
+
+.secondaryLink {
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--primary-dark);
+}
+
+.secondaryLink:hover {
+  background: #eef6ff;
+}
+
+.success,
+.formError {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.success {
+  color: #166534;
+}
+
+.formError {
+  color: #991b1b;
+}
+
+.errorPanel {
+  border-color: #fecaca;
+  background: #fff7f7;
+  padding: 28px;
+}
+
+.errorTitle {
+  margin: 0 0 8px;
+  color: #991b1b;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.errorMessage {
+  margin: 0 0 18px;
+  color: #7f1d1d;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 28px 16px 40px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+
+  .form {
+    padding: 18px;
+  }
+
+  .primaryButton,
+  .secondaryLink {
+    width: 100%;
+  }
+}

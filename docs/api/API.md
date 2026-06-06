@@ -490,6 +490,9 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 自分のレビュー詳細を取得する。
 
+- BFF 経由では `GET /api/me/reviews/:id` として公開し、Browser から Go API を直接呼ばない
+- BFF は `access_token` cookie を利用して Go API を呼び出し、期限切れ時は refresh retry を適用する
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 - 編集画面初期値として利用する
 - 自分のレビューのみ取得可能
 - 他ユーザーのレビューIDは Not Found とする
@@ -500,6 +503,9 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 自分のレビューを編集する。
 
+- BFF 経由では `PATCH /api/me/reviews/:id` として公開し、Browser から Go API を直接呼ばない
+- BFF は `access_token` cookie を利用して Go API を呼び出し、期限切れ時は refresh retry を適用する
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 - draft 状態のみ編集可能
 - rating / title / comment を更新する
 - published / hidden は編集不可
@@ -525,6 +531,9 @@ draftレビューを公開する。
 
 自分のレビューを削除する。
 
+- BFF 経由では `DELETE /api/me/reviews/:id` として公開し、Browser から Go API を直接呼ばない
+- BFF は `access_token` cookie を利用して Go API を呼び出し、期限切れ時は refresh retry を適用する
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 - 物理削除
 - Phase1では自分のレビューなら status に関係なく削除可能
 - unique(user_id, product_id) が解放される

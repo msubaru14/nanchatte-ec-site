@@ -247,7 +247,10 @@ npm run test:e2e:ui
   - `GET /api/products/:productId/reviews/summary`
   - `POST /api/products/:productId/reviews`
   - `GET /api/me/reviews`
+  - `GET /api/me/reviews/:id`
+  - `PATCH /api/me/reviews/:id`
   - `POST /api/me/reviews/:id/publish`
+  - `DELETE /api/me/reviews/:id`
   - access token / refresh token を httpOnly cookie で管理
   - 認証対象 API では 401 時に refresh retry を行う
   - backend の response / error code を Browser 向けにも維持する
@@ -321,6 +324,9 @@ npm run test:e2e:ui
   - 注文履歴詳細の商品ごとに、商品詳細画面のレビュー投稿フォームへ進む導線を表示
 - 自分のレビュー一覧画面
   - `GET /api/me/reviews` BFFを利用した自分のレビュー一覧表示
+  - `GET /api/me/reviews/:id` BFFを利用した自分のレビュー編集フォーム初期表示
+  - `PATCH /api/me/reviews/:id` BFFを利用した下書きレビュー編集
+  - `DELETE /api/me/reviews/:id` BFFを利用した自分のレビュー削除
   - draft / published / hidden を含むレビュー表示
   - status のユーザー向け表示名変換
   - title / comment 未入力レビュー表示
@@ -328,6 +334,9 @@ npm run test:e2e:ui
   - 取得失敗時のエラー表示と再読み込み導線
   - 未ログイン時の returnTo 付きログイン遷移
   - 商品詳細画面への導線
+  - 下書きレビューの編集画面への導線
+  - 公開中・非表示レビューの編集不可表示
+  - 削除前の確認ダイアログと削除失敗時のエラー表示
 - Next.js App Router によるトップページ
 - 商品一覧画面
   - `GET /api/products` を利用した商品カード表示
