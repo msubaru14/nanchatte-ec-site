@@ -63,6 +63,60 @@ test.describe("認証画面", () => {
     });
   });
 
+  test("adminユーザーにはHeaderにレビュー管理導線を表示する", async ({
+    page,
+  }) => {
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 2,
+            name: "Admin User",
+            email: "admin@example.com",
+            roles: ["admin"],
+          },
+          error: null,
+        }),
+      });
+    });
+
+    await page.goto("/login");
+
+    await expect(
+      page.getByRole("link", { name: "レビュー管理" }),
+    ).toHaveAttribute("href", "/admin/reviews");
+  });
+
+  test("customerユーザーにはHeaderのレビュー管理導線を表示しない", async ({
+    page,
+  }) => {
+    await page.unroute("**/api/auth/me");
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: 1,
+            name: "Customer User",
+            email: "customer@example.com",
+            roles: ["customer"],
+          },
+          error: null,
+        }),
+      });
+    });
+
+    await page.goto("/login");
+
+    await expect(
+      page.getByRole("link", { name: "レビュー管理" }),
+    ).toHaveCount(0);
+  });
+
   test("ログイン成功時は指定された内部パスへ遷移する", async ({ page }) => {
     await page.route("**/api/auth/login", async (route) => {
       await route.fulfill({
