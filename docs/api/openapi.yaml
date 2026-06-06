@@ -19,6 +19,8 @@ tags:
     description: Authenticated customer order APIs
   - name: Reviews
     description: Product review APIs
+  - name: Admin Reviews
+    description: Admin review management APIs
 paths:
   /api/auth/register:
     post:
@@ -250,6 +252,189 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "403":
           $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/admin/reviews:
+    get:
+      tags:
+        - Admin Reviews
+      summary: List admin reviews
+      description: |
+        管理者向けレビュー一覧を取得する。
+
+        access token による認証と admin role が必要。
+        draft / published / hidden を含めて createdAt の新しい順で返す。
+        Phase1ではページネーションなしで返す。
+      operationId: listAdminReviews
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Admin review list response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminReviewListSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviews:
+                        - reviewId: 1
+                          userId: 10
+                          reviewerName: Alice
+                          productId: 1
+                          productName: HHKB Professional HYBRID Type-S
+                          rating: 5
+                          title: 良い商品
+                          comment: 使いやすい
+                          status: hidden
+                          createdAt: "2026-06-01T12:00:00Z"
+                          updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+                empty:
+                  value:
+                    data:
+                      reviews: []
+                    error: null
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/admin/reviews/{id}/hide:
+    post:
+      tags:
+        - Admin Reviews
+      summary: Hide admin review
+      description: |
+        管理者がレビューを hidden に変更する。
+
+        access token による認証と admin role が必要。
+        published / draft は hidden に変更する。
+        すでに hidden のレビューは冪等に成功扱いで返す。
+      operationId: hideAdminReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Admin review hidden response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminReviewSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      userId: 10
+                      reviewerName: Alice
+                      productId: 1
+                      productName: HHKB Professional HYBRID Type-S
+                      rating: 5
+                      title: 良い商品
+                      comment: 使いやすい
+                      status: hidden
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidReviewIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/admin/reviews/{id}/publish:
+    post:
+      tags:
+        - Admin Reviews
+      summary: Publish admin review
+      description: |
+        管理者が hidden レビューを published に戻す。
+
+        access token による認証と admin role が必要。
+        hidden は published に変更する。
+        すでに published のレビューは冪等に成功扱いで返す。
+        draft は管理者操作では published にしない。
+      operationId: publishAdminReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Admin review published response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminReviewSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      userId: 10
+                      reviewerName: Alice
+                      productId: 1
+                      productName: HHKB Professional HYBRID Type-S
+                      rating: 5
+                      title: 良い商品
+                      comment: 使いやすい
+                      status: published
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          description: Invalid review publish request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidReviewId:
+                  value:
+                    data: null
+                    error:
+                      code: INVALID_REQUEST
+                      message: invalid review id
+                draftReview:
+                  value:
+                    data: null
+                    error:
+                      code: VALIDATION_ERROR
+                      message: validation error
+                      details:
+                        - field: status
+                          code: INVALID_FORMAT
+                          message: draft review cannot be published by admin
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
   /api/me/reviews:
@@ -1998,6 +2183,96 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MyReview"
+    AdminReviewListSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AdminReviewListData"
+        error:
+          nullable: true
+          example: null
+    AdminReviewListData:
+      type: object
+      required:
+        - reviews
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminReview"
+    AdminReviewSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AdminReview"
+        error:
+          nullable: true
+          example: null
+    AdminReview:
+      type: object
+      required:
+        - reviewId
+        - userId
+        - reviewerName
+        - productId
+        - productName
+        - rating
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        reviewId:
+          type: integer
+          format: int64
+          example: 1
+        userId:
+          type: integer
+          format: int64
+          example: 10
+        reviewerName:
+          type: string
+          example: Alice
+        productId:
+          type: integer
+          format: int64
+          example: 1
+        productName:
+          type: string
+          example: HHKB Professional HYBRID Type-S
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: 良い商品
+        comment:
+          type: string
+          nullable: true
+          example: 使いやすい
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+            - hidden
+          example: hidden
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
     MyReviewDetailSuccessResponse:
       type: object
       required:

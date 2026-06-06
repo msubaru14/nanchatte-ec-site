@@ -90,6 +90,66 @@ func (r *Repository) ListReviewsByUserID(userID int64) ([]MyReviewResult, error)
 	return reviews, nil
 }
 
+func (r *Repository) ListAdminReviews() ([]AdminReviewResult, error) {
+	var reviews []AdminReviewResult
+	err := r.db.Table("reviews").
+		Select(`
+			reviews.id AS review_id,
+			reviews.user_id,
+			CASE
+				WHEN users.deleted_at IS NULL THEN users.name
+				ELSE '退会済みユーザー'
+			END AS reviewer_name,
+			reviews.product_id,
+			products.name AS product_name,
+			reviews.rating,
+			reviews.title,
+			reviews.comment,
+			reviews.status,
+			reviews.created_at,
+			reviews.updated_at
+		`).
+		Joins("JOIN users ON users.id = reviews.user_id").
+		Joins("JOIN products ON products.id = reviews.product_id").
+		Order("reviews.created_at DESC").
+		Scan(&reviews).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return reviews, nil
+}
+
+func (r *Repository) FindAdminReviewByID(reviewID int64) (*AdminReviewResult, error) {
+	var review AdminReviewResult
+	err := r.db.Table("reviews").
+		Select(`
+			reviews.id AS review_id,
+			reviews.user_id,
+			CASE
+				WHEN users.deleted_at IS NULL THEN users.name
+				ELSE '退会済みユーザー'
+			END AS reviewer_name,
+			reviews.product_id,
+			products.name AS product_name,
+			reviews.rating,
+			reviews.title,
+			reviews.comment,
+			reviews.status,
+			reviews.created_at,
+			reviews.updated_at
+		`).
+		Joins("JOIN users ON users.id = reviews.user_id").
+		Joins("JOIN products ON products.id = reviews.product_id").
+		Where("reviews.id = ?", reviewID).
+		Take(&review).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &review, nil
+}
+
 func (r *Repository) FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error) {
 	var review MyReviewDetailResult
 	err := r.db.Table("reviews").
@@ -126,6 +186,18 @@ func (r *Repository) FindReviewModelByIDAndUserID(reviewID int64, userID int64) 
 	return &review, nil
 }
 
+func (r *Repository) FindReviewModelByID(reviewID int64) (*Review, error) {
+	var review Review
+	err := r.db.
+		Where("id = ?", reviewID).
+		First(&review).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &review, nil
+}
+
 func (r *Repository) UpdateReviewContent(reviewID int64, userID int64, rating int, title *string, comment *string) (*Review, error) {
 	values := map[string]any{
 		"rating":  rating,
@@ -152,6 +224,17 @@ func (r *Repository) UpdateReviewStatus(reviewID int64, userID int64, status Sta
 	}
 
 	return r.FindReviewModelByIDAndUserID(reviewID, userID)
+}
+
+func (r *Repository) UpdateReviewStatusByID(reviewID int64, status Status) (*Review, error) {
+	if err := r.db.Model(&Review{}).
+		Where("id = ?", reviewID).
+		Update("status", status).
+		Error; err != nil {
+		return nil, err
+	}
+
+	return r.FindReviewModelByID(reviewID)
 }
 
 func (r *Repository) DeleteReview(reviewID int64, userID int64) (int64, error) {

@@ -72,6 +72,17 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 			myReviewRoutes.DELETE("/:id", reviewHandler.DeleteMine)
 		}
 
+		adminReviewRoutes := api.Group(
+			"/admin/reviews",
+			middleware.AuthMiddleware(tokenService),
+			middleware.RequireRole(auth.AdminRole),
+		)
+		{
+			adminReviewRoutes.GET("", reviewHandler.ListAdmin)
+			adminReviewRoutes.POST("/:id/hide", reviewHandler.HideAdmin)
+			adminReviewRoutes.POST("/:id/publish", reviewHandler.PublishAdmin)
+		}
+
 		cartRoutes := api.Group(
 			"/cart",
 			middleware.AuthMiddleware(tokenService),

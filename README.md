@@ -305,6 +305,14 @@ npm run test:e2e:ui
   - 1ユーザー1商品1レビュー制約を適用
   - published のみ公開一覧・平均評価対象にする
   - draft レビューのみ編集・公開可能
+- admin review API
+  - `GET /api/admin/reviews`
+  - `POST /api/admin/reviews/:id/hide`
+  - `POST /api/admin/reviews/:id/publish`
+  - `admin` role の認証済みユーザー向けに、全ユーザーのレビュー一覧を提供
+  - draft / published / hidden を管理者一覧に含める
+  - レビューを hidden にすると公開一覧・平均評価対象から除外する
+  - hidden レビューを published に戻すと公開一覧・平均評価対象に再反映する
 - 注文確認 / 注文完了画面
   - Cart画面から注文確認画面への導線
   - Cart BFFを利用した注文前確認

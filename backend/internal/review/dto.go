@@ -33,6 +33,10 @@ type MyReviewsResult struct {
 	Reviews []MyReviewResult
 }
 
+type AdminReviewsResult struct {
+	Reviews []AdminReviewResult
+}
+
 type MyReviewDetailResult struct {
 	ReviewID    int64
 	ProductID   int64
@@ -72,6 +76,20 @@ type MyReviewResult struct {
 	UpdatedAt   time.Time
 }
 
+type AdminReviewResult struct {
+	ReviewID     int64
+	UserID       int64
+	ReviewerName string
+	ProductID    int64
+	ProductName  string
+	Rating       int
+	Title        *string
+	Comment      *string
+	Status       Status
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
 type createReviewRequest struct {
 	Rating  int     `json:"rating"`
 	Title   *string `json:"title"`
@@ -90,6 +108,10 @@ type listReviewsResponse struct {
 
 type listMyReviewsResponse struct {
 	Reviews []myReviewResponse `json:"reviews"`
+}
+
+type listAdminReviewsResponse struct {
+	Reviews []adminReviewResponse `json:"reviews"`
 }
 
 type myReviewDetailResponse struct {
@@ -133,6 +155,20 @@ type myReviewResponse struct {
 	Status      Status    `json:"status"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+type adminReviewResponse struct {
+	ReviewID     int64     `json:"reviewId"`
+	UserID       int64     `json:"userId"`
+	ReviewerName string    `json:"reviewerName"`
+	ProductID    int64     `json:"productId"`
+	ProductName  string    `json:"productName"`
+	Rating       int       `json:"rating"`
+	Title        *string   `json:"title"`
+	Comment      *string   `json:"comment"`
+	Status       Status    `json:"status"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 type createReviewResponse struct {
@@ -193,6 +229,31 @@ func newListMyReviewsResponse(result *MyReviewsResult) listMyReviewsResponse {
 	}
 
 	return listMyReviewsResponse{Reviews: reviews}
+}
+
+func newListAdminReviewsResponse(result *AdminReviewsResult) listAdminReviewsResponse {
+	reviews := make([]adminReviewResponse, 0, len(result.Reviews))
+	for _, review := range result.Reviews {
+		reviews = append(reviews, newAdminReviewResponse(&review))
+	}
+
+	return listAdminReviewsResponse{Reviews: reviews}
+}
+
+func newAdminReviewResponse(review *AdminReviewResult) adminReviewResponse {
+	return adminReviewResponse{
+		ReviewID:     review.ReviewID,
+		UserID:       review.UserID,
+		ReviewerName: review.ReviewerName,
+		ProductID:    review.ProductID,
+		ProductName:  review.ProductName,
+		Rating:       review.Rating,
+		Title:        review.Title,
+		Comment:      review.Comment,
+		Status:       review.Status,
+		CreatedAt:    review.CreatedAt,
+		UpdatedAt:    review.UpdatedAt,
+	}
 }
 
 func newMyReviewDetailResponse(result *MyReviewDetailResult) myReviewDetailResponse {

@@ -12,7 +12,10 @@ import (
 	"github.com/msubaru14/nanchatte-ec-backend/internal/shared/validator"
 )
 
-const CustomerRole = "customer"
+const (
+	CustomerRole = "customer"
+	AdminRole    = "admin"
+)
 
 const (
 	postgresUniqueViolationCode = "23505"

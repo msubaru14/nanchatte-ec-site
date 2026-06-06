@@ -546,8 +546,11 @@ draftレビューを公開する。
 
 管理者向けレビュー一覧を取得する。
 
-- published / hidden / draft を確認可能にするか要検討
-- product / status / rating で絞り込み可能
+- admin role 必須
+- draft / published / hidden をすべて含める
+- reviewId / userId / reviewerName / productId / productName / rating / title / comment / status / createdAt / updatedAt を返す
+- 新しい順
+- Phase1ではページネーション・絞り込みなし
 
 ---
 
@@ -555,12 +558,19 @@ draftレビューを公開する。
 
 管理者向けレビュー詳細を取得する。
 
+- Phase1のIssue #58では未実装
+- 管理者レビュー詳細画面を作る段階で必要に応じて実装する
+
 ---
 
 ## POST /api/admin/reviews/:id/hide
 
 レビューを hidden にする。
 
+- admin role 必須
+- published -> hidden
+- draft -> hidden
+- hidden -> hidden は冪等に成功扱い
 - 一般非表示
 - 平均評価対象外
 
@@ -569,6 +579,12 @@ draftレビューを公開する。
 ## POST /api/admin/reviews/:id/publish
 
 hidden レビューを published に戻す。
+
+- admin role 必須
+- hidden -> published
+- published -> published は冪等に成功扱い
+- draft -> published は不可
+- published が公開レビュー一覧・平均評価対象になる
 
 ---
 
