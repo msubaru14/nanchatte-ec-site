@@ -7,6 +7,8 @@ import {
   parseBackendResponse,
 } from "../../../auth/api/server";
 import type {
+  AdminReview,
+  AdminReviewList,
   MyReview,
   MyReviewList,
   ProductReviewList,
@@ -116,6 +118,39 @@ export const publishMyReviewWithBackend = async (reviewId: string) => {
     },
   );
   const json = await parseBackendResponse<MyReview>(response);
+
+  return { response, json };
+};
+
+export const fetchAdminReviewsWithBackend = async () => {
+  const response = await backendFetchWithAuth("/api/admin/reviews", {
+    method: "GET",
+  });
+  const json = await parseBackendResponse<AdminReviewList>(response);
+
+  return { response, json };
+};
+
+export const hideAdminReviewWithBackend = async (reviewId: string) => {
+  const response = await backendFetchWithAuth(
+    `/api/admin/reviews/${encodeURIComponent(reviewId)}/hide`,
+    {
+      method: "POST",
+    },
+  );
+  const json = await parseBackendResponse<AdminReview>(response);
+
+  return { response, json };
+};
+
+export const publishAdminReviewWithBackend = async (reviewId: string) => {
+  const response = await backendFetchWithAuth(
+    `/api/admin/reviews/${encodeURIComponent(reviewId)}/publish`,
+    {
+      method: "POST",
+    },
+  );
+  const json = await parseBackendResponse<AdminReview>(response);
 
   return { response, json };
 };

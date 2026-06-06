@@ -1,4 +1,6 @@
 export type {
+  AdminReview,
+  AdminReviewList,
   MyReview,
   MyReviewList,
   ProductReview,

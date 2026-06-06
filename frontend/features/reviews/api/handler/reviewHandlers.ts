@@ -3,10 +3,13 @@ import { NextResponse } from "next/server";
 import {
   createProductReviewWithBackend,
   deleteMyReviewWithBackend,
+  fetchAdminReviewsWithBackend,
   fetchMyReviewDetailWithBackend,
   fetchMyReviewsWithBackend,
   fetchProductReviewsWithBackend,
   fetchProductReviewSummaryWithBackend,
+  hideAdminReviewWithBackend,
+  publishAdminReviewWithBackend,
   publishMyReviewWithBackend,
   updateMyReviewWithBackend,
 } from "../server";
@@ -90,6 +93,32 @@ export const handlePublishMyReview = async (
 ) => {
   const { id } = await params;
   const { response, json } = await publishMyReviewWithBackend(id);
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handleGetAdminReviews = async () => {
+  const { response, json } = await fetchAdminReviewsWithBackend();
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handleHideAdminReview = async (
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  const { id } = await params;
+  const { response, json } = await hideAdminReviewWithBackend(id);
+
+  return NextResponse.json(json, { status: response.status });
+};
+
+export const handlePublishAdminReview = async (
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  const { id } = await params;
+  const { response, json } = await publishAdminReviewWithBackend(id);
 
   return NextResponse.json(json, { status: response.status });
 };

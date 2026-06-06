@@ -58,6 +58,24 @@ export type MyReviewList = {
   reviews: MyReview[];
 };
 
+export type AdminReview = {
+  reviewId: number;
+  userId: number;
+  reviewerName: string;
+  productId: number;
+  productName: string;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  status: ReviewStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminReviewList = {
+  reviews: AdminReview[];
+};
+
 export type ReviewMessageResult = {
   message: string;
 };
