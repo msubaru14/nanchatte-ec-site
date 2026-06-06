@@ -387,6 +387,97 @@ func TestHandlerListMine(t *testing.T) {
 	}
 }
 
+func TestHandlerListAdmin(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name            string
+		adminResult     *AdminReviewsResult
+		apiErr          *apperror.APIError
+		wantStatus      int
+		wantReviewCount int
+		wantStatusValue Status
+	}{
+		{
+			name:       "管理者レビュー一覧を取得できる",
+			wantStatus: http.StatusOK,
+			adminResult: &AdminReviewsResult{
+				Reviews: []AdminReviewResult{
+					{
+						ReviewID:     1,
+						UserID:       10,
+						ReviewerName: "Alice",
+						ProductID:    20,
+						ProductName:  "HHKB",
+						Rating:       5,
+						Status:       StatusHidden,
+						CreatedAt:    createdAt,
+						UpdatedAt:    createdAt,
+					},
+				},
+			},
+			wantReviewCount: 1,
+			wantStatusValue: StatusHidden,
+		},
+		{
+			name:       "serviceがエラーならエラーレスポンスを返す",
+			apiErr:     apperror.NewInternalServerError(),
+			wantStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &fakeReviewService{
+				adminReviewsResult: tt.adminResult,
+				adminReviewsAPIErr: tt.apiErr,
+			}
+			handler := NewHandler(service)
+			router := gin.New()
+			router.GET("/api/admin/reviews", handler.ListAdmin)
+
+			req := httptest.NewRequest(http.MethodGet, "/api/admin/reviews", nil)
+			res := httptest.NewRecorder()
+
+			router.ServeHTTP(res, req)
+
+			if res.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d", res.Code, tt.wantStatus)
+			}
+			if tt.wantStatus != http.StatusOK {
+				return
+			}
+
+			var body struct {
+				Data struct {
+					Reviews []struct {
+						ReviewID     int64  `json:"reviewId"`
+						UserID       int64  `json:"userId"`
+						ReviewerName string `json:"reviewerName"`
+						ProductID    int64  `json:"productId"`
+						ProductName  string `json:"productName"`
+						Status       Status `json:"status"`
+					} `json:"reviews"`
+				} `json:"data"`
+				Error any `json:"error"`
+			}
+			if err := json.Unmarshal(res.Body.Bytes(), &body); err != nil {
+				t.Fatalf("json.Unmarshal returned error: %v", err)
+			}
+			if len(body.Data.Reviews) != tt.wantReviewCount {
+				t.Fatalf("reviews length = %d, want %d", len(body.Data.Reviews), tt.wantReviewCount)
+			}
+			if body.Data.Reviews[0].Status != tt.wantStatusValue {
+				t.Fatalf("status = %s, want %s", body.Data.Reviews[0].Status, tt.wantStatusValue)
+			}
+			if body.Error != nil {
+				t.Fatalf("error = %#v, want nil", body.Error)
+			}
+		})
+	}
+}
+
 func TestHandlerShowMine(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -790,26 +881,28 @@ func TestHandlerDeleteMine(t *testing.T) {
 }
 
 type fakeReviewService struct {
-	userID            int64
-	productID         int64
-	reviewID          int64
-	input             CreateInput
-	updateInput       UpdateInput
-	result            *CreateResult
-	listResult        *ListResult
-	myReviewsResult   *MyReviewsResult
-	myReviewDetail    *MyReviewDetailResult
-	updatedReview     *MyReviewDetailResult
-	publishedReview   *MyReviewDetailResult
-	summaryResult     *SummaryResult
-	apiErr            *apperror.APIError
-	listAPIError      *apperror.APIError
-	myReviewsAPIError *apperror.APIError
-	myReviewAPIError  *apperror.APIError
-	updateAPIError    *apperror.APIError
-	publishAPIError   *apperror.APIError
-	deleteAPIError    *apperror.APIError
-	summaryAPIError   *apperror.APIError
+	userID             int64
+	productID          int64
+	reviewID           int64
+	input              CreateInput
+	updateInput        UpdateInput
+	result             *CreateResult
+	listResult         *ListResult
+	myReviewsResult    *MyReviewsResult
+	adminReviewsResult *AdminReviewsResult
+	myReviewDetail     *MyReviewDetailResult
+	updatedReview      *MyReviewDetailResult
+	publishedReview    *MyReviewDetailResult
+	summaryResult      *SummaryResult
+	apiErr             *apperror.APIError
+	listAPIError       *apperror.APIError
+	myReviewsAPIError  *apperror.APIError
+	adminReviewsAPIErr *apperror.APIError
+	myReviewAPIError   *apperror.APIError
+	updateAPIError     *apperror.APIError
+	publishAPIError    *apperror.APIError
+	deleteAPIError     *apperror.APIError
+	summaryAPIError    *apperror.APIError
 }
 
 func (s *fakeReviewService) CreateReview(userID int64, productID int64, input CreateInput) (*CreateResult, *apperror.APIError) {
@@ -827,6 +920,10 @@ func (s *fakeReviewService) ListPublishedReviews(productID int64) (*ListResult, 
 func (s *fakeReviewService) ListMyReviews(userID int64) (*MyReviewsResult, *apperror.APIError) {
 	s.userID = userID
 	return s.myReviewsResult, s.myReviewsAPIError
+}
+
+func (s *fakeReviewService) ListAdminReviews() (*AdminReviewsResult, *apperror.APIError) {
+	return s.adminReviewsResult, s.adminReviewsAPIErr
 }
 
 func (s *fakeReviewService) GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError) {

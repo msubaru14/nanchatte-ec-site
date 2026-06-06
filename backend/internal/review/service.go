@@ -23,6 +23,7 @@ type repository interface {
 	ReviewExists(userID int64, productID int64) (bool, error)
 	ListPublishedReviewsByProductID(productID int64) ([]PublishedReviewResult, error)
 	ListReviewsByUserID(userID int64) ([]MyReviewResult, error)
+	ListAdminReviews() ([]AdminReviewResult, error)
 	FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error)
 	FindReviewModelByIDAndUserID(reviewID int64, userID int64) (*Review, error)
 	UpdateReviewContent(reviewID int64, userID int64, rating int, title *string, comment *string) (*Review, error)
@@ -118,6 +119,15 @@ func (s *Service) ListMyReviews(userID int64) (*MyReviewsResult, *apperror.APIEr
 	}
 
 	return &MyReviewsResult{Reviews: reviews}, nil
+}
+
+func (s *Service) ListAdminReviews() (*AdminReviewsResult, *apperror.APIError) {
+	reviews, err := s.repository.ListAdminReviews()
+	if err != nil {
+		return nil, apperror.NewInternalServerError()
+	}
+
+	return &AdminReviewsResult{Reviews: reviews}, nil
 }
 
 func (s *Service) GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError) {

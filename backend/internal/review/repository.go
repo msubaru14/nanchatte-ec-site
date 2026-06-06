@@ -90,6 +90,36 @@ func (r *Repository) ListReviewsByUserID(userID int64) ([]MyReviewResult, error)
 	return reviews, nil
 }
 
+func (r *Repository) ListAdminReviews() ([]AdminReviewResult, error) {
+	var reviews []AdminReviewResult
+	err := r.db.Table("reviews").
+		Select(`
+			reviews.id AS review_id,
+			reviews.user_id,
+			CASE
+				WHEN users.deleted_at IS NULL THEN users.name
+				ELSE '退会済みユーザー'
+			END AS reviewer_name,
+			reviews.product_id,
+			products.name AS product_name,
+			reviews.rating,
+			reviews.title,
+			reviews.comment,
+			reviews.status,
+			reviews.created_at,
+			reviews.updated_at
+		`).
+		Joins("JOIN users ON users.id = reviews.user_id").
+		Joins("JOIN products ON products.id = reviews.product_id").
+		Order("reviews.created_at DESC").
+		Scan(&reviews).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return reviews, nil
+}
+
 func (r *Repository) FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error) {
 	var review MyReviewDetailResult
 	err := r.db.Table("reviews").

@@ -19,6 +19,8 @@ tags:
     description: Authenticated customer order APIs
   - name: Reviews
     description: Product review APIs
+  - name: Admin Reviews
+    description: Admin review management APIs
 paths:
   /api/auth/register:
     post:
@@ -245,6 +247,55 @@ paths:
                       email: alice@example.com
                       roles:
                         - customer
+                    error: null
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/admin/reviews:
+    get:
+      tags:
+        - Admin Reviews
+      summary: List admin reviews
+      description: |
+        管理者向けレビュー一覧を取得する。
+
+        access token による認証と admin role が必要。
+        draft / published / hidden を含めて createdAt の新しい順で返す。
+        Phase1ではページネーションなしで返す。
+      operationId: listAdminReviews
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Admin review list response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminReviewListSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviews:
+                        - reviewId: 1
+                          userId: 10
+                          reviewerName: Alice
+                          productId: 1
+                          productName: HHKB Professional HYBRID Type-S
+                          rating: 5
+                          title: 良い商品
+                          comment: 使いやすい
+                          status: hidden
+                          createdAt: "2026-06-01T12:00:00Z"
+                          updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+                empty:
+                  value:
+                    data:
+                      reviews: []
                     error: null
         "401":
           $ref: "#/components/responses/UnauthorizedError"
@@ -1998,6 +2049,85 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MyReview"
+    AdminReviewListSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AdminReviewListData"
+        error:
+          nullable: true
+          example: null
+    AdminReviewListData:
+      type: object
+      required:
+        - reviews
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminReview"
+    AdminReview:
+      type: object
+      required:
+        - reviewId
+        - userId
+        - reviewerName
+        - productId
+        - productName
+        - rating
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        reviewId:
+          type: integer
+          format: int64
+          example: 1
+        userId:
+          type: integer
+          format: int64
+          example: 10
+        reviewerName:
+          type: string
+          example: Alice
+        productId:
+          type: integer
+          format: int64
+          example: 1
+        productName:
+          type: string
+          example: HHKB Professional HYBRID Type-S
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: 良い商品
+        comment:
+          type: string
+          nullable: true
+          example: 使いやすい
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+            - hidden
+          example: hidden
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
     MyReviewDetailSuccessResponse:
       type: object
       required:

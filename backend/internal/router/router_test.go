@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/msubaru14/nanchatte-ec-backend/internal/auth"
 )
 
 func TestCartRoutesRequireAuthentication(t *testing.T) {
@@ -74,6 +76,7 @@ func TestReviewRoutesRequireAuthentication(t *testing.T) {
 		{name: "自分のレビュー更新は認証必須", method: http.MethodPatch, path: "/api/me/reviews/1"},
 		{name: "自分のレビュー公開は認証必須", method: http.MethodPost, path: "/api/me/reviews/1/publish"},
 		{name: "自分のレビュー削除は認証必須", method: http.MethodDelete, path: "/api/me/reviews/1"},
+		{name: "管理者レビュー一覧は認証必須", method: http.MethodGet, path: "/api/admin/reviews"},
 	}
 
 	r := SetupRouter(nil)
@@ -89,5 +92,24 @@ func TestReviewRoutesRequireAuthentication(t *testing.T) {
 				t.Fatalf("status = %d, want %d", res.Code, http.StatusUnauthorized)
 			}
 		})
+	}
+}
+
+func TestAdminReviewRoutesRequireAdminRole(t *testing.T) {
+	tokenService := auth.NewTokenService()
+	token, err := tokenService.GenerateAccessToken(1, []string{auth.CustomerRole})
+	if err != nil {
+		t.Fatalf("GenerateAccessToken returned error: %v", err)
+	}
+
+	r := SetupRouter(nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/admin/reviews", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	res := httptest.NewRecorder()
+
+	r.ServeHTTP(res, req)
+
+	if res.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want %d", res.Code, http.StatusForbidden)
 	}
 }

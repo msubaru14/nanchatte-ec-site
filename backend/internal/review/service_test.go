@@ -439,6 +439,93 @@ func TestServiceListMyReviewsRepositoryError(t *testing.T) {
 	}
 }
 
+func TestServiceListAdminReviews(t *testing.T) {
+	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name    string
+		reviews []AdminReviewResult
+	}{
+		{
+			name: "管理者レビュー一覧で全statusを取得できる",
+			reviews: []AdminReviewResult{
+				{
+					ReviewID:     1,
+					UserID:       10,
+					ReviewerName: "Alice",
+					ProductID:    20,
+					ProductName:  "HHKB",
+					Rating:       5,
+					Status:       StatusDraft,
+					CreatedAt:    createdAt,
+					UpdatedAt:    createdAt,
+				},
+				{
+					ReviewID:     2,
+					UserID:       11,
+					ReviewerName: "Bob",
+					ProductID:    21,
+					ProductName:  "Trackball",
+					Rating:       4,
+					Status:       StatusPublished,
+					CreatedAt:    createdAt,
+					UpdatedAt:    createdAt,
+				},
+				{
+					ReviewID:     3,
+					UserID:       12,
+					ReviewerName: "退会済みユーザー",
+					ProductID:    22,
+					ProductName:  "Desk mat",
+					Rating:       3,
+					Status:       StatusHidden,
+					CreatedAt:    createdAt,
+					UpdatedAt:    createdAt,
+				},
+			},
+		},
+		{
+			name:    "レビューがない場合は空配列を返す",
+			reviews: []AdminReviewResult{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{adminReviews: tt.reviews}
+			service := &Service{repository: repository}
+
+			result, apiErr := service.ListAdminReviews()
+
+			if apiErr != nil {
+				t.Fatalf("apiErr = %#v, want nil", apiErr)
+			}
+			if len(result.Reviews) != len(tt.reviews) {
+				t.Fatalf("reviews length = %d, want %d", len(result.Reviews), len(tt.reviews))
+			}
+			for i, review := range result.Reviews {
+				if review.Status != tt.reviews[i].Status {
+					t.Fatalf("reviews[%d].Status = %s, want %s", i, review.Status, tt.reviews[i].Status)
+				}
+			}
+		})
+	}
+}
+
+func TestServiceListAdminReviewsRepositoryError(t *testing.T) {
+	repository := &fakeRepository{adminReviewsErr: errors.New("db error")}
+	service := &Service{repository: repository}
+
+	_, apiErr := service.ListAdminReviews()
+
+	if apiErr == nil {
+		t.Fatal("apiErr = nil, want error")
+	}
+	if apiErr.Code != apperror.CodeInternalServerError {
+		t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, apperror.CodeInternalServerError)
+	}
+}
+
 func TestServiceGetMyReviewDetail(t *testing.T) {
 	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
 
@@ -868,6 +955,7 @@ type fakeRepository struct {
 	purchased          bool
 	publishedReviews   []PublishedReviewResult
 	myReviews          []MyReviewResult
+	adminReviews       []AdminReviewResult
 	myReviewDetail     *MyReviewDetailResult
 	reviewModel        *Review
 	summary            *SummaryResult
@@ -876,6 +964,7 @@ type fakeRepository struct {
 	reviewErr          error
 	listReviewsErr     error
 	myReviewsErr       error
+	adminReviewsErr    error
 	myReviewErr        error
 	reviewModelErr     error
 	updateErr          error
@@ -908,6 +997,10 @@ func (r *fakeRepository) ListPublishedReviewsByProductID(productID int64) ([]Pub
 
 func (r *fakeRepository) ListReviewsByUserID(userID int64) ([]MyReviewResult, error) {
 	return r.myReviews, r.myReviewsErr
+}
+
+func (r *fakeRepository) ListAdminReviews() ([]AdminReviewResult, error) {
+	return r.adminReviews, r.adminReviewsErr
 }
 
 func (r *fakeRepository) FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error) {

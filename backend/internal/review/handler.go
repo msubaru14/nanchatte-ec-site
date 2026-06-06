@@ -17,6 +17,7 @@ type reviewService interface {
 	CreateReview(userID int64, productID int64, input CreateInput) (*CreateResult, *apperror.APIError)
 	ListPublishedReviews(productID int64) (*ListResult, *apperror.APIError)
 	ListMyReviews(userID int64) (*MyReviewsResult, *apperror.APIError)
+	ListAdminReviews() (*AdminReviewsResult, *apperror.APIError)
 	GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError)
 	UpdateMyReview(userID int64, reviewID int64, input UpdateInput) (*MyReviewDetailResult, *apperror.APIError)
 	PublishMyReview(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError)
@@ -56,6 +57,16 @@ func (h *Handler) ListMine(c *gin.Context) {
 	}
 
 	response.Success(c, newListMyReviewsResponse(result))
+}
+
+func (h *Handler) ListAdmin(c *gin.Context) {
+	result, apiErr := h.service.ListAdminReviews()
+	if apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, newListAdminReviewsResponse(result))
 }
 
 func (h *Handler) ShowMine(c *gin.Context) {
