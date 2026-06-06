@@ -1106,6 +1106,150 @@ func TestServiceHideAdminReviewError(t *testing.T) {
 	}
 }
 
+func TestServicePublishAdminReview(t *testing.T) {
+	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+	updatedAt := time.Date(2026, 6, 2, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name              string
+		review            *Review
+		adminReview       *AdminReviewResult
+		wantUpdatedStatus Status
+	}{
+		{
+			name: "hiddenレビューをpublishedにできる",
+			review: &Review{
+				ID:        1,
+				UserID:    10,
+				ProductID: 20,
+				Rating:    5,
+				Status:    StatusHidden,
+				CreatedAt: createdAt,
+				UpdatedAt: createdAt,
+			},
+			adminReview: &AdminReviewResult{
+				ReviewID:     1,
+				UserID:       10,
+				ReviewerName: "Alice",
+				ProductID:    20,
+				ProductName:  "HHKB",
+				Rating:       5,
+				Status:       StatusPublished,
+				CreatedAt:    createdAt,
+				UpdatedAt:    updatedAt,
+			},
+			wantUpdatedStatus: StatusPublished,
+		},
+		{
+			name: "publishedレビューは冪等に成功する",
+			review: &Review{
+				ID:        1,
+				UserID:    10,
+				ProductID: 20,
+				Rating:    5,
+				Status:    StatusPublished,
+			},
+			adminReview: &AdminReviewResult{
+				ReviewID:     1,
+				UserID:       10,
+				ReviewerName: "Alice",
+				ProductID:    20,
+				ProductName:  "HHKB",
+				Rating:       5,
+				Status:       StatusPublished,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{
+				reviewModel: tt.review,
+				adminReview: tt.adminReview,
+			}
+			service := &Service{repository: repository}
+
+			result, apiErr := service.PublishAdminReview(1)
+
+			if apiErr != nil {
+				t.Fatalf("apiErr = %#v, want nil", apiErr)
+			}
+			if repository.updatedStatusByID != tt.wantUpdatedStatus {
+				t.Fatalf("updatedStatusByID = %s, want %s", repository.updatedStatusByID, tt.wantUpdatedStatus)
+			}
+			if result.Status != StatusPublished {
+				t.Fatalf("result.Status = %s, want %s", result.Status, StatusPublished)
+			}
+		})
+	}
+}
+
+func TestServicePublishAdminReviewError(t *testing.T) {
+	tests := []struct {
+		name        string
+		configure   func(*fakeRepository)
+		wantErrCode string
+	}{
+		{
+			name: "レビューが存在しないならNot Found",
+			configure: func(r *fakeRepository) {
+				r.reviewModelErr = gorm.ErrRecordNotFound
+			},
+			wantErrCode: apperror.CodeNotFound,
+		},
+		{
+			name: "レビュー取得でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.reviewModelErr = errors.New("db error")
+			},
+			wantErrCode: apperror.CodeInternalServerError,
+		},
+		{
+			name: "draftレビューは管理者公開不可",
+			configure: func(r *fakeRepository) {
+				r.reviewModel = &Review{ID: 1, UserID: 10, ProductID: 20, Rating: 5, Status: StatusDraft}
+			},
+			wantErrCode: apperror.CodeValidationError,
+		},
+		{
+			name: "status更新でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.reviewModel = &Review{ID: 1, UserID: 10, ProductID: 20, Rating: 5, Status: StatusHidden}
+				r.statusUpdateByIDErr = errors.New("db error")
+			},
+			wantErrCode: apperror.CodeInternalServerError,
+		},
+		{
+			name: "管理者レビュー取得でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.reviewModel = &Review{ID: 1, UserID: 10, ProductID: 20, Rating: 5, Status: StatusPublished}
+				r.adminReviewErr = errors.New("db error")
+			},
+			wantErrCode: apperror.CodeInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{}
+			tt.configure(repository)
+			service := &Service{repository: repository}
+
+			_, apiErr := service.PublishAdminReview(1)
+
+			if apiErr == nil {
+				t.Fatal("apiErr = nil, want error")
+			}
+			if apiErr.Code != tt.wantErrCode {
+				t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, tt.wantErrCode)
+			}
+			if tt.wantErrCode == apperror.CodeNotFound && repository.updatedStatusByID != "" {
+				t.Fatalf("updatedStatusByID = %s, want empty", repository.updatedStatusByID)
+			}
+		})
+	}
+}
+
 type fakeRepository struct {
 	productExists       bool
 	reviewExists        bool

@@ -156,6 +156,35 @@ func (s *Service) HideAdminReview(reviewID int64) (*AdminReviewResult, *apperror
 	return result, nil
 }
 
+func (s *Service) PublishAdminReview(reviewID int64) (*AdminReviewResult, *apperror.APIError) {
+	review, err := s.repository.FindReviewModelByID(reviewID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound("review not found")
+		}
+		return nil, apperror.NewInternalServerError()
+	}
+
+	if review.Status == StatusDraft {
+		return nil, apperror.NewValidationError("validation error", []apperror.ErrorDetail{
+			{Field: "status", Code: apperror.DetailInvalidFormat, Message: "draft review cannot be published by admin"},
+		})
+	}
+
+	if review.Status != StatusPublished {
+		if _, err := s.repository.UpdateReviewStatusByID(reviewID, StatusPublished); err != nil {
+			return nil, apperror.NewInternalServerError()
+		}
+	}
+
+	result, err := s.repository.FindAdminReviewByID(reviewID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError()
+	}
+
+	return result, nil
+}
+
 func (s *Service) GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError) {
 	review, err := s.repository.FindReviewByIDAndUserID(reviewID, userID)
 	if err != nil {

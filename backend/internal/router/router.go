@@ -80,6 +80,7 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 		{
 			adminReviewRoutes.GET("", reviewHandler.ListAdmin)
 			adminReviewRoutes.POST("/:id/hide", reviewHandler.HideAdmin)
+			adminReviewRoutes.POST("/:id/publish", reviewHandler.PublishAdmin)
 		}
 
 		cartRoutes := api.Group(

@@ -359,6 +359,84 @@ paths:
           $ref: "#/components/responses/ReviewNotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/admin/reviews/{id}/publish:
+    post:
+      tags:
+        - Admin Reviews
+      summary: Publish admin review
+      description: |
+        管理者が hidden レビューを published に戻す。
+
+        access token による認証と admin role が必要。
+        hidden は published に変更する。
+        すでに published のレビューは冪等に成功扱いで返す。
+        draft は管理者操作では published にしない。
+      operationId: publishAdminReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Admin review published response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminReviewSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      userId: 10
+                      reviewerName: Alice
+                      productId: 1
+                      productName: HHKB Professional HYBRID Type-S
+                      rating: 5
+                      title: 良い商品
+                      comment: 使いやすい
+                      status: published
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          description: Invalid review publish request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidReviewId:
+                  value:
+                    data: null
+                    error:
+                      code: INVALID_REQUEST
+                      message: invalid review id
+                draftReview:
+                  value:
+                    data: null
+                    error:
+                      code: VALIDATION_ERROR
+                      message: validation error
+                      details:
+                        - field: status
+                          code: INVALID_FORMAT
+                          message: draft review cannot be published by admin
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/me/reviews:
     get:
       tags:

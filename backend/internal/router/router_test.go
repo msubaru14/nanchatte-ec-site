@@ -78,6 +78,7 @@ func TestReviewRoutesRequireAuthentication(t *testing.T) {
 		{name: "自分のレビュー削除は認証必須", method: http.MethodDelete, path: "/api/me/reviews/1"},
 		{name: "管理者レビュー一覧は認証必須", method: http.MethodGet, path: "/api/admin/reviews"},
 		{name: "管理者レビュー非表示化は認証必須", method: http.MethodPost, path: "/api/admin/reviews/1/hide"},
+		{name: "管理者レビュー再公開は認証必須", method: http.MethodPost, path: "/api/admin/reviews/1/publish"},
 	}
 
 	r := SetupRouter(nil)
@@ -104,6 +105,7 @@ func TestAdminReviewRoutesRequireAdminRole(t *testing.T) {
 	}{
 		{name: "管理者レビュー一覧はadmin role必須", method: http.MethodGet, path: "/api/admin/reviews"},
 		{name: "管理者レビュー非表示化はadmin role必須", method: http.MethodPost, path: "/api/admin/reviews/1/hide"},
+		{name: "管理者レビュー再公開はadmin role必須", method: http.MethodPost, path: "/api/admin/reviews/1/publish"},
 	}
 
 	tokenService := auth.NewTokenService()
