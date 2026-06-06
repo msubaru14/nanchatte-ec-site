@@ -24,10 +24,13 @@ type repository interface {
 	ListPublishedReviewsByProductID(productID int64) ([]PublishedReviewResult, error)
 	ListReviewsByUserID(userID int64) ([]MyReviewResult, error)
 	ListAdminReviews() ([]AdminReviewResult, error)
+	FindAdminReviewByID(reviewID int64) (*AdminReviewResult, error)
 	FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error)
 	FindReviewModelByIDAndUserID(reviewID int64, userID int64) (*Review, error)
+	FindReviewModelByID(reviewID int64) (*Review, error)
 	UpdateReviewContent(reviewID int64, userID int64, rating int, title *string, comment *string) (*Review, error)
 	UpdateReviewStatus(reviewID int64, userID int64, status Status) (*Review, error)
+	UpdateReviewStatusByID(reviewID int64, status Status) (*Review, error)
 	DeleteReview(reviewID int64, userID int64) (int64, error)
 	GetPublishedReviewSummary(productID int64) (*SummaryResult, error)
 	PurchasedOrderedProduct(userID int64, productID int64) (bool, error)
@@ -128,6 +131,29 @@ func (s *Service) ListAdminReviews() (*AdminReviewsResult, *apperror.APIError) {
 	}
 
 	return &AdminReviewsResult{Reviews: reviews}, nil
+}
+
+func (s *Service) HideAdminReview(reviewID int64) (*AdminReviewResult, *apperror.APIError) {
+	review, err := s.repository.FindReviewModelByID(reviewID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound("review not found")
+		}
+		return nil, apperror.NewInternalServerError()
+	}
+
+	if review.Status != StatusHidden {
+		if _, err := s.repository.UpdateReviewStatusByID(reviewID, StatusHidden); err != nil {
+			return nil, apperror.NewInternalServerError()
+		}
+	}
+
+	result, err := s.repository.FindAdminReviewByID(reviewID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError()
+	}
+
+	return result, nil
 }
 
 func (s *Service) GetMyReviewDetail(userID int64, reviewID int64) (*MyReviewDetailResult, *apperror.APIError) {

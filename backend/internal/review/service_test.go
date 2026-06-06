@@ -949,38 +949,199 @@ func TestServiceDeleteMyReview(t *testing.T) {
 	}
 }
 
+func TestServiceHideAdminReview(t *testing.T) {
+	createdAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+	updatedAt := time.Date(2026, 6, 2, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name              string
+		review            *Review
+		adminReview       *AdminReviewResult
+		wantUpdatedStatus Status
+	}{
+		{
+			name: "publishedレビューをhiddenにできる",
+			review: &Review{
+				ID:        1,
+				UserID:    10,
+				ProductID: 20,
+				Rating:    5,
+				Status:    StatusPublished,
+				CreatedAt: createdAt,
+				UpdatedAt: createdAt,
+			},
+			adminReview: &AdminReviewResult{
+				ReviewID:     1,
+				UserID:       10,
+				ReviewerName: "Alice",
+				ProductID:    20,
+				ProductName:  "HHKB",
+				Rating:       5,
+				Status:       StatusHidden,
+				CreatedAt:    createdAt,
+				UpdatedAt:    updatedAt,
+			},
+			wantUpdatedStatus: StatusHidden,
+		},
+		{
+			name: "draftレビューをhiddenにできる",
+			review: &Review{
+				ID:        1,
+				UserID:    10,
+				ProductID: 20,
+				Rating:    5,
+				Status:    StatusDraft,
+			},
+			adminReview: &AdminReviewResult{
+				ReviewID:     1,
+				UserID:       10,
+				ReviewerName: "Alice",
+				ProductID:    20,
+				ProductName:  "HHKB",
+				Rating:       5,
+				Status:       StatusHidden,
+			},
+			wantUpdatedStatus: StatusHidden,
+		},
+		{
+			name: "hiddenレビューは冪等に成功する",
+			review: &Review{
+				ID:        1,
+				UserID:    10,
+				ProductID: 20,
+				Rating:    5,
+				Status:    StatusHidden,
+			},
+			adminReview: &AdminReviewResult{
+				ReviewID:     1,
+				UserID:       10,
+				ReviewerName: "Alice",
+				ProductID:    20,
+				ProductName:  "HHKB",
+				Rating:       5,
+				Status:       StatusHidden,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{
+				reviewModel: tt.review,
+				adminReview: tt.adminReview,
+			}
+			service := &Service{repository: repository}
+
+			result, apiErr := service.HideAdminReview(1)
+
+			if apiErr != nil {
+				t.Fatalf("apiErr = %#v, want nil", apiErr)
+			}
+			if repository.updatedStatusByID != tt.wantUpdatedStatus {
+				t.Fatalf("updatedStatusByID = %s, want %s", repository.updatedStatusByID, tt.wantUpdatedStatus)
+			}
+			if result.Status != StatusHidden {
+				t.Fatalf("result.Status = %s, want %s", result.Status, StatusHidden)
+			}
+		})
+	}
+}
+
+func TestServiceHideAdminReviewError(t *testing.T) {
+	tests := []struct {
+		name        string
+		configure   func(*fakeRepository)
+		wantErrCode string
+	}{
+		{
+			name: "レビューが存在しないならNot Found",
+			configure: func(r *fakeRepository) {
+				r.reviewModelErr = gorm.ErrRecordNotFound
+			},
+			wantErrCode: apperror.CodeNotFound,
+		},
+		{
+			name: "レビュー取得でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.reviewModelErr = errors.New("db error")
+			},
+			wantErrCode: apperror.CodeInternalServerError,
+		},
+		{
+			name: "status更新でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.reviewModel = &Review{ID: 1, UserID: 10, ProductID: 20, Rating: 5, Status: StatusPublished}
+				r.statusUpdateByIDErr = errors.New("db error")
+			},
+			wantErrCode: apperror.CodeInternalServerError,
+		},
+		{
+			name: "管理者レビュー取得でRepositoryエラーならInternal Server Error",
+			configure: func(r *fakeRepository) {
+				r.reviewModel = &Review{ID: 1, UserID: 10, ProductID: 20, Rating: 5, Status: StatusHidden}
+				r.adminReviewErr = errors.New("db error")
+			},
+			wantErrCode: apperror.CodeInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repository := &fakeRepository{}
+			tt.configure(repository)
+			service := &Service{repository: repository}
+
+			_, apiErr := service.HideAdminReview(1)
+
+			if apiErr == nil {
+				t.Fatal("apiErr = nil, want error")
+			}
+			if apiErr.Code != tt.wantErrCode {
+				t.Fatalf("apiErr.Code = %s, want %s", apiErr.Code, tt.wantErrCode)
+			}
+			if errors.Is(repository.reviewModelErr, gorm.ErrRecordNotFound) && repository.updatedStatusByID != "" {
+				t.Fatalf("updatedStatusByID = %s, want empty", repository.updatedStatusByID)
+			}
+		})
+	}
+}
+
 type fakeRepository struct {
-	productExists      bool
-	reviewExists       bool
-	purchased          bool
-	publishedReviews   []PublishedReviewResult
-	myReviews          []MyReviewResult
-	adminReviews       []AdminReviewResult
-	myReviewDetail     *MyReviewDetailResult
-	reviewModel        *Review
-	summary            *SummaryResult
-	now                time.Time
-	productErr         error
-	reviewErr          error
-	listReviewsErr     error
-	myReviewsErr       error
-	adminReviewsErr    error
-	myReviewErr        error
-	reviewModelErr     error
-	updateErr          error
-	statusUpdateErr    error
-	deleteErr          error
-	summaryErr         error
-	purchaseErr        error
-	createErr          error
-	createdReview      *Review
-	updatedRating      int
-	updatedTitle       *string
-	updatedComment     *string
-	updatedStatus      Status
-	deleteRowsAffected int64
-	deletedReviewID    int64
-	deletedUserID      int64
+	productExists       bool
+	reviewExists        bool
+	purchased           bool
+	publishedReviews    []PublishedReviewResult
+	myReviews           []MyReviewResult
+	adminReviews        []AdminReviewResult
+	adminReview         *AdminReviewResult
+	myReviewDetail      *MyReviewDetailResult
+	reviewModel         *Review
+	summary             *SummaryResult
+	now                 time.Time
+	productErr          error
+	reviewErr           error
+	listReviewsErr      error
+	myReviewsErr        error
+	adminReviewsErr     error
+	adminReviewErr      error
+	myReviewErr         error
+	reviewModelErr      error
+	updateErr           error
+	statusUpdateErr     error
+	statusUpdateByIDErr error
+	deleteErr           error
+	summaryErr          error
+	purchaseErr         error
+	createErr           error
+	createdReview       *Review
+	updatedRating       int
+	updatedTitle        *string
+	updatedComment      *string
+	updatedStatus       Status
+	updatedStatusByID   Status
+	deleteRowsAffected  int64
+	deletedReviewID     int64
+	deletedUserID       int64
 }
 
 func (r *fakeRepository) ProductExists(productID int64) (bool, error) {
@@ -1003,11 +1164,19 @@ func (r *fakeRepository) ListAdminReviews() ([]AdminReviewResult, error) {
 	return r.adminReviews, r.adminReviewsErr
 }
 
+func (r *fakeRepository) FindAdminReviewByID(reviewID int64) (*AdminReviewResult, error) {
+	return r.adminReview, r.adminReviewErr
+}
+
 func (r *fakeRepository) FindReviewByIDAndUserID(reviewID int64, userID int64) (*MyReviewDetailResult, error) {
 	return r.myReviewDetail, r.myReviewErr
 }
 
 func (r *fakeRepository) FindReviewModelByIDAndUserID(reviewID int64, userID int64) (*Review, error) {
+	return r.reviewModel, r.reviewModelErr
+}
+
+func (r *fakeRepository) FindReviewModelByID(reviewID int64) (*Review, error) {
 	return r.reviewModel, r.reviewModelErr
 }
 
@@ -1033,6 +1202,20 @@ func (r *fakeRepository) UpdateReviewStatus(reviewID int64, userID int64, status
 	r.updatedStatus = status
 	if r.statusUpdateErr != nil {
 		return nil, r.statusUpdateErr
+	}
+
+	if r.reviewModel == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	r.reviewModel.Status = status
+	return r.reviewModel, nil
+}
+
+func (r *fakeRepository) UpdateReviewStatusByID(reviewID int64, status Status) (*Review, error) {
+	r.updatedStatusByID = status
+	if r.statusUpdateByIDErr != nil {
+		return nil, r.statusUpdateByIDErr
 	}
 
 	if r.reviewModel == nil {

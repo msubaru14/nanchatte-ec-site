@@ -234,22 +234,26 @@ func newListMyReviewsResponse(result *MyReviewsResult) listMyReviewsResponse {
 func newListAdminReviewsResponse(result *AdminReviewsResult) listAdminReviewsResponse {
 	reviews := make([]adminReviewResponse, 0, len(result.Reviews))
 	for _, review := range result.Reviews {
-		reviews = append(reviews, adminReviewResponse{
-			ReviewID:     review.ReviewID,
-			UserID:       review.UserID,
-			ReviewerName: review.ReviewerName,
-			ProductID:    review.ProductID,
-			ProductName:  review.ProductName,
-			Rating:       review.Rating,
-			Title:        review.Title,
-			Comment:      review.Comment,
-			Status:       review.Status,
-			CreatedAt:    review.CreatedAt,
-			UpdatedAt:    review.UpdatedAt,
-		})
+		reviews = append(reviews, newAdminReviewResponse(&review))
 	}
 
 	return listAdminReviewsResponse{Reviews: reviews}
+}
+
+func newAdminReviewResponse(review *AdminReviewResult) adminReviewResponse {
+	return adminReviewResponse{
+		ReviewID:     review.ReviewID,
+		UserID:       review.UserID,
+		ReviewerName: review.ReviewerName,
+		ProductID:    review.ProductID,
+		ProductName:  review.ProductName,
+		Rating:       review.Rating,
+		Title:        review.Title,
+		Comment:      review.Comment,
+		Status:       review.Status,
+		CreatedAt:    review.CreatedAt,
+		UpdatedAt:    review.UpdatedAt,
+	}
 }
 
 func newMyReviewDetailResponse(result *MyReviewDetailResult) myReviewDetailResponse {

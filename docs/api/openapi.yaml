@@ -303,6 +303,62 @@ paths:
           $ref: "#/components/responses/ForbiddenError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/admin/reviews/{id}/hide:
+    post:
+      tags:
+        - Admin Reviews
+      summary: Hide admin review
+      description: |
+        管理者がレビューを hidden に変更する。
+
+        access token による認証と admin role が必要。
+        published / draft は hidden に変更する。
+        すでに hidden のレビューは冪等に成功扱いで返す。
+      operationId: hideAdminReview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Admin review hidden response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminReviewSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      reviewId: 1
+                      userId: 10
+                      reviewerName: Alice
+                      productId: 1
+                      productName: HHKB Professional HYBRID Type-S
+                      rating: 5
+                      title: 良い商品
+                      comment: 使いやすい
+                      status: hidden
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidReviewIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ReviewNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/me/reviews:
     get:
       tags:
@@ -2069,6 +2125,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdminReview"
+    AdminReviewSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AdminReview"
+        error:
+          nullable: true
+          example: null
     AdminReview:
       type: object
       required:
