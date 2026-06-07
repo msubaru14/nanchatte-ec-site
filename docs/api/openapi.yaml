@@ -21,6 +21,8 @@ tags:
     description: Product review APIs
   - name: Admin Reviews
     description: Admin review management APIs
+  - name: Admin Products
+    description: Admin product management APIs
 paths:
   /api/auth/register:
     post:
@@ -813,6 +815,365 @@ paths:
                       message: product not found
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/admin/products:
+    get:
+      tags:
+        - Admin Products
+      summary: List admin products
+      description: |
+        管理者向けの商品一覧を取得する。
+
+        access token による認証と admin role が必要。
+        active / stopped の両方を productId 昇順で返す。
+        Phase1ではページネーションなしで返す。
+      operationId: listAdminProducts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Admin product list response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProductListSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      products:
+                        - productId: 1
+                          name: HHKB Professional HYBRID Type-S
+                          description: Compact keyboard with electrostatic capacitive switches.
+                          price: 36000
+                          taxRateId: 1
+                          taxRate: 0.1
+                          categoryId: 1
+                          stockQuantity: 12
+                          lowStockThreshold: 3
+                          status: active
+                          createdAt: "2026-06-01T12:00:00Z"
+                          updatedAt: "2026-06-01T12:00:00Z"
+                        - productId: 2
+                          name: Trackball Mouse
+                          description: null
+                          price: 8000
+                          taxRateId: 1
+                          taxRate: 0.1
+                          categoryId: 2
+                          stockQuantity: 0
+                          lowStockThreshold: 2
+                          status: stopped
+                          createdAt: "2026-06-01T12:00:00Z"
+                          updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+                empty:
+                  value:
+                    data:
+                      products: []
+                    error: null
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Admin Products
+      summary: Create admin product
+      description: |
+        管理者が商品を新規登録する。
+
+        access token による認証と admin role が必要。
+        price は税抜価格として扱う。
+      operationId: createAdminProduct
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminProductCreateRequest"
+            examples:
+              createProduct:
+                value:
+                  name: HHKB Professional HYBRID Type-S
+                  description: Compact keyboard with electrostatic capacitive switches.
+                  price: 36000
+                  taxRateId: 1
+                  categoryId: 1
+                  stockQuantity: 12
+                  lowStockThreshold: 3
+                  status: active
+      responses:
+        "201":
+          description: Admin product created response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProductSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      productId: 1
+                      name: HHKB Professional HYBRID Type-S
+                      description: Compact keyboard with electrostatic capacitive switches.
+                      price: 36000
+                      taxRateId: 1
+                      taxRate: 0.1
+                      categoryId: 1
+                      stockQuantity: 12
+                      lowStockThreshold: 3
+                      status: active
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-01T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/AdminProductRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/admin/products/{id}:
+    get:
+      tags:
+        - Admin Products
+      summary: Get admin product
+      description: |
+        管理者向けの商品詳細を取得する。
+
+        access token による認証と admin role が必要。
+        stopped 商品も取得できる。
+      operationId: getAdminProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Admin product detail response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProductSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      productId: 1
+                      name: HHKB Professional HYBRID Type-S
+                      description: Compact keyboard with electrostatic capacitive switches.
+                      price: 36000
+                      taxRateId: 1
+                      taxRate: 0.1
+                      categoryId: 1
+                      stockQuantity: 12
+                      lowStockThreshold: 3
+                      status: stopped
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidProductIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ProductNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Admin Products
+      summary: Update admin product
+      description: |
+        管理者が商品情報を更新する。
+
+        access token による認証と admin role が必要。
+        status は専用APIで変更する。price は税抜価格として扱う。
+      operationId: updateAdminProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminProductUpdateRequest"
+            examples:
+              updateProduct:
+                value:
+                  name: HHKB Professional HYBRID Type-S Snow
+                  price: 38000
+                  stockQuantity: 8
+                  lowStockThreshold: 2
+      responses:
+        "200":
+          description: Admin product updated response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProductSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      productId: 1
+                      name: HHKB Professional HYBRID Type-S Snow
+                      description: Compact keyboard with electrostatic capacitive switches.
+                      price: 38000
+                      taxRateId: 1
+                      taxRate: 0.1
+                      categoryId: 1
+                      stockQuantity: 8
+                      lowStockThreshold: 2
+                      status: active
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/AdminProductRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ProductNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/admin/products/{id}/stop-selling:
+    post:
+      tags:
+        - Admin Products
+      summary: Stop selling admin product
+      description: |
+        管理者が商品を販売停止にする。
+
+        access token による認証と admin role が必要。
+        すでに stopped の商品は冪等に成功扱いで返す。
+      operationId: stopSellingAdminProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Admin product stopped response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProductSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      productId: 1
+                      name: HHKB Professional HYBRID Type-S
+                      description: Compact keyboard with electrostatic capacitive switches.
+                      price: 36000
+                      taxRateId: 1
+                      taxRate: 0.1
+                      categoryId: 1
+                      stockQuantity: 12
+                      lowStockThreshold: 3
+                      status: stopped
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidProductIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ProductNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/admin/products/{id}/resume-selling:
+    post:
+      tags:
+        - Admin Products
+      summary: Resume selling admin product
+      description: |
+        管理者が商品を販売中に戻す。
+
+        access token による認証と admin role が必要。
+        すでに active の商品は冪等に成功扱いで返す。
+      operationId: resumeSellingAdminProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Admin product active response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProductSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      productId: 1
+                      name: HHKB Professional HYBRID Type-S
+                      description: Compact keyboard with electrostatic capacitive switches.
+                      price: 36000
+                      taxRateId: 1
+                      taxRate: 0.1
+                      categoryId: 1
+                      stockQuantity: 12
+                      lowStockThreshold: 3
+                      status: active
+                      createdAt: "2026-06-01T12:00:00Z"
+                      updatedAt: "2026-06-02T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidProductIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/ProductNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/products/{productId}/reviews:
     get:
       tags:
@@ -1413,6 +1774,62 @@ components:
                 error:
                   code: INVALID_REQUEST
                   message: invalid product id
+    AdminProductRequestError:
+      description: Invalid admin product request or validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidRequestBody:
+              value:
+                data: null
+                error:
+                  code: INVALID_REQUEST
+                  message: invalid request body
+            nameRequired:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: name
+                      code: REQUIRED
+                      message: name is required
+            invalidPrice:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: price
+                      code: OUT_OF_RANGE
+                      message: price must be greater than 0
+            invalidStatus:
+              value:
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: validation error
+                  details:
+                    - field: status
+                      code: INVALID_FORMAT
+                      message: status must be active or stopped
+    ProductNotFoundError:
+      description: Product not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            productNotFound:
+              value:
+                data: null
+                error:
+                  code: NOT_FOUND
+                  message: product not found
     InvalidOrderIDError:
       description: Invalid order ID
       content:
@@ -2265,6 +2682,187 @@ components:
             - published
             - hidden
           example: hidden
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-06-01T12:00:00Z"
+    AdminProductListSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AdminProductListData"
+        error:
+          nullable: true
+          example: null
+    AdminProductListData:
+      type: object
+      required:
+        - products
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminProduct"
+    AdminProductSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AdminProduct"
+        error:
+          nullable: true
+          example: null
+    AdminProductCreateRequest:
+      type: object
+      required:
+        - name
+        - price
+        - taxRateId
+        - categoryId
+        - stockQuantity
+        - lowStockThreshold
+        - status
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: HHKB Professional HYBRID Type-S
+        description:
+          type: string
+          nullable: true
+          example: Compact keyboard with electrostatic capacitive switches.
+        price:
+          type: integer
+          minimum: 1
+          description: Tax-excluded price.
+          example: 36000
+        taxRateId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        categoryId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        stockQuantity:
+          type: integer
+          minimum: 0
+          example: 12
+        lowStockThreshold:
+          type: integer
+          minimum: 0
+          example: 3
+        status:
+          type: string
+          enum:
+            - active
+            - stopped
+          example: active
+    AdminProductUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: HHKB Professional HYBRID Type-S Snow
+        description:
+          type: string
+          nullable: true
+          example: Compact keyboard with electrostatic capacitive switches.
+        price:
+          type: integer
+          minimum: 1
+          description: Tax-excluded price.
+          example: 38000
+        taxRateId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        categoryId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        stockQuantity:
+          type: integer
+          minimum: 0
+          example: 8
+        lowStockThreshold:
+          type: integer
+          minimum: 0
+          example: 2
+    AdminProduct:
+      type: object
+      required:
+        - productId
+        - name
+        - price
+        - taxRateId
+        - taxRate
+        - categoryId
+        - stockQuantity
+        - lowStockThreshold
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        productId:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: HHKB Professional HYBRID Type-S
+        description:
+          type: string
+          nullable: true
+          example: Compact keyboard with electrostatic capacitive switches.
+        price:
+          type: integer
+          minimum: 1
+          description: Tax-excluded price.
+          example: 36000
+        taxRateId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        taxRate:
+          type: number
+          format: double
+          minimum: 0
+          example: 0.1
+        categoryId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        stockQuantity:
+          type: integer
+          minimum: 0
+          example: 12
+        lowStockThreshold:
+          type: integer
+          minimum: 0
+          example: 3
+        status:
+          type: string
+          enum:
+            - active
+            - stopped
+          example: active
         createdAt:
           type: string
           format: date-time
