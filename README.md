@@ -313,6 +313,17 @@ npm run test:e2e:ui
   - draft / published / hidden を管理者一覧に含める
   - レビューを hidden にすると公開一覧・平均評価対象から除外する
   - hidden レビューを published に戻すと公開一覧・平均評価対象に再反映する
+- admin product API
+  - `GET /api/admin/products`
+  - `GET /api/admin/products/:id`
+  - `POST /api/admin/products`
+  - `PATCH /api/admin/products/:id`
+  - `POST /api/admin/products/:id/stop-selling`
+  - `POST /api/admin/products/:id/resume-selling`
+  - `admin` role の認証済みユーザー向けに、販売中・販売停止の商品一覧と詳細を提供
+  - 商品登録・編集では商品名、税抜価格、税率、カテゴリ、在庫数、残りわずか閾値を validation する
+  - 販売停止・販売再開は冪等に扱う
+  - 一般ユーザー向けの商品一覧・詳細では、引き続き active 商品のみ返す
 - 注文確認 / 注文完了画面
   - Cart画面から注文確認画面への導線
   - Cart BFFを利用した注文前確認
