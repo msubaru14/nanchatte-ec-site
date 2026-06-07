@@ -63,7 +63,7 @@ test.describe("認証画面", () => {
     });
   });
 
-  test("adminユーザーにはHeaderにレビュー管理導線を表示する", async ({
+  test("adminユーザーにはHeaderに管理画面導線を表示する", async ({
     page,
   }) => {
     await page.unroute("**/api/auth/me");
@@ -86,11 +86,11 @@ test.describe("認証画面", () => {
     await page.goto("/login");
 
     await expect(
-      page.getByRole("link", { name: "レビュー管理" }),
-    ).toHaveAttribute("href", "/admin/reviews");
+      page.getByRole("link", { name: "管理画面" }),
+    ).toHaveAttribute("href", "/admin");
   });
 
-  test("customerユーザーにはHeaderのレビュー管理導線を表示しない", async ({
+  test("customerユーザーにはHeaderの管理画面導線を表示しない", async ({
     page,
   }) => {
     await page.unroute("**/api/auth/me");
@@ -113,7 +113,7 @@ test.describe("認証画面", () => {
     await page.goto("/login");
 
     await expect(
-      page.getByRole("link", { name: "レビュー管理" }),
+      page.getByRole("link", { name: "管理画面" }),
     ).toHaveCount(0);
   });
 
