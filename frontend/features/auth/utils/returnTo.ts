@@ -1,4 +1,5 @@
 const DEFAULT_RETURN_TO = "/products";
+const DEFAULT_ADMIN_RETURN_TO = "/admin";
 const RETURN_TO_VALIDATION_ORIGIN = "http://return-to.invalid";
 
 export const getSafeReturnTo = (
@@ -21,4 +22,19 @@ export const getSafeReturnTo = (
   } catch {
     return DEFAULT_RETURN_TO;
   }
+};
+
+export const getSafeAdminReturnTo = (
+  returnTo: string | string[] | null | undefined,
+) => {
+  const safeReturnTo = getSafeReturnTo(returnTo);
+
+  if (
+    safeReturnTo === DEFAULT_ADMIN_RETURN_TO ||
+    safeReturnTo.startsWith(`${DEFAULT_ADMIN_RETURN_TO}/`)
+  ) {
+    return safeReturnTo;
+  }
+
+  return DEFAULT_ADMIN_RETURN_TO;
 };

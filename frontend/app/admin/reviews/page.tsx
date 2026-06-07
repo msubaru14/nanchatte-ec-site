@@ -79,7 +79,7 @@ export default function AdminReviewsPage() {
   const redirectToLogin = useCallback(() => {
     setUser(null);
     router.replace(
-      `/login?returnTo=${encodeURIComponent(ADMIN_REVIEWS_RETURN_TO)}`,
+      `/admin/login?returnTo=${encodeURIComponent(ADMIN_REVIEWS_RETURN_TO)}`,
     );
   }, [router, setUser]);
 

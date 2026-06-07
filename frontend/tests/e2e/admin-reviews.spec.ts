@@ -360,7 +360,7 @@ test.describe("管理者レビュー一覧", () => {
     );
 
     await Promise.all([
-      page.waitForURL(/\/login\?returnTo=%2Fadmin%2Freviews$/),
+      page.waitForURL(/\/admin\/login\?returnTo=%2Fadmin%2Freviews$/),
       page.goto("/admin/reviews"),
     ]);
   });
