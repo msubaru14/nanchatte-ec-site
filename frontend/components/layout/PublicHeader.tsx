@@ -128,7 +128,7 @@ export function PublicHeader() {
                   </span>
                 ) : null}
               </Link>
-              {isAdmin ? <Link href="/admin/reviews">レビュー管理</Link> : null}
+              {isAdmin ? <Link href="/admin">管理画面</Link> : null}
               <Link className={styles.userName} href="/me">
                 {user.name}
               </Link>
