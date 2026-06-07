@@ -83,6 +83,20 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 			adminReviewRoutes.POST("/:id/publish", reviewHandler.PublishAdmin)
 		}
 
+		adminProductRoutes := api.Group(
+			"/admin/products",
+			middleware.AuthMiddleware(tokenService),
+			middleware.RequireRole(auth.AdminRole),
+		)
+		{
+			adminProductRoutes.GET("", productHandler.ListAdmin)
+			adminProductRoutes.GET("/:id", productHandler.ShowAdmin)
+			adminProductRoutes.POST("", productHandler.CreateAdmin)
+			adminProductRoutes.PATCH("/:id", productHandler.UpdateAdmin)
+			adminProductRoutes.POST("/:id/stop-selling", productHandler.StopSellingAdmin)
+			adminProductRoutes.POST("/:id/resume-selling", productHandler.ResumeSellingAdmin)
+		}
+
 		cartRoutes := api.Group(
 			"/cart",
 			middleware.AuthMiddleware(tokenService),
