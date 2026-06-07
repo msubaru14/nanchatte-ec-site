@@ -15,6 +15,7 @@ import styles from "./PublicHeader.module.css";
 export function PublicHeader() {
   const router = useRouter();
   const { isLoading, setUser, user } = useAuth();
+  const isAdmin = user?.roles.includes("admin") ?? false;
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [cartItemCount, setCartItemCount] = useState<number | null>(null);
@@ -127,6 +128,7 @@ export function PublicHeader() {
                   </span>
                 ) : null}
               </Link>
+              {isAdmin ? <Link href="/admin/reviews">レビュー管理</Link> : null}
               <Link className={styles.userName} href="/me">
                 {user.name}
               </Link>

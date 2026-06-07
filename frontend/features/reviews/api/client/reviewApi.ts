@@ -2,6 +2,8 @@ import { ERROR_CODES } from "../../../../constants/errorCodes";
 import { getJsonHeaders, requestJson } from "../../../../lib/api";
 import { ApiError } from "../../../../lib/errors";
 import type {
+  AdminReview,
+  AdminReviewList,
   MyReview,
   MyReviewList,
   ProductReviewList,
@@ -160,6 +162,59 @@ export const publishMyReview = async (reviewId: number | string) => {
     throw new ApiError(
       ERROR_CODES.INTERNAL_SERVER_ERROR,
       "Published review response is empty",
+    );
+  }
+
+  return json.data;
+};
+
+export const fetchAdminReviews = async () => {
+  const json = await requestJson<AdminReviewList>("/api/admin/reviews", {
+    cache: "no-store",
+  });
+
+  if (!json.data) {
+    throw new ApiError(
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+      "Admin review list response is empty",
+    );
+  }
+
+  return json.data;
+};
+
+export const hideAdminReview = async (reviewId: number | string) => {
+  const json = await requestJson<AdminReview>(
+    `/api/admin/reviews/${encodeURIComponent(String(reviewId))}/hide`,
+    {
+      method: "POST",
+      headers: getJsonHeaders(),
+    },
+  );
+
+  if (!json.data) {
+    throw new ApiError(
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+      "Hidden admin review response is empty",
+    );
+  }
+
+  return json.data;
+};
+
+export const publishAdminReview = async (reviewId: number | string) => {
+  const json = await requestJson<AdminReview>(
+    `/api/admin/reviews/${encodeURIComponent(String(reviewId))}/publish`,
+    {
+      method: "POST",
+      headers: getJsonHeaders(),
+    },
+  );
+
+  if (!json.data) {
+    throw new ApiError(
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+      "Published admin review response is empty",
     );
   }
 
