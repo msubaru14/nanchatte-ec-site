@@ -38,11 +38,15 @@
 │   ├── db
 │   └── internal
 │       ├── auth
+│       ├── cart
 │       ├── health
 │       ├── middleware
+│       ├── order
 │       ├── product
+│       ├── review
 │       ├── router
 │       └── shared
+├── db
 ├── docs
 │   ├── api
 │   ├── database
@@ -50,9 +54,20 @@
 │   └── ui
 └── frontend
     ├── app
+    │   ├── admin
+    │   │   └── reviews
     │   ├── api
-    │   │   └── auth
+    │   │   ├── admin
+    │   │   ├── auth
+    │   │   ├── cart
+    │   │   ├── me
+    │   │   ├── orders
+    │   │   └── products
+    │   ├── cart
     │   ├── login
+    │   ├── me
+    │   │   └── reviews
+    │   ├── orders
     │   ├── products
     │   └── register
     ├── components
@@ -69,10 +84,29 @@
     │   │   │   └── types
     │   │   ├── components
     │   │   └── utils
-    │   └── products
+    │   ├── cart
+    │   │   └── api
+    │   │       ├── client
+    │   │       ├── handler
+    │   │       ├── server
+    │   │       └── types
+    │   ├── order
+    │   │   ├── api
+    │   │   │   ├── client
+    │   │   │   ├── handler
+    │   │   │   ├── server
+    │   │   │   └── types
+    │   │   └── utils
+    │   ├── products
     │       ├── api
     │       ├── components
     │       └── types
+    │   └── reviews
+    │       └── api
+    │           ├── client
+    │           ├── handler
+    │           ├── server
+    │           └── types
     ├── lib
     └── tests
         └── e2e
