@@ -11,6 +11,11 @@ const ADMIN_HOME_RETURN_TO = "/admin";
 
 const activeMenuItems = [
   {
+    href: "/admin/products",
+    label: "商品管理",
+    description: "商品情報、在庫状況、販売状態を確認します。",
+  },
+  {
     href: "/admin/reviews",
     label: "レビュー管理",
     description: "投稿レビューの確認、非表示化、再公開を行います。",
@@ -18,10 +23,6 @@ const activeMenuItems = [
 ] as const;
 
 const plannedMenuItems = [
-  {
-    label: "商品管理",
-    description: "商品情報と販売状態の管理は今後追加予定です。",
-  },
   {
     label: "注文管理",
     description: "注文状況の確認と管理は今後追加予定です。",
