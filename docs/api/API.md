@@ -50,7 +50,8 @@ access token は不要だが、refresh token が必要。
 - `GET /api/admin/products/:id`
 - `POST /api/admin/products`
 - `PATCH /api/admin/products/:id`
-- `PATCH /api/admin/products/:id/status`
+- `POST /api/admin/products/:id/stop-selling`
+- `POST /api/admin/products/:id/resume-selling`
 - `GET /api/admin/orders`
 - `GET /api/admin/orders/:id`
 - `POST /api/admin/orders/:id/cancel`
@@ -215,7 +216,7 @@ access tokenを再発行する。
 - active / stopped 両方を取得可能
 - stock_quantity を返す
 - low_stock_threshold を返す
-- 検索・絞り込み・ページネーション対応
+- Phase1では検索・絞り込み・ページネーションなし
 
 ---
 
@@ -233,20 +234,16 @@ access tokenを再発行する。
 
 商品を新規登録する。
 
-- 商品名
-- 商品説明
-- 税抜価格
-- 税率
-- カテゴリ
-- メーカー名
-- 型番
-- 在庫数
-- 残りわずか閾値
-- 商品状態
-- 画像URL
-- 発売日
+- name は必須
+- price は税抜価格として扱い、0より大きい値
+- taxRateId は必須
+- categoryId は必須
+- stockQuantity は0以上
+- lowStockThreshold は0以上
+- status は active / stopped
+- description は任意
 
-を受け取る。
+登録成功時は作成した商品情報を返す。
 
 ---
 
@@ -255,18 +252,31 @@ access tokenを再発行する。
 商品情報を更新する。
 
 - 商品フォーム画面から利用する
-- 基本情報・価格・在庫・状態を更新可能
+- name / description / price / taxRateId / categoryId / stockQuantity / lowStockThreshold を更新可能
+- status変更は専用APIに分ける
+- name は空にできない
+- price は税抜価格として扱い、0より大きい値
+- stockQuantity / lowStockThreshold は0以上
 
 ---
 
-## PATCH /api/admin/products/:id/status
+## POST /api/admin/products/:id/stop-selling
 
-商品状態を変更する。
+商品を販売停止にする。
 
-- active / stopped を切り替える
-- 商品一覧から販売停止・再開を行う場合に利用する
+- active -> stopped
+- すでに stopped の商品は冪等に成功扱い
+- 一般ユーザー向けの商品一覧・詳細、カート追加、注文確定では扱えない
 
-※ PATCH /api/admin/products/:id に統合してもよい。
+---
+
+## POST /api/admin/products/:id/resume-selling
+
+商品を販売中に戻す。
+
+- stopped -> active
+- すでに active の商品は冪等に成功扱い
+- 販売再開後は一般ユーザー向けの商品一覧・詳細の対象に戻る
 
 ---
 

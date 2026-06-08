@@ -153,13 +153,13 @@ Phase1では小数点以下切り捨て。
 }
 ```
 
-管理者向けAPIでは税抜価格・税率・税込価格を返してよい。
+管理者向けAPIでは税抜価格と税率を返す。
 
 ```json
 {
-  "priceExcludingTax": 10000,
-  "taxRate": 0.10,
-  "priceIncludingTax": 11000
+  "price": 10000,
+  "taxRateId": 1,
+  "taxRate": 0.10
 }
 ```
 
@@ -433,13 +433,82 @@ out_of_stock
 
 ```json
 {
-  "id": 1,
+  "productId": 1,
   "name": "Sample Keyboard",
   "stockQuantity": 8,
   "lowStockThreshold": 10,
-  "stockStatus": "low_stock"
+  "status": "active"
 }
 ```
+
+Phase1では、管理者の商品登録・編集APIで `stockQuantity` と `lowStockThreshold` を更新できる。
+
+```txt
+POST /api/admin/products
+PATCH /api/admin/products/:id
+```
+
+---
+
+# ■ 管理者向けProduct API
+
+## 一覧・詳細
+
+```txt
+GET /api/admin/products
+GET /api/admin/products/:id
+```
+
+- active / stopped の両方を取得可能
+- 実在庫数を返す
+- 税抜価格 `price`、`taxRateId`、税率 `taxRate` を返す
+- Phase1ではページネーション・検索・絞り込みなし
+
+---
+
+## 登録
+
+```txt
+POST /api/admin/products
+```
+
+- name は必須
+- price は税抜価格として扱い、0より大きい値
+- taxRateId は必須
+- categoryId は必須
+- stockQuantity は0以上
+- lowStockThreshold は0以上
+- status は active / stopped
+- description は任意
+
+---
+
+## 編集
+
+```txt
+PATCH /api/admin/products/:id
+```
+
+- name / description / price / taxRateId / categoryId / stockQuantity / lowStockThreshold を更新可能
+- status はこのAPIでは変更しない
+- name は空にできない
+- price は0より大きい値
+- stockQuantity / lowStockThreshold は0以上
+
+---
+
+## 販売停止・販売再開
+
+```txt
+POST /api/admin/products/:id/stop-selling
+POST /api/admin/products/:id/resume-selling
+```
+
+- 販売停止は active -> stopped
+- 販売再開は stopped -> active
+- どちらも現在状態が期待状態と同じ場合は冪等に成功扱い
+- stopped 商品は一般ユーザー向けの商品一覧・詳細・カート追加・注文確定で扱えない
+- active に戻した商品は一般ユーザー向けの商品一覧・詳細の対象に戻る
 
 ---
 

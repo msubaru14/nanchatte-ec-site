@@ -510,8 +510,8 @@ DELETE /api/me/reviews/:id
 ```txt
 POST /api/admin/products
 PATCH /api/admin/products/:id
-PATCH /api/admin/products/:id/stock
-PATCH /api/admin/products/:id/status
+POST /api/admin/products/:id/stop-selling
+POST /api/admin/products/:id/resume-selling
 
 GET /api/admin/orders
 ```

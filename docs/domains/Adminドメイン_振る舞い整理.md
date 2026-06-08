@@ -74,6 +74,26 @@ admin
 
 ---
 
+## 管理者向けProduct API
+
+```txt
+GET /api/admin/products
+GET /api/admin/products/:id
+POST /api/admin/products
+PATCH /api/admin/products/:id
+POST /api/admin/products/:id/stop-selling
+POST /api/admin/products/:id/resume-selling
+```
+
+- すべて admin role 必須
+- 未ログインは 401
+- admin role がない場合は 403
+- 一覧・詳細では active / stopped の両方を扱う
+- 登録・編集では name / price / stockQuantity / lowStockThreshold / taxRateId / categoryId を validation する
+- status 変更は販売停止・販売再開APIで扱う
+
+---
+
 ## 商品状態
 
 Phase1では:
