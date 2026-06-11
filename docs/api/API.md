@@ -217,6 +217,9 @@ access tokenを再発行する。
 - stock_quantity を返す
 - low_stock_threshold を返す
 - Phase1では検索・絞り込み・ページネーションなし
+- BFF 経由では `GET /api/admin/products` として公開し、Browser から Go API を直接呼ばない
+- BFF は `access_token` cookie を利用して Go API を呼び出し、期限切れ時は refresh retry を適用する
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 
 ---
 
@@ -267,6 +270,9 @@ access tokenを再発行する。
 - active -> stopped
 - すでに stopped の商品は冪等に成功扱い
 - 一般ユーザー向けの商品一覧・詳細、カート追加、注文確定では扱えない
+- BFF 経由では `POST /api/admin/products/:id/stop-selling` として公開し、Browser から Go API を直接呼ばない
+- BFF は `access_token` cookie を利用して Go API を呼び出し、期限切れ時は refresh retry を適用する
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 
 ---
 
@@ -277,6 +283,9 @@ access tokenを再発行する。
 - stopped -> active
 - すでに active の商品は冪等に成功扱い
 - 販売再開後は一般ユーザー向けの商品一覧・詳細の対象に戻る
+- BFF 経由では `POST /api/admin/products/:id/resume-selling` として公開し、Browser から Go API を直接呼ばない
+- BFF は `access_token` cookie を利用して Go API を呼び出し、期限切れ時は refresh retry を適用する
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 
 ---
 
