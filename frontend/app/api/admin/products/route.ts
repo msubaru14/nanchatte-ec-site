@@ -1,1 +1,4 @@
-export { handleGetAdminProducts as GET } from "../../../../features/products/api/handler";
+export {
+  handleCreateAdminProduct as POST,
+  handleGetAdminProducts as GET,
+} from "../../../../features/products/api/handler";

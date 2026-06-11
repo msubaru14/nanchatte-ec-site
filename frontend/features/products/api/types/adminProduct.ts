@@ -18,3 +18,24 @@ export type AdminProduct = {
 export type AdminProductList = {
   products: AdminProduct[];
 };
+
+export type AdminProductCreateInput = {
+  name: string;
+  description: string | null;
+  price: number;
+  taxRateId: number;
+  categoryId: number;
+  stockQuantity: number;
+  lowStockThreshold: number;
+  status: AdminProductStatus;
+};
+
+export type AdminProductUpdateInput = {
+  name?: string;
+  description?: string | null;
+  price?: number;
+  taxRateId?: number;
+  categoryId?: number;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
+};
