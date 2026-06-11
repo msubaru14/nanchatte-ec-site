@@ -130,6 +130,8 @@ docker compose up --build -d
 - 管理者ログイン画面: http://localhost:3000/admin/login
 - 管理者トップ画面: http://localhost:3000/admin
 - 管理者商品一覧画面: http://localhost:3000/admin/products
+- 管理者商品登録画面: http://localhost:3000/admin/products/new
+- 管理者商品編集画面: http://localhost:3000/admin/products/{id}/edit
 - 管理者レビュー一覧画面: http://localhost:3000/admin/reviews
 - 注文確認画面: http://localhost:3000/orders/confirm
 - 注文完了画面: http://localhost:3000/orders/complete
@@ -261,6 +263,9 @@ npm run test:e2e:ui
   - `POST /api/me/reviews/:id/publish`
   - `DELETE /api/me/reviews/:id`
   - `GET /api/admin/products`
+  - `GET /api/admin/products/:id`
+  - `POST /api/admin/products`
+  - `PATCH /api/admin/products/:id`
   - `POST /api/admin/products/:id/stop-selling`
   - `POST /api/admin/products/:id/resume-selling`
   - `GET /api/admin/reviews`
@@ -373,6 +378,8 @@ npm run test:e2e:ui
   - 削除前の確認ダイアログと削除失敗時のエラー表示
 - 管理者商品一覧画面
   - `GET /api/admin/products` BFFを利用した管理者商品一覧表示
+  - 管理者商品登録画面への導線
+  - 管理者商品編集画面への導線
   - `POST /api/admin/products/:id/stop-selling` BFFを利用した販売停止
   - `POST /api/admin/products/:id/resume-selling` BFFを利用した販売再開
   - 管理者トップから商品管理への導線
@@ -384,6 +391,19 @@ npm run test:e2e:ui
   - 未ログイン時の returnTo 付き管理者ログイン遷移
   - customerユーザーの権限エラー表示
   - 操作前の確認ダイアログと操作失敗時のエラー表示
+- 管理者商品登録 / 編集画面
+  - `GET /api/admin/products/:id` BFFを利用した編集フォーム初期表示
+  - `POST /api/admin/products` BFFを利用した商品登録
+  - `PATCH /api/admin/products/:id` BFFを利用した商品編集
+  - 商品登録時の active / stopped 選択
+  - 商品編集時は status を直接編集しない
+  - description 空欄、stockQuantity = 0、lowStockThreshold = 0 に対応
+  - backend validation error の form / field 表示
+  - 登録・編集成功後の管理者商品一覧への遷移と成功メッセージ表示
+  - 未ログイン時の returnTo 付き管理者ログイン遷移
+  - customerユーザーの権限エラー表示
+  - 編集対象取得失敗時のエラー表示と再読み込み導線
+  - 存在しない商品IDの Not Found 表示
 - Next.js App Router によるトップページ
 - 商品一覧画面
   - `GET /api/products` を利用した商品カード表示
