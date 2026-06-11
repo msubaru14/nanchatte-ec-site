@@ -31,7 +31,12 @@
 ├── docs
 └── frontend
     ├── app
+    │   ├── admin
+    │   │   ├── login
+    │   │   ├── products
+    │   │   └── reviews
     │   ├── api
+    │   │   ├── admin
     │   │   ├── auth
     │   │   ├── cart
     │   │   ├── me
@@ -122,6 +127,10 @@ docker compose up --build -d
 - カート画面: http://localhost:3000/cart
 - マイページ: http://localhost:3000/me
 - 自分のレビュー一覧画面: http://localhost:3000/me/reviews
+- 管理者ログイン画面: http://localhost:3000/admin/login
+- 管理者トップ画面: http://localhost:3000/admin
+- 管理者商品一覧画面: http://localhost:3000/admin/products
+- 管理者レビュー一覧画面: http://localhost:3000/admin/reviews
 - 注文確認画面: http://localhost:3000/orders/confirm
 - 注文完了画面: http://localhost:3000/orders/complete
 - 注文履歴一覧画面: http://localhost:3000/orders
@@ -251,6 +260,12 @@ npm run test:e2e:ui
   - `PATCH /api/me/reviews/:id`
   - `POST /api/me/reviews/:id/publish`
   - `DELETE /api/me/reviews/:id`
+  - `GET /api/admin/products`
+  - `POST /api/admin/products/:id/stop-selling`
+  - `POST /api/admin/products/:id/resume-selling`
+  - `GET /api/admin/reviews`
+  - `POST /api/admin/reviews/:id/hide`
+  - `POST /api/admin/reviews/:id/publish`
   - access token / refresh token を httpOnly cookie で管理
   - 認証対象 API では 401 時に refresh retry を行う
   - backend の response / error code を Browser 向けにも維持する
@@ -356,6 +371,19 @@ npm run test:e2e:ui
   - 下書きレビューの編集画面への導線
   - 公開中・非表示レビューの編集不可表示
   - 削除前の確認ダイアログと削除失敗時のエラー表示
+- 管理者商品一覧画面
+  - `GET /api/admin/products` BFFを利用した管理者商品一覧表示
+  - `POST /api/admin/products/:id/stop-selling` BFFを利用した販売停止
+  - `POST /api/admin/products/:id/resume-selling` BFFを利用した販売再開
+  - 管理者トップから商品管理への導線
+  - active / stopped の管理者向け表示名変換
+  - 在庫あり / 残りわずか / 在庫なしの表示
+  - description 未入力商品表示
+  - 商品0件表示
+  - 取得失敗時のエラー表示と再読み込み導線
+  - 未ログイン時の returnTo 付き管理者ログイン遷移
+  - customerユーザーの権限エラー表示
+  - 操作前の確認ダイアログと操作失敗時のエラー表示
 - Next.js App Router によるトップページ
 - 商品一覧画面
   - `GET /api/products` を利用した商品カード表示
