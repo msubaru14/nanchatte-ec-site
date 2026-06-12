@@ -1,6 +1,8 @@
 package order
 
 import (
+	"time"
+
 	"github.com/msubaru14/nanchatte-ec-backend/internal/cart"
 	"github.com/msubaru14/nanchatte-ec-backend/internal/product"
 	"gorm.io/gorm"
@@ -105,6 +107,34 @@ func (r *Repository) ListOrdersByUserID(userID int64) ([]OrderSummaryResult, err
 	return orders, nil
 }
 
+func (r *Repository) ListAdminOrders() ([]AdminOrderSummaryResult, error) {
+	var orders []AdminOrderSummaryResult
+	err := r.db.Table("orders").
+		Select(`
+			orders.id AS order_id,
+			orders.order_number,
+			orders.user_id,
+			users.name AS user_name,
+			users.email AS user_email,
+			orders.order_status,
+			orders.total_including_tax,
+			orders.ordered_at,
+			orders.canceled_at,
+			COALESCE(SUM(order_items.quantity), 0) AS item_count
+		`).
+		Joins("JOIN users ON users.id = orders.user_id").
+		Joins("LEFT JOIN order_items ON order_items.order_id = orders.id").
+		Group("orders.id, orders.order_number, orders.user_id, users.name, users.email, orders.order_status, orders.total_including_tax, orders.ordered_at, orders.canceled_at").
+		Order("orders.ordered_at DESC").
+		Order("orders.id DESC").
+		Scan(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
 func (r *Repository) FindOrderByIDAndUserID(orderID int64, userID int64) (*Order, error) {
 	var order Order
 	err := r.db.
@@ -119,4 +149,78 @@ func (r *Repository) FindOrderByIDAndUserID(orderID int64, userID int64) (*Order
 	}
 
 	return &order, nil
+}
+
+func (r *Repository) FindAdminOrderByID(orderID int64) (*AdminOrderRecord, error) {
+	var order AdminOrderRecord
+	err := r.db.Table("orders").
+		Select(`
+			orders.id AS order_id,
+			orders.order_number,
+			orders.user_id,
+			users.name AS user_name,
+			users.email AS user_email,
+			orders.order_status,
+			orders.total_excluding_tax,
+			orders.total_tax,
+			orders.total_including_tax,
+			orders.ordered_at,
+			orders.canceled_at
+		`).
+		Joins("JOIN users ON users.id = orders.user_id").
+		Where("orders.id = ?", orderID).
+		Take(&order).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &order, nil
+}
+
+func (r *Repository) ListOrderItemsByOrderID(orderID int64) ([]OrderItem, error) {
+	var items []OrderItem
+	err := r.db.
+		Where("order_id = ?", orderID).
+		Order("id ASC").
+		Find(&items).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (r *Repository) FindOrderByIDForUpdate(orderID int64) (*Order, error) {
+	var order Order
+	err := r.db.
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Preload("Items", func(db *gorm.DB) *gorm.DB {
+			return db.Order("id ASC")
+		}).
+		Where("id = ?", orderID).
+		First(&order).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &order, nil
+}
+
+func (r *Repository) UpdateOrderCanceled(orderID int64, canceledAt time.Time) (int64, error) {
+	result := r.db.Model(&Order{}).
+		Where("id = ?", orderID).
+		Updates(map[string]interface{}{
+			"order_status": OrderStatusCanceled,
+			"canceled_at":  canceledAt,
+		})
+
+	return result.RowsAffected, result.Error
+}
+
+func (r *Repository) IncrementProductStock(productID int64, quantity int) (int64, error) {
+	result := r.db.Model(&product.Product{}).
+		Where("id = ?", productID).
+		Update("stock_quantity", gorm.Expr("stock_quantity + ?", quantity))
+
+	return result.RowsAffected, result.Error
 }

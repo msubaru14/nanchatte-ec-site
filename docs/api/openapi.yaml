@@ -23,6 +23,8 @@ tags:
     description: Admin review management APIs
   - name: Admin Products
     description: Admin product management APIs
+  - name: Admin Orders
+    description: Admin order management APIs
 paths:
   /api/auth/register:
     post:
@@ -1174,6 +1176,198 @@ paths:
           $ref: "#/components/responses/ProductNotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/admin/orders:
+    get:
+      tags:
+        - Admin Orders
+      summary: List admin orders
+      description: |
+        管理者向けの注文一覧を取得する。
+
+        access token による認証と admin role が必要。
+        全ユーザーの ordered / canceled 注文を取得できる。
+        退会済みユーザーの注文も取得対象とする。
+        orderedAt DESC、同時刻の場合は orderId DESC で返す。
+        Phase1では検索・絞り込み・ページネーションなしで返す。
+      operationId: listAdminOrders
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Admin order list response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrderListSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      orders:
+                        - orderId: 2
+                          orderNumber: ORD-20260530-BBBBBB
+                          userId: 20
+                          userName: Deleted User
+                          userEmail: deleted@example.com
+                          orderStatus: canceled
+                          totalIncludingTax: 90200
+                          orderedAt: "2026-05-30T12:00:00Z"
+                          canceledAt: "2026-05-31T12:00:00Z"
+                          itemCount: 3
+                        - orderId: 1
+                          orderNumber: ORD-20260529-AAAAAA
+                          userId: 10
+                          userName: Active User
+                          userEmail: active@example.com
+                          orderStatus: ordered
+                          totalIncludingTax: 79200
+                          orderedAt: "2026-05-29T12:00:00Z"
+                          canceledAt: null
+                          itemCount: 2
+                    error: null
+                empty:
+                  value:
+                    data:
+                      orders: []
+                    error: null
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/admin/orders/{id}:
+    get:
+      tags:
+        - Admin Orders
+      summary: Get admin order detail
+      description: |
+        管理者向けの注文詳細を取得する。
+
+        access token による認証と admin role が必要。
+        全ユーザーの注文を取得できる。
+        order_items は注文時点のスナップショット情報を返し、Productの現在情報は表示用に利用しない。
+      operationId: getAdminOrderDetail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Admin order detail response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrderDetailSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      orderId: 2
+                      orderNumber: ORD-20260530-BBBBBB
+                      userId: 20
+                      userName: Deleted User
+                      userEmail: deleted@example.com
+                      orderStatus: canceled
+                      totalExcludingTax: 82000
+                      totalTax: 8200
+                      totalIncludingTax: 90200
+                      orderedAt: "2026-05-30T12:00:00Z"
+                      canceledAt: "2026-05-31T12:00:00Z"
+                      items:
+                        - productId: 1
+                          productName: HHKB Professional
+                          productImageUrl: null
+                          makerName: PFU
+                          modelNumber: PD-KB800
+                          unitPriceExcludingTax: 36000
+                          taxRate: 0.1
+                          unitPriceIncludingTax: 39600
+                          quantity: 2
+                          subtotalExcludingTax: 72000
+                          subtotalTax: 7200
+                          subtotalIncludingTax: 79200
+                        - productId: 2
+                          productName: Trackball
+                          productImageUrl: null
+                          makerName: null
+                          modelNumber: null
+                          unitPriceExcludingTax: 10000
+                          taxRate: 0.1
+                          unitPriceIncludingTax: 11000
+                          quantity: 1
+                          subtotalExcludingTax: 10000
+                          subtotalTax: 1000
+                          subtotalIncludingTax: 11000
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidOrderIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/OrderNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/admin/orders/{id}/cancel:
+    post:
+      tags:
+        - Admin Orders
+      summary: Cancel admin order
+      description: |
+        管理者が注文をキャンセルする。
+
+        access token による認証と admin role が必要。
+        order_status = ordered の注文のみキャンセルできる。
+        成功時は同一transaction内で order_status 更新、canceled_at 設定、order_items.quantity 分の在庫復元を行う。
+        canceled 注文の再キャンセルは Phase1 では業務エラーとして扱う。
+      operationId: cancelAdminOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: Admin order canceled response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrderCancelSuccessResponse"
+              examples:
+                success:
+                  value:
+                    data:
+                      orderId: 1
+                      orderStatus: canceled
+                      canceledAt: "2026-06-13T12:00:00Z"
+                    error: null
+        "400":
+          $ref: "#/components/responses/InvalidOrderIDError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/OrderNotFoundError"
+        "409":
+          $ref: "#/components/responses/AdminOrderCannotCancelError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/products/{productId}/reviews:
     get:
       tags:
@@ -2001,9 +2195,22 @@ components:
             orderNotFound:
               value:
                 data: null
+                  error:
+                    code: NOT_FOUND
+                    message: order not found
+    AdminOrderCannotCancelError:
+      description: Admin order cannot be canceled
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            alreadyCanceled:
+              value:
+                data: null
                 error:
-                  code: NOT_FOUND
-                  message: order not found
+                  code: CONFLICT
+                  message: order cannot be canceled
     ReviewCreateRequestError:
       description: Invalid review create request or validation error
       content:
@@ -3015,6 +3222,190 @@ components:
           type: string
           format: date-time
           example: "2026-06-01T12:00:00Z"
+    AdminOrderListSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AdminOrderListData"
+        error:
+          nullable: true
+          example: null
+    AdminOrderListData:
+      type: object
+      required:
+        - orders
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminOrderSummary"
+    AdminOrderSummary:
+      type: object
+      required:
+        - orderId
+        - orderNumber
+        - userId
+        - userName
+        - userEmail
+        - orderStatus
+        - totalIncludingTax
+        - orderedAt
+        - canceledAt
+        - itemCount
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          example: 1
+        orderNumber:
+          type: string
+          pattern: "^ORD-[0-9]{8}-[A-Z0-9]{6}$"
+          example: ORD-20260530-A8K3D2
+        userId:
+          type: integer
+          format: int64
+          example: 20
+        userName:
+          type: string
+          example: Deleted User
+        userEmail:
+          type: string
+          format: email
+          example: deleted@example.com
+        orderStatus:
+          type: string
+          enum:
+            - ordered
+            - canceled
+          example: canceled
+        totalIncludingTax:
+          type: integer
+          minimum: 0
+          example: 90200
+        orderedAt:
+          type: string
+          format: date-time
+          example: "2026-05-30T12:00:00Z"
+        canceledAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-05-31T12:00:00Z"
+        itemCount:
+          type: integer
+          minimum: 0
+          example: 3
+    AdminOrderDetailSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AdminOrderDetailData"
+        error:
+          nullable: true
+          example: null
+    AdminOrderDetailData:
+      type: object
+      required:
+        - orderId
+        - orderNumber
+        - userId
+        - userName
+        - userEmail
+        - orderStatus
+        - totalExcludingTax
+        - totalTax
+        - totalIncludingTax
+        - orderedAt
+        - canceledAt
+        - items
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          example: 1
+        orderNumber:
+          type: string
+          pattern: "^ORD-[0-9]{8}-[A-Z0-9]{6}$"
+          example: ORD-20260530-A8K3D2
+        userId:
+          type: integer
+          format: int64
+          example: 20
+        userName:
+          type: string
+          example: Deleted User
+        userEmail:
+          type: string
+          format: email
+          example: deleted@example.com
+        orderStatus:
+          type: string
+          enum:
+            - ordered
+            - canceled
+          example: canceled
+        totalExcludingTax:
+          type: integer
+          minimum: 0
+          example: 82000
+        totalTax:
+          type: integer
+          minimum: 0
+          example: 8200
+        totalIncludingTax:
+          type: integer
+          minimum: 0
+          example: 90200
+        orderedAt:
+          type: string
+          format: date-time
+          example: "2026-05-30T12:00:00Z"
+        canceledAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-05-31T12:00:00Z"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderDetailItem"
+    AdminOrderCancelSuccessResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          $ref: "#/components/schemas/AdminOrderCancelData"
+        error:
+          nullable: true
+          example: null
+    AdminOrderCancelData:
+      type: object
+      required:
+        - orderId
+        - orderStatus
+        - canceledAt
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          example: 1
+        orderStatus:
+          type: string
+          enum:
+            - canceled
+          example: canceled
+        canceledAt:
+          type: string
+          format: date-time
+          example: "2026-06-13T12:00:00Z"
     OrderCreateSuccessResponse:
       type: object
       required:

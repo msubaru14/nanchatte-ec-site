@@ -25,6 +25,31 @@ type DetailResult struct {
 	Items             []DetailItemResult
 }
 
+type AdminListResult struct {
+	Orders []AdminOrderSummaryResult
+}
+
+type AdminDetailResult struct {
+	OrderID           int64
+	OrderNumber       string
+	UserID            int64
+	UserName          string
+	UserEmail         string
+	OrderStatus       OrderStatus
+	TotalExcludingTax int
+	TotalTax          int
+	TotalIncludingTax int
+	OrderedAt         time.Time
+	CanceledAt        *time.Time
+	Items             []DetailItemResult
+}
+
+type AdminCancelResult struct {
+	OrderID     int64
+	OrderStatus OrderStatus
+	CanceledAt  *time.Time
+}
+
 type OrderSummaryResult struct {
 	OrderID           int64
 	OrderNumber       string
@@ -32,6 +57,33 @@ type OrderSummaryResult struct {
 	TotalIncludingTax int
 	OrderedAt         time.Time
 	ItemCount         int
+}
+
+type AdminOrderSummaryResult struct {
+	OrderID           int64
+	OrderNumber       string
+	UserID            int64
+	UserName          string
+	UserEmail         string
+	OrderStatus       OrderStatus
+	TotalIncludingTax int
+	OrderedAt         time.Time
+	CanceledAt        *time.Time
+	ItemCount         int
+}
+
+type AdminOrderRecord struct {
+	OrderID           int64
+	OrderNumber       string
+	UserID            int64
+	UserName          string
+	UserEmail         string
+	OrderStatus       OrderStatus
+	TotalExcludingTax int
+	TotalTax          int
+	TotalIncludingTax int
+	OrderedAt         time.Time
+	CanceledAt        *time.Time
 }
 
 type DetailItemResult struct {
@@ -62,12 +114,29 @@ type listOrdersResponse struct {
 	Orders []orderSummaryResponse `json:"orders"`
 }
 
+type listAdminOrdersResponse struct {
+	Orders []adminOrderSummaryResponse `json:"orders"`
+}
+
 type orderSummaryResponse struct {
 	OrderID           int64       `json:"orderId"`
 	OrderNumber       string      `json:"orderNumber"`
 	OrderStatus       OrderStatus `json:"orderStatus"`
 	TotalIncludingTax int         `json:"totalIncludingTax"`
 	OrderedAt         time.Time   `json:"orderedAt"`
+	ItemCount         int         `json:"itemCount"`
+}
+
+type adminOrderSummaryResponse struct {
+	OrderID           int64       `json:"orderId"`
+	OrderNumber       string      `json:"orderNumber"`
+	UserID            int64       `json:"userId"`
+	UserName          string      `json:"userName"`
+	UserEmail         string      `json:"userEmail"`
+	OrderStatus       OrderStatus `json:"orderStatus"`
+	TotalIncludingTax int         `json:"totalIncludingTax"`
+	OrderedAt         time.Time   `json:"orderedAt"`
+	CanceledAt        *time.Time  `json:"canceledAt"`
 	ItemCount         int         `json:"itemCount"`
 }
 
@@ -80,6 +149,27 @@ type orderDetailResponse struct {
 	TotalIncludingTax int                       `json:"totalIncludingTax"`
 	OrderedAt         time.Time                 `json:"orderedAt"`
 	Items             []orderDetailItemResponse `json:"items"`
+}
+
+type adminOrderDetailResponse struct {
+	OrderID           int64                     `json:"orderId"`
+	OrderNumber       string                    `json:"orderNumber"`
+	UserID            int64                     `json:"userId"`
+	UserName          string                    `json:"userName"`
+	UserEmail         string                    `json:"userEmail"`
+	OrderStatus       OrderStatus               `json:"orderStatus"`
+	TotalExcludingTax int                       `json:"totalExcludingTax"`
+	TotalTax          int                       `json:"totalTax"`
+	TotalIncludingTax int                       `json:"totalIncludingTax"`
+	OrderedAt         time.Time                 `json:"orderedAt"`
+	CanceledAt        *time.Time                `json:"canceledAt"`
+	Items             []orderDetailItemResponse `json:"items"`
+}
+
+type adminOrderCancelResponse struct {
+	OrderID     int64       `json:"orderId"`
+	OrderStatus OrderStatus `json:"orderStatus"`
+	CanceledAt  *time.Time  `json:"canceledAt"`
 }
 
 type orderDetailItemResponse struct {
@@ -130,6 +220,26 @@ func newListOrdersResponse(result *ListResult) listOrdersResponse {
 	return listOrdersResponse{Orders: orders}
 }
 
+func newListAdminOrdersResponse(result *AdminListResult) listAdminOrdersResponse {
+	orders := make([]adminOrderSummaryResponse, 0, len(result.Orders))
+	for _, order := range result.Orders {
+		orders = append(orders, adminOrderSummaryResponse{
+			OrderID:           order.OrderID,
+			OrderNumber:       order.OrderNumber,
+			UserID:            order.UserID,
+			UserName:          order.UserName,
+			UserEmail:         order.UserEmail,
+			OrderStatus:       order.OrderStatus,
+			TotalIncludingTax: order.TotalIncludingTax,
+			OrderedAt:         order.OrderedAt,
+			CanceledAt:        order.CanceledAt,
+			ItemCount:         order.ItemCount,
+		})
+	}
+
+	return listAdminOrdersResponse{Orders: orders}
+}
+
 func newOrderDetailResponse(result *DetailResult) orderDetailResponse {
 	items := make([]orderDetailItemResponse, 0, len(result.Items))
 	for _, item := range result.Items {
@@ -158,6 +268,49 @@ func newOrderDetailResponse(result *DetailResult) orderDetailResponse {
 		TotalIncludingTax: result.TotalIncludingTax,
 		OrderedAt:         result.OrderedAt,
 		Items:             items,
+	}
+}
+
+func newAdminOrderDetailResponse(result *AdminDetailResult) adminOrderDetailResponse {
+	items := make([]orderDetailItemResponse, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, orderDetailItemResponse{
+			ProductID:             item.ProductID,
+			ProductName:           item.ProductName,
+			ProductImageURL:       item.ProductImageURL,
+			MakerName:             item.MakerName,
+			ModelNumber:           item.ModelNumber,
+			UnitPriceExcludingTax: item.UnitPriceExcludingTax,
+			TaxRate:               item.TaxRate,
+			UnitPriceIncludingTax: item.UnitPriceIncludingTax,
+			Quantity:              item.Quantity,
+			SubtotalExcludingTax:  item.SubtotalExcludingTax,
+			SubtotalTax:           item.SubtotalTax,
+			SubtotalIncludingTax:  item.SubtotalIncludingTax,
+		})
+	}
+
+	return adminOrderDetailResponse{
+		OrderID:           result.OrderID,
+		OrderNumber:       result.OrderNumber,
+		UserID:            result.UserID,
+		UserName:          result.UserName,
+		UserEmail:         result.UserEmail,
+		OrderStatus:       result.OrderStatus,
+		TotalExcludingTax: result.TotalExcludingTax,
+		TotalTax:          result.TotalTax,
+		TotalIncludingTax: result.TotalIncludingTax,
+		OrderedAt:         result.OrderedAt,
+		CanceledAt:        result.CanceledAt,
+		Items:             items,
+	}
+}
+
+func newAdminOrderCancelResponse(result *AdminCancelResult) adminOrderCancelResponse {
+	return adminOrderCancelResponse{
+		OrderID:     result.OrderID,
+		OrderStatus: result.OrderStatus,
+		CanceledAt:  result.CanceledAt,
 	}
 }
 

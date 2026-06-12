@@ -29,6 +29,12 @@ type orderRepository interface {
 	OrderNumberExists(orderNumber string) (bool, error)
 	ListOrdersByUserID(userID int64) ([]OrderSummaryResult, error)
 	FindOrderByIDAndUserID(orderID int64, userID int64) (*Order, error)
+	ListAdminOrders() ([]AdminOrderSummaryResult, error)
+	FindAdminOrderByID(orderID int64) (*AdminOrderRecord, error)
+	ListOrderItemsByOrderID(orderID int64) ([]OrderItem, error)
+	FindOrderByIDForUpdate(orderID int64) (*Order, error)
+	UpdateOrderCanceled(orderID int64, canceledAt time.Time) (int64, error)
+	IncrementProductStock(productID int64, quantity int) (int64, error)
 }
 
 func NewService(db *gorm.DB) *Service {
@@ -129,6 +135,79 @@ func (s *Service) GetOrderDetail(userID int64, orderID int64) (*DetailResult, *a
 	return toDetailResult(*order), nil
 }
 
+func (s *Service) ListAdminOrders() (*AdminListResult, *apperror.APIError) {
+	orders, err := s.repository.ListAdminOrders()
+	if err != nil {
+		return nil, toAPIError(err)
+	}
+
+	return &AdminListResult{Orders: orders}, nil
+}
+
+func (s *Service) GetAdminOrderDetail(orderID int64) (*AdminDetailResult, *apperror.APIError) {
+	order, err := s.repository.FindAdminOrderByID(orderID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound("order not found")
+		}
+		return nil, toAPIError(err)
+	}
+
+	items, err := s.repository.ListOrderItemsByOrderID(orderID)
+	if err != nil {
+		return nil, toAPIError(err)
+	}
+
+	return toAdminDetailResult(*order, items), nil
+}
+
+func (s *Service) CancelAdminOrder(orderID int64) (*AdminCancelResult, *apperror.APIError) {
+	var result *AdminCancelResult
+	err := s.repository.Transaction(func(repository orderRepository) error {
+		targetOrder, err := repository.FindOrderByIDForUpdate(orderID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return apperror.NewNotFound("order not found")
+			}
+			return err
+		}
+		if targetOrder.OrderStatus != OrderStatusOrdered {
+			return apperror.NewConflict("order cannot be canceled")
+		}
+
+		canceledAt := s.now()
+		rowsAffected, err := repository.UpdateOrderCanceled(orderID, canceledAt)
+		if err != nil {
+			return err
+		}
+		if rowsAffected == 0 {
+			return errors.New("failed to update order status")
+		}
+
+		for _, item := range targetOrder.Items {
+			rowsAffected, err := repository.IncrementProductStock(item.ProductID, item.Quantity)
+			if err != nil {
+				return err
+			}
+			if rowsAffected == 0 {
+				return errors.New("failed to restore product stock")
+			}
+		}
+
+		result = &AdminCancelResult{
+			OrderID:     targetOrder.ID,
+			OrderStatus: OrderStatusCanceled,
+			CanceledAt:  &canceledAt,
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, toAPIError(err)
+	}
+
+	return result, nil
+}
+
 func (s *Service) generateUniqueOrderNumber(repository orderRepository, orderedAt time.Time) (string, error) {
 	for range maxOrderNumberGenerateAttempts {
 		orderNumber, err := s.orderNumberGenerator(orderedAt)
@@ -219,9 +298,39 @@ func toCreateResult(order Order, items []OrderItem) *CreateResult {
 }
 
 func toDetailResult(order Order) *DetailResult {
-	items := make([]DetailItemResult, 0, len(order.Items))
-	for _, item := range order.Items {
-		items = append(items, DetailItemResult{
+	return &DetailResult{
+		OrderID:           order.ID,
+		OrderNumber:       order.OrderNumber,
+		OrderStatus:       order.OrderStatus,
+		TotalExcludingTax: order.TotalExcludingTax,
+		TotalTax:          order.TotalTax,
+		TotalIncludingTax: order.TotalIncludingTax,
+		OrderedAt:         order.OrderedAt,
+		Items:             toDetailItemResults(order.Items),
+	}
+}
+
+func toAdminDetailResult(order AdminOrderRecord, items []OrderItem) *AdminDetailResult {
+	return &AdminDetailResult{
+		OrderID:           order.OrderID,
+		OrderNumber:       order.OrderNumber,
+		UserID:            order.UserID,
+		UserName:          order.UserName,
+		UserEmail:         order.UserEmail,
+		OrderStatus:       order.OrderStatus,
+		TotalExcludingTax: order.TotalExcludingTax,
+		TotalTax:          order.TotalTax,
+		TotalIncludingTax: order.TotalIncludingTax,
+		OrderedAt:         order.OrderedAt,
+		CanceledAt:        order.CanceledAt,
+		Items:             toDetailItemResults(items),
+	}
+}
+
+func toDetailItemResults(items []OrderItem) []DetailItemResult {
+	results := make([]DetailItemResult, 0, len(items))
+	for _, item := range items {
+		results = append(results, DetailItemResult{
 			ProductID:             item.ProductID,
 			ProductName:           item.ProductName,
 			ProductImageURL:       item.ProductImageURL,
@@ -237,16 +346,7 @@ func toDetailResult(order Order) *DetailResult {
 		})
 	}
 
-	return &DetailResult{
-		OrderID:           order.ID,
-		OrderNumber:       order.OrderNumber,
-		OrderStatus:       order.OrderStatus,
-		TotalExcludingTax: order.TotalExcludingTax,
-		TotalTax:          order.TotalTax,
-		TotalIncludingTax: order.TotalIncludingTax,
-		OrderedAt:         order.OrderedAt,
-		Items:             items,
-	}
+	return results
 }
 
 func priceIncludingTax(priceExcludingTax int, taxRate float64) int {

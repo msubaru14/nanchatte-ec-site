@@ -97,6 +97,17 @@ func SetupRouter(database *gorm.DB) *gin.Engine {
 			adminProductRoutes.POST("/:id/resume-selling", productHandler.ResumeSellingAdmin)
 		}
 
+		adminOrderRoutes := api.Group(
+			"/admin/orders",
+			middleware.AuthMiddleware(tokenService),
+			middleware.RequireRole(auth.AdminRole),
+		)
+		{
+			adminOrderRoutes.GET("", orderHandler.ListAdmin)
+			adminOrderRoutes.GET("/:id", orderHandler.ShowAdmin)
+			adminOrderRoutes.POST("/:id/cancel", orderHandler.CancelAdmin)
+		}
+
 		cartRoutes := api.Group(
 			"/cart",
 			middleware.AuthMiddleware(tokenService),
