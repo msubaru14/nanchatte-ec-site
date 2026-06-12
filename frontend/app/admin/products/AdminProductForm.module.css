@@ -1,0 +1,155 @@
+.form {
+  display: grid;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 24px;
+}
+
+.field,
+.fieldset {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldset {
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  padding: 10px 12px;
+}
+
+.textarea {
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.input:disabled,
+.textarea:disabled {
+  background: #f8fafc;
+  color: var(--muted);
+  cursor: wait;
+}
+
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.radioLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 14px;
+}
+
+.radioLabel:has(input:checked) {
+  border-color: var(--primary);
+  background: #eef6ff;
+  color: var(--primary-dark);
+}
+
+.radioLabel:has(input:disabled) {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 16px;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.primaryButton:disabled {
+  background: #cbd5e1;
+  color: #475569;
+  cursor: wait;
+}
+
+.success,
+.formError,
+.fieldError {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.success {
+  color: #166534;
+}
+
+.formError,
+.fieldError {
+  color: #991b1b;
+}
+
+@media (max-width: 640px) {
+  .form {
+    padding: 18px;
+  }
+
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .primaryButton {
+    width: 100%;
+  }
+}

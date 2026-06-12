@@ -41,6 +41,11 @@ const productStatusLabels: Record<AdminProduct["status"], string> = {
   stopped: "販売停止",
 };
 
+const successMessages: Record<string, string> = {
+  created: "商品を登録しました。",
+  updated: "商品を保存しました。",
+};
+
 const formatDateTime = (value: string) => {
   const date = new Date(value);
 
@@ -150,6 +155,22 @@ export default function AdminProductsPage() {
     void loadProducts();
   }, [loadProducts]);
 
+  useEffect(() => {
+    const messageKey = new URLSearchParams(window.location.search).get(
+      "message",
+    );
+    const message = messageKey ? successMessages[messageKey] : null;
+
+    if (!message) {
+      return;
+    }
+
+    setOperationFeedback({
+      kind: "success",
+      message,
+    });
+  }, []);
+
   const updateProduct = (nextProduct: AdminProduct) => {
     setProductList((current) =>
       current
@@ -245,6 +266,12 @@ export default function AdminProductsPage() {
         <h1 className={styles.title} id="admin-products-title">
           商品管理
         </h1>
+      </div>
+
+      <div className={styles.toolbar}>
+        <Link className={styles.createLink} href="/admin/products/new">
+          商品を登録する
+        </Link>
       </div>
 
       {isLoading ? (
@@ -357,6 +384,12 @@ export default function AdminProductsPage() {
                     href={`/products/${product.productId}`}
                   >
                     商品詳細を見る
+                  </Link>
+                  <Link
+                    className={styles.productLink}
+                    href={`/admin/products/${product.productId}/edit`}
+                  >
+                    編集
                   </Link>
                   {product.status === "active" ? (
                     <button

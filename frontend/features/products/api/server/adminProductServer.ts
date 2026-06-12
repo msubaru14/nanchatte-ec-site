@@ -16,6 +16,48 @@ export const fetchAdminProductsWithBackend = async () => {
   return { response, json };
 };
 
+export const fetchAdminProductDetailWithBackend = async (
+  productId: string,
+) => {
+  const response = await backendFetchWithAuth(
+    `/api/admin/products/${encodeURIComponent(productId)}`,
+    {
+      method: "GET",
+    },
+  );
+  const json = await parseBackendResponse<AdminProduct>(response);
+
+  return { response, json };
+};
+
+export const createAdminProductWithBackend = async (body: string) => {
+  const response = await backendFetchWithAuth("/api/admin/products", {
+    method: "POST",
+    headers: getJsonHeaders(),
+    body,
+  });
+  const json = await parseBackendResponse<AdminProduct>(response);
+
+  return { response, json };
+};
+
+export const updateAdminProductWithBackend = async (
+  productId: string,
+  body: string,
+) => {
+  const response = await backendFetchWithAuth(
+    `/api/admin/products/${encodeURIComponent(productId)}`,
+    {
+      method: "PATCH",
+      headers: getJsonHeaders(),
+      body,
+    },
+  );
+  const json = await parseBackendResponse<AdminProduct>(response);
+
+  return { response, json };
+};
+
 export const stopSellingAdminProductWithBackend = async (
   productId: string,
 ) => {

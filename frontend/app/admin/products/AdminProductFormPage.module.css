@@ -1,0 +1,124 @@
+.page {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 40px 24px 56px;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.title {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.lead {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.topActions {
+  margin-bottom: 16px;
+}
+
+.status,
+.errorPanel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.status {
+  padding: 32px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.errorPanel {
+  border-color: #fecaca;
+  background: #fff7f7;
+  padding: 28px;
+}
+
+.errorTitle {
+  margin: 0 0 8px;
+  color: #991b1b;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.errorMessage {
+  margin: 0 0 18px;
+  color: #7f1d1d;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.primaryButton,
+.secondaryLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 16px;
+  text-decoration: none;
+}
+
+.primaryButton {
+  border: 0;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.primaryButton:hover {
+  background: var(--primary-dark);
+}
+
+.secondaryLink {
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--primary-dark);
+}
+
+.secondaryLink:hover {
+  background: #eef6ff;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 28px 16px 40px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+
+  .primaryButton,
+  .secondaryLink {
+    width: 100%;
+  }
+}

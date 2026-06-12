@@ -8,6 +8,12 @@
   margin-bottom: 24px;
 }
 
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: var(--primary);
@@ -157,6 +163,7 @@
 }
 
 .productLink,
+.createLink,
 .stopButton,
 .resumeButton {
   display: inline-flex;
@@ -176,8 +183,19 @@
   color: var(--primary-dark);
 }
 
-.productLink:hover {
+.productLink:hover,
+.createLink:hover {
   background: #eef6ff;
+}
+
+.createLink {
+  border: 0;
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.createLink:hover {
+  background: var(--primary-dark);
 }
 
 .stopButton,
@@ -296,6 +314,7 @@
   }
 
   .productActions,
+  .createLink,
   .productLink,
   .stopButton,
   .resumeButton {

@@ -230,6 +230,8 @@ access tokenを再発行する。
 - stopped 商品も取得可能
 - 編集フォーム初期値として利用する
 - 税抜価格・税率・在庫数を返す
+- BFF 経由では `GET /api/admin/products/:id` として公開し、Browser から Go API を直接呼ばない
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 
 ---
 
@@ -245,6 +247,8 @@ access tokenを再発行する。
 - lowStockThreshold は0以上
 - status は active / stopped
 - description は任意
+- BFF 経由では `POST /api/admin/products` として公開し、Browser から Go API を直接呼ばない
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 
 登録成功時は作成した商品情報を返す。
 
@@ -260,6 +264,8 @@ access tokenを再発行する。
 - name は空にできない
 - price は税抜価格として扱い、0より大きい値
 - stockQuantity / lowStockThreshold は0以上
+- BFF 経由では `PATCH /api/admin/products/:id` として公開し、Browser から Go API を直接呼ばない
+- BFF は Go API の HTTP status と response / error code を維持して Browser へ返す
 
 ---
 
