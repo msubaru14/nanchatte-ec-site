@@ -78,6 +78,17 @@ async function mockAdminProducts(page: Page) {
   );
 }
 
+async function mockAdminOrders(page: Page) {
+  await page.route("**/api/admin/orders", (route) =>
+    fulfillJson(route, 200, {
+      data: {
+        orders: [],
+      },
+      error: null,
+    }),
+  );
+}
+
 test.describe("管理者入口", () => {
   test.beforeEach(async ({ page }) => {
     await mockHeaderCart(page);
@@ -122,7 +133,11 @@ test.describe("管理者入口", () => {
       "href",
       "/admin/products",
     );
-    await expect(page.getByText("Coming soon")).toHaveCount(2);
+    await expect(page.getByRole("link", { name: "注文管理" })).toHaveAttribute(
+      "href",
+      "/admin/orders",
+    );
+    await expect(page.getByText("Coming soon")).toHaveCount(1);
   });
 
   test("customerユーザーが管理者ログインしても権限エラーを表示する", async ({
@@ -185,6 +200,22 @@ test.describe("管理者入口", () => {
 
     await expect(page).toHaveURL(/\/admin\/products$/);
     await expect(page.getByRole("heading", { name: "商品管理" })).toBeVisible();
+  });
+
+  test("adminログイン後に注文管理returnToへ戻る", async ({ page }) => {
+    await mockCurrentUser(page, unauthorizedResponse, 401);
+    await mockAdminOrders(page);
+    await page.route("**/api/auth/login", (route) =>
+      fulfillJson(route, 200, adminUserResponse),
+    );
+
+    await page.goto("/admin/login?returnTo=%2Fadmin%2Forders");
+    await page.getByLabel("メールアドレス").fill("admin@example.com");
+    await page.getByLabel("パスワード").fill("secret123");
+    await page.getByRole("button", { name: "管理者としてログイン" }).click();
+
+    await expect(page).toHaveURL(/\/admin\/orders$/);
+    await expect(page.getByRole("heading", { name: "注文管理" })).toBeVisible();
   });
 
   test("外部returnToは破棄して管理者トップへ遷移する", async ({ page }) => {
