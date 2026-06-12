@@ -2,9 +2,17 @@ import "server-only";
 
 import {
   backendFetchWithAuth,
+  getJsonHeaders,
   parseBackendResponse,
 } from "../../../auth/api/server";
-import type { OrderCreateResult, OrderDetail, OrderList } from "../types";
+import type {
+  AdminOrderCancelResult,
+  AdminOrderDetail,
+  AdminOrderList,
+  OrderCreateResult,
+  OrderDetail,
+  OrderList,
+} from "../types";
 
 export const fetchOrdersWithBackend = async () => {
   const response = await backendFetchWithAuth("/api/orders", {
@@ -32,6 +40,40 @@ export const createOrderWithBackend = async () => {
     method: "POST",
   });
   const json = await parseBackendResponse<OrderCreateResult>(response);
+
+  return { response, json };
+};
+
+export const fetchAdminOrdersWithBackend = async () => {
+  const response = await backendFetchWithAuth("/api/admin/orders", {
+    method: "GET",
+  });
+  const json = await parseBackendResponse<AdminOrderList>(response);
+
+  return { response, json };
+};
+
+export const fetchAdminOrderDetailWithBackend = async (orderId: string) => {
+  const response = await backendFetchWithAuth(
+    `/api/admin/orders/${encodeURIComponent(orderId)}`,
+    {
+      method: "GET",
+    },
+  );
+  const json = await parseBackendResponse<AdminOrderDetail>(response);
+
+  return { response, json };
+};
+
+export const cancelAdminOrderWithBackend = async (orderId: string) => {
+  const response = await backendFetchWithAuth(
+    `/api/admin/orders/${encodeURIComponent(orderId)}/cancel`,
+    {
+      method: "POST",
+      headers: getJsonHeaders(),
+    },
+  );
+  const json = await parseBackendResponse<AdminOrderCancelResult>(response);
 
   return { response, json };
 };

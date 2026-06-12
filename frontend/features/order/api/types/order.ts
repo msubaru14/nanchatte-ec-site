@@ -53,3 +53,41 @@ export type OrderDetail = {
   orderedAt: string;
   items: OrderDetailItem[];
 };
+
+export type AdminOrderSummary = {
+  orderId: number;
+  orderNumber: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  orderStatus: "ordered" | "canceled";
+  totalIncludingTax: number;
+  orderedAt: string;
+  canceledAt: string | null;
+  itemCount: number;
+};
+
+export type AdminOrderList = {
+  orders: AdminOrderSummary[];
+};
+
+export type AdminOrderDetail = {
+  orderId: number;
+  orderNumber: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  orderStatus: "ordered" | "canceled";
+  totalExcludingTax: number;
+  totalTax: number;
+  totalIncludingTax: number;
+  orderedAt: string;
+  canceledAt: string | null;
+  items: OrderDetailItem[];
+};
+
+export type AdminOrderCancelResult = {
+  orderId: number;
+  orderStatus: "canceled";
+  canceledAt: string;
+};
