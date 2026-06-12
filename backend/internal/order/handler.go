@@ -17,6 +17,9 @@ type orderService interface {
 	CreateOrder(userID int64) (*CreateResult, *apperror.APIError)
 	ListOrders(userID int64) (*ListResult, *apperror.APIError)
 	GetOrderDetail(userID int64, orderID int64) (*DetailResult, *apperror.APIError)
+	ListAdminOrders() (*AdminListResult, *apperror.APIError)
+	GetAdminOrderDetail(orderID int64) (*AdminDetailResult, *apperror.APIError)
+	CancelAdminOrder(orderID int64) (*AdminCancelResult, *apperror.APIError)
 }
 
 func NewHandler(service orderService) *Handler {
@@ -70,6 +73,46 @@ func (h *Handler) Show(c *gin.Context) {
 	}
 
 	response.Success(c, newOrderDetailResponse(result))
+}
+
+func (h *Handler) ListAdmin(c *gin.Context) {
+	result, apiErr := h.service.ListAdminOrders()
+	if apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, newListAdminOrdersResponse(result))
+}
+
+func (h *Handler) ShowAdmin(c *gin.Context) {
+	orderID, ok := orderIDFromParam(c)
+	if !ok {
+		return
+	}
+
+	result, apiErr := h.service.GetAdminOrderDetail(orderID)
+	if apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, newAdminOrderDetailResponse(result))
+}
+
+func (h *Handler) CancelAdmin(c *gin.Context) {
+	orderID, ok := orderIDFromParam(c)
+	if !ok {
+		return
+	}
+
+	result, apiErr := h.service.CancelAdminOrder(orderID)
+	if apiErr != nil {
+		writeAPIError(c, apiErr)
+		return
+	}
+
+	response.Success(c, newAdminOrderCancelResponse(result))
 }
 
 func userIDFromContext(c *gin.Context) (int64, bool) {

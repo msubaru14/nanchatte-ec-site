@@ -419,8 +419,11 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 管理者向けの注文一覧を取得する。
 
 - 全ユーザーの注文を取得可能
-- status / ordered_at などで絞り込み可能
+- `ordered` / `canceled` の両方を取得可能
 - 退会済みユーザー注文も表示する
+- 注文者の userId / userName / userEmail を返す
+- `ordered_at DESC`, 同時刻の場合は `order_id DESC` で返す
+- Phase1では検索・絞り込み・ページネーションなし
 
 ---
 
@@ -430,10 +433,12 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 
 - 全注文を取得可能
 - 注文者情報
-- order_items
+- order_items の注文時点スナップショット
 - キャンセル状態
 
 を返す。
+
+対象注文が存在しない場合は `NOT_FOUND`。
 
 ---
 
@@ -442,8 +447,12 @@ request / response / error の詳細仕様は `docs/api/openapi.yaml` を参照�
 管理者が注文をキャンセルする。
 
 - order_status = ordered の場合のみ可能
+- order_status を canceled にする
 - 在庫復元
 - canceled_at 設定
+- 注文更新と在庫復元は同一 transaction 内で行い、部分成功させない
+- canceled 注文の再キャンセルは Phase1 では `CONFLICT` の業務エラーとして扱う
+- 対象注文が存在しない場合は `NOT_FOUND`
 
 ---
 
