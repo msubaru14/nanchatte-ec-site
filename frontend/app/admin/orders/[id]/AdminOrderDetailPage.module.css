@@ -1,0 +1,349 @@
+.page {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  padding: 40px 24px 56px;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.title {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.status,
+.summaryPanel,
+.item,
+.errorPanel,
+.guidancePanel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.status {
+  padding: 32px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.detailLayout {
+  display: grid;
+  gap: 24px;
+}
+
+.summaryPanel {
+  padding: 24px;
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1.35;
+}
+
+.statusBadge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 10px;
+}
+
+.status-ordered {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-canceled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.summaryList {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+
+.summaryList div,
+.itemMeta div {
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.summaryList dt,
+.itemMeta dt {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.summaryList dd,
+.itemMeta dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.itemsSection {
+  display: grid;
+  gap: 16px;
+}
+
+.itemList {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 144px minmax(0, 1fr);
+  gap: 20px;
+  padding: 16px;
+}
+
+.itemMedia {
+  display: grid;
+  align-content: start;
+}
+
+.imageFrame {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.itemBody {
+  min-width: 0;
+}
+
+.itemName {
+  margin: 0 0 16px;
+  color: var(--text);
+  font-size: 19px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.itemMeta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+
+.cancelButton,
+.retryButton,
+.primaryLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 14px;
+}
+
+.cancelButton {
+  border: 1px solid #dc2626;
+  background: #ffffff;
+  color: #991b1b;
+  cursor: pointer;
+  font: inherit;
+  margin-top: 16px;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: #fff7f7;
+}
+
+.cancelButton:disabled {
+  border-color: var(--line);
+  background: #f8fafc;
+  color: var(--muted);
+  cursor: wait;
+}
+
+.successMessage,
+.operationError {
+  margin: 16px 0 0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+  padding: 10px 12px;
+}
+
+.successMessage {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.operationError {
+  border: 1px solid #fecaca;
+  background: #fff7f7;
+  color: #991b1b;
+}
+
+.errorPanel {
+  border-color: #fecaca;
+  background: #fff7f7;
+  padding: 28px;
+}
+
+.errorTitle {
+  margin: 0 0 8px;
+  color: #991b1b;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.errorMessage {
+  margin: 0 0 18px;
+  color: #7f1d1d;
+  font-size: 14px;
+}
+
+.retryButton {
+  border: 0;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.retryButton:hover,
+.primaryLink:hover {
+  background: var(--primary-dark);
+}
+
+.guidancePanel {
+  padding: 32px;
+}
+
+.guidanceTitle {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.guidanceMessage {
+  margin: 0 0 20px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.primaryLink {
+  background: var(--primary);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+@media (max-width: 860px) {
+  .page {
+    padding: 28px 16px 40px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+
+  .summaryHeader {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .summaryList,
+  .itemMeta {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .item {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  .summaryList,
+  .itemMeta {
+    grid-template-columns: 1fr;
+  }
+
+  .item {
+    grid-template-columns: 1fr;
+  }
+
+  .imageFrame {
+    aspect-ratio: 16 / 10;
+  }
+
+  .cancelButton,
+  .primaryLink {
+    width: 100%;
+  }
+}
