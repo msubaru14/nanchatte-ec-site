@@ -33,6 +33,7 @@
     ├── app
     │   ├── admin
     │   │   ├── login
+    │   │   ├── orders
     │   │   ├── products
     │   │   └── reviews
     │   ├── api
@@ -133,6 +134,8 @@ docker compose up --build -d
 - 管理者商品登録画面: http://localhost:3000/admin/products/new
 - 管理者商品編集画面: http://localhost:3000/admin/products/{id}/edit
 - 管理者レビュー一覧画面: http://localhost:3000/admin/reviews
+- 管理者注文一覧画面: http://localhost:3000/admin/orders
+- 管理者注文詳細画面: http://localhost:3000/admin/orders/{id}
 - 注文確認画面: http://localhost:3000/orders/confirm
 - 注文完了画面: http://localhost:3000/orders/complete
 - 注文履歴一覧画面: http://localhost:3000/orders
@@ -271,6 +274,9 @@ npm run test:e2e:ui
   - `GET /api/admin/reviews`
   - `POST /api/admin/reviews/:id/hide`
   - `POST /api/admin/reviews/:id/publish`
+  - `GET /api/admin/orders`
+  - `GET /api/admin/orders/:id`
+  - `POST /api/admin/orders/:id/cancel`
   - access token / refresh token を httpOnly cookie で管理
   - 認証対象 API では 401 時に refresh retry を行う
   - backend の response / error code を Browser 向けにも維持する
@@ -404,6 +410,18 @@ npm run test:e2e:ui
   - customerユーザーの権限エラー表示
   - 編集対象取得失敗時のエラー表示と再読み込み導線
   - 存在しない商品IDの Not Found 表示
+- 管理者注文画面
+  - `GET /api/admin/orders` BFFを利用した管理者注文一覧表示
+  - `GET /api/admin/orders/:id` BFFを利用した管理者注文詳細表示
+  - `POST /api/admin/orders/:id/cancel` BFFを利用した注文キャンセル
+  - 管理者トップから注文管理への導線
+  - ordered / canceled の管理者向け表示名変換
+  - 注文者情報、注文番号、合計金額、明細スナップショットの表示
+  - 注文0件表示
+  - 取得失敗時のエラー表示と再読み込み導線
+  - 未ログイン時の returnTo 付き管理者ログイン遷移
+  - customerユーザーの権限エラー表示
+  - キャンセル前の確認ダイアログとキャンセル失敗時のエラー表示
 - Next.js App Router によるトップページ
 - 商品一覧画面
   - `GET /api/products` を利用した商品カード表示
@@ -427,6 +445,24 @@ npm run test:e2e:ui
 - `internal/review` による review domain 構成
 - `internal/shared` によるGo共通レスポンス・エラー基盤
 - DB接続・migration実行基盤
+
+## Phase1対象外
+
+以下は Phase1 の完了条件には含めません。
+
+- 実決済
+- 返金処理
+- 配送管理
+- メール送信
+- クーポン
+- レコメンド
+- 商品画像アップロード
+- 複雑な在庫同期
+- 管理者操作ログ
+- キャンセル理由
+- ユーザー管理画面
+- marketplace / seller 機能
+- マスタ管理UI
 
 ## 注意
 
