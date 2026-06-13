@@ -20,13 +20,14 @@ const activeMenuItems = [
     label: "レビュー管理",
     description: "投稿レビューの確認、非表示化、再公開を行います。",
   },
+  {
+    href: "/admin/orders",
+    label: "注文管理",
+    description: "全ユーザーの注文状況、明細、キャンセル状態を確認します。",
+  },
 ] as const;
 
 const plannedMenuItems = [
-  {
-    label: "注文管理",
-    description: "注文状況の確認と管理は今後追加予定です。",
-  },
   {
     label: "ユーザー管理",
     description: "ユーザー状態の確認と管理は今後追加予定です。",
