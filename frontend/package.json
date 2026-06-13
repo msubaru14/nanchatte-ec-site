@@ -8,7 +8,7 @@
     "start": "next start",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "lint": "next lint"
+    "lint": "tsc --noEmit --pretty false"
   },
   "dependencies": {
     "next": "^16.2.6",
